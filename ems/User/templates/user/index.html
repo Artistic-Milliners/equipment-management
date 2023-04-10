@@ -1,0 +1,56 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'user/css/index.css' %}">
+    <title>{% block title %}
+         Index
+        {% endblock title %}</title>
+</head>
+<body>
+
+    <!-- NAVBAR STARTS -->
+    <nav class="navbar bg-body-tertiary">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="{% url 'User:home' %}">
+            <img src="{% static 'index/images/am_logo.png' %}" alt="Logo" width="auto" height="24" class="d-inline-block align-text-top">
+          </a>
+          <button class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">
+            <img src="{% static 'index/images/menu_icon.png' %}" alt="Sidebar" />
+          </button>
+        </div>
+    </nav>
+
+    <!-- NAVBAR ENDS -->
+    <!-- SIDEBAR STARTS -->
+
+        <div>
+            Index file
+        </div>
+
+    <!-- SIDEBAR ENDS -->
+
+    <!-- MAIN BODY STARTS -->
+    
+    <div class="container">
+
+
+    </div>
+
+        
+    <!-- MAIN BODY ENDS -->
+
+    
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js" integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V" crossorigin="anonymous"></script>
+    
+
+
+</body>
+</html>

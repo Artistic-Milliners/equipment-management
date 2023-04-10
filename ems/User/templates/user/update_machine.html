@@ -1,0 +1,35 @@
+{% extends "user/home.html" %}
+
+{% block main-body %}
+<form action="{% url 'User:update_machine' pk=machine_val.pk %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label for="machine-type" class="form-label">Type</label>
+      <input name="type-of-machine" value="{{machine_val.type_of_machine}}" type="text" class="form-control" id="exampleInputPassword1">
+    </div>
+    
+    <div class="mb-3">
+      <label for="machine-name" class="form-label">Machine Name</label>
+      <input name="name" value="{{machine_val.name}}" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+    </div>
+
+    <div class="mb-3">
+      <label for="machine-model" class="form-label">Model</label>
+      <input name="model" value="{{machine_val.model}}" type="text" class="form-control" id="exampleInputPassword1">
+    </div>
+
+    <div class="mb-3">
+        <label for="machine-cost" class="form-label">Cost</label>
+        <input name="purchase_cost" value="{{machine_val.purchase_cost}}" type="text" class="form-control" id="machine-cost">
+    </div>
+
+    <div class="mb-3">
+        <label for="machine-image" class="form-label">Upload Image</label>
+        <input name="machine-image" type="file" class="form-control" id="machine-image">
+    </div>
+
+    <input class="btn btn-primary" type="submit" value="Submit" name="" id="">
+  </form>
+
+{% endblock main-body %}

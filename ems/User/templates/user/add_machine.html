@@ -1,0 +1,58 @@
+{% extends "user/home.html" %}
+{% block title %}
+  Add | Machine
+{% endblock title %}
+
+{% block main-body %}
+    <form action="" method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="machine-name" class="form-label">Machine Name</label>
+            <input name="name" type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+          </div>
+
+        <div class="mb-3">
+            <label for="machine-type" class="form-label">Type</label>
+            <select name="type-of-machine" id="machine-type" class="form-select">
+                {% for e in equipments %}
+                <option value="{{e.id}}">{{e.name}}</option>  
+                {% endfor %}
+                
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="machine-spares" class="form-label">Machine Spares</label>
+            <select name="spares-list" class="form-select" multiple aria-label="multiple select example">
+                {% for spare in spares  %}
+                    <option value="{{spare.id}}">{{spare.name}}</option>  
+                {% endfor %}  
+              </select>
+          </div>
+      
+          <div class="mb-3">
+            <label for="machine-model" class="form-label">Model</label>
+            <input name="model"  type="text" class="form-control" id="exampleInputPassword1">
+          </div>
+
+          <div class="mb-3">
+            <label for="machine-purchase-date" class="form-label">Purchasing Date</label>
+            <input name="dop"  type="date" class="form-control" id="exampleInputPassword1">
+        </div>
+      
+          <div class="mb-3">
+              <label for="machine-purchase-date" class="form-label">Purchasing Cost</label>
+              <input name="purchase_cost"  type="text" class="form-control" id="exampleInputPassword1">
+          </div>
+
+          <div class="mb-3">
+            <label for="machine-image" class="form-label">Upload Image</label>
+            <input name="image"  type="file" class="form-control" id="exampleInputPassword1">
+          </div>
+    
+      
+          <input class="btn btn-primary" type="submit" value="Submit" name="" id="">
+    </form>
+  
+{% endblock main-body %}

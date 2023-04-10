@@ -1,0 +1,10 @@
+
+<ul class="list-unstyled components">
+{% for equipment,machines in equipments.items %}
+        <li> {{equipment|safe}} <i class="fa fa-caret-down"></i>
+            {% for m in machines  %}
+                    <a href="{% url 'machineDetail' pk=m.pk %}"><li>{{m}}</li></a>  
+            {% endfor %}        
+        </li> 
+{% endfor %}
+</ul>

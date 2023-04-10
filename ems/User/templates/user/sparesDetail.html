@@ -1,0 +1,102 @@
+{% extends "user/home.html" %}
+{% load static %}
+
+
+{% block title %}
+  Spares
+{% endblock title %}Spares
+{% block main-body %}
+<!-- Top Buttons Start -->
+<section id="add-issue-section">
+  <div class="add-spare" style="margin:10px">
+    <button type="submit" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
+      <i class="fa fa-plus" aria-hidden="true"> Add Spare</i>
+    </button>
+  </div>
+  
+  <div class="add-spare" style="margin:10px">
+    <button type="submit" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
+      <i class="fa fa-minus" aria-hidden="true"> Issue Part</i>
+    </button>
+  </div>
+</section>
+<!-- Top Buttons End -->
+
+
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+          <div class="modal-content">
+              <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Add New Spare</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+              </button>
+              </div>
+              <form id="add-form" data-url="{% url 'User:spares_add' %}" method="post">
+                  {% csrf_token %}
+
+                  <div class="modal-body">
+                          <div class="mb-3">
+                          <label for="item-code" class="form-label">Item Code</label>
+                          <input name="item-code" value="" type="text" class="form-control" id="item-code" required>
+                          </div>
+                          
+                          <div class="mb-3">
+                          <label for="name" class="form-label">Name</label>
+                          <input name="name" value="" type="text" class="form-control" id="name" aria-describedby="Spare Name" required>
+                          </div>
+                      
+                          <div class="mb-3">
+                          <label for="quantity" class="form-label">quantity</label>
+                          <input name="quantity" value="" type="text" class="form-control" id="quantity" required>
+                          </div>
+                      
+                          <div class="mb-3">
+                              <label for="unit" class="form-label">Unit</label>
+                              <input name="unit" value="" type="text" class="form-control" id="unit" required>
+                          </div>
+            
+                  </div>
+                  <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  <input type="submit" onclick="modalData('add-form')" class="btn btn-primary" value="Save">
+                  </div>
+              </form>
+              
+          </div>
+          </div>
+      </div>
+    <!-- Modal Ends -->
+
+    <!-- Spares Table starts -->
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th scope="col">S.No</th>
+      <th scope="col">Item Code</th>
+      <th scope="col">Name</th>
+      <th scope="col">Quantity</th>
+      <th scope="col">Unit</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for spare in spares %}
+    <tr>
+      <th scope="row">{{spare.pk}}</th>
+      <td>{{spare.item_code}}</td>
+      <td>{{spare.name}}</td>
+      <td>{{spare.quantity}}</td>
+      <td>{{spare.unit}}</td>
+      <td><button class="btn btn-primary">Issue</button></td>
+      <td><a href="{% url 'User:spares_delete' pk=spare.pk %}"><button class="btn btn-danger">Delete</button></a></td>
+    </tr> 
+    {% endfor %}
+    `
+  </tbody>
+</table>
+
+<script src="{% static 'user/js/machine_detail.js' %}"></script>
+
+<!-- spares table ends -->
+{% endblock main-body %}

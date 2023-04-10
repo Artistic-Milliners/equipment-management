@@ -1,0 +1,105 @@
+{% extends "user/home.html" %}
+{% load static %}
+
+{% block title %}
+  Machine Detail
+{% endblock title %}
+
+
+
+{% block sidebar %}
+{% for equipment,machines in equipments.items %}
+<li>
+    <a class="btn dropdown-toggle m-1" data-bs-toggle="collapse" href="#equipment" role="button" aria-expanded="false" aria-controls="collapseExample">
+        {{equipment|safe}}
+    </a><i class="fas fa-caret-down"></i>
+</li>
+<div class="collapse" id="equipment">
+    {% for m in machines  %}
+    <a class="btn btn-primary m-1" href="{% url 'User:machineDetail' pk=m.pk %}"><li>{{m}}</li></a>  
+    {% endfor %}        
+    </li>  
+</div>
+{% endfor %} 
+            
+{% endblock sidebar %}
+
+
+{% block main-body %}
+
+        <h1>{{machine_detail.name}}</h1>
+        <div>
+            <ul>
+                <li>{{machine_detail.type_of_machine.name}}</li>
+                <li>{{machine_detail.model}}</li>
+                <li>{{machine_detail.purchase_cost}}</li>
+                <ul>
+                    {% for s in machine_detail.spares.all%}
+                        <li>{{s}}</li>
+                    {% endfor %}
+                </ul>
+
+            </ul>
+            <button type="submit" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#exampleModal">Update</button>
+            <a href="{% url 'User:delete_machine' pk=machine_detail.pk %}"><button type="submit" class="btn btn-danger">Delete</button></a>
+            
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Update Information</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                </div>
+                <form id="update-form" data-url="{% url 'User:update_machine' pk=machine_detail.pk %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="modal-body">
+
+                    
+                            <div class="mb-3">
+                            <label for="machine-type" class="form-label">Type</label>
+                            <input name="type-of-machine" value="{{machine_detail.type_of_machine}}" type="text" class="form-control" id="machine-type">
+                            </div>
+                            
+                            <div class="mb-3">
+                            <label for="machine-name" class="form-label">Machine Name</label>
+                            <input name="name" value="{{machine_detail.name}}" type="text" class="form-control" id="machine-name" aria-describedby="emailHelp">
+                            </div>
+                        
+                            <div class="mb-3">
+                            <label for="machine-model" class="form-label">Model</label>
+                            <input name="model" value="{{machine_detail.model}}" type="text" class="form-control" id="machine-model">
+                            </div>
+                        
+                            <div class="mb-3">
+                                <label for="machine-cost" class="form-label">Cost</label>
+                                <input name="purchase_cost" value="{{machine_detail.purchase_cost}}" type="text" class="form-control" id="machine-cost">
+                            </div>
+                        
+                            <div class="mb-3">
+                                <label for="machine-image" class="form-label">Upload Image</label>
+                                <input name="machine-image" type="file" class="form-control" id="machine-image">
+                            </div>
+
+                        
+                    
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <input type="submit" class="btn btn-primary" value="Save Changes" onclick=modalData("#update-form")>
+                    </div>
+                </form>
+                
+            </div>
+            </div>
+        </div>
+
+<script src="{% static 'user/js/machine_detail.js' %}"></script>
+
+{% endblock main-body %}
+
+
