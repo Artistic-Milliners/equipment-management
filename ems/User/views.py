@@ -122,7 +122,7 @@ def delete_machine(request, pk):
 
 
 def spare_view(request):
-    spares = models.Spares.objects.all().order_by("pk")
+    spares = models.Spares.objects.all().order_by("-pk")
     return render(request, 'user/sparesDetail.html', {'spares':spares})
 
 
@@ -130,7 +130,6 @@ def spare_view(request):
 def spare_add(request):
     
     if request.method=='POST':
-        print("i am here")
         item_code = request.POST.get('item-code')
         name = request.POST.get('name')
         quantity = request.POST.get('quantity')
@@ -148,16 +147,82 @@ def spare_add(request):
     return JsonResponse({"message": "Form data received"})
 
 
+def spare_update(request,pk):
+    spare = models.Spares.objects.get(pk=pk)
+
+    try:
+        if request.method == "POST":
+            item_code = request.POST.get('update-item-code')
+            item_name = request.POST.get('update-name')
+            item_quantity = request.POST.get('update-quantity')
+            item_unit = request.POST.get('update-unit')
+
+            spare = models.Spares(
+                pk = pk,
+                item_code = item_code,
+                name = item_name,
+                quantity = item_quantity,
+                unit = item_unit
+            )
+
+            spare.save()
+
+        return JsonResponse({"MESSAGE":"Spare data updated successfully"})
+
+    except Exception as e:
+        return JsonResponse({"Error": e})
+
+
 def spare_delete(request,pk):
     try:
         
         spare = models.Spares.objects.get(pk=pk)
         
         if spare:
-    
+
             spare.delete()
             return redirect('User:spares')
+    
     except ObjectDoesNotExist:
         return JsonResponse({'message': "Object not found"})
     
     return redirect("User:spares")
+
+def spare_issue(request, pk):
+
+    current_quantity = models.Spares.objects.filter(pk=pk).values()[0]["quantity"]
+    try:        
+        if request.method == 'POST':
+            
+            quantity = int(request.POST.get("issue-quantity"))
+            
+            if quantity <= current_quantity:
+                updated_quantity = current_quantity-quantity
+            else:
+                return JsonResponse({"Quantity":"Required quantity is more than available quantity"})
+
+
+            item_code = request.POST.get("issue-item-code")
+            name = request.POST.get("issue-name")
+            unit = request.POST.get("issue-unit")
+
+
+
+
+            spare = models.Spares(
+                pk = pk,
+                item_code=item_code,
+                name=name,
+                unit=unit,
+                quantity = updated_quantity
+            )
+
+            spare.save()
+
+            return JsonResponse({"Successful: Issue Successfully"})
+    except Exception as e:
+            return JsonResponse({"Error": e})
+
+
+
+        

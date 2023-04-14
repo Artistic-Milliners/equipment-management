@@ -19,5 +19,7 @@ urlpatterns = [
     path('delete/<int:pk>', views.delete_machine, name='delete_machine'),
     path('home/spares', views.spare_view, name='spares'),
     path('home/spares/addSpare', views.spare_add, name='spares_add'),
+    path('home/spares/updateSpare/<int:pk>', views.spare_update, name='spares_update'),
     path('home/spares/deleteSpare/<int:pk>', views.spare_delete, name='spares_delete'),
+    path('home/spares/issueSpare/<int:pk>', views.spare_issue, name='spares_issue'),
 ]

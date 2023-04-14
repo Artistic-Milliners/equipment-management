@@ -13,12 +13,10 @@ nav{
     justify-content: space-between;
     gap: 5px;
     align-items: center;
-    border: 2px dotted red;
 }
 
 .nav-icon-left{
     margin: 5px;
-    border: 2px dotted green;
 }
 
 
@@ -34,4 +32,8 @@ nav a>img{
     justify-content: center;   
     align-items: center;
     gap: 2px; 
+}
+
+.table-row{
+    color: red;
 }

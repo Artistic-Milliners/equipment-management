@@ -13,15 +13,10 @@
       <i class="fa fa-plus" aria-hidden="true"> Add Spare</i>
     </button>
   </div>
-  
-  <div class="add-spare" style="margin:10px">
-    <button type="submit" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
-      <i class="fa fa-minus" aria-hidden="true"> Issue Part</i>
-    </button>
-  </div>
 </section>
-<!-- Top Buttons End -->
 
+
+<!-- Top Buttons End -->
 
         <!-- Modal -->
         <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -69,6 +64,104 @@
       </div>
     <!-- Modal Ends -->
 
+
+
+    <!-- Modal update starts -->
+    <div class="modal fade" id="UpdateModal" tabindex="-1" role="dialog" aria-labelledby="UpdateModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Update Spare</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+          </button>
+          </div>
+          <form id="update-form"  method="post">
+              {% csrf_token %}
+
+              <div class="modal-body">
+                      <div class="mb-3">
+                      <label for="update-item-code" class="form-label">Item Code</label>
+                      <input name="update-item-code" type="text" class="form-control" id="update-item-code" required>
+                      </div>
+                      
+                      <div class="mb-3">
+                      <label for="update-name" class="form-label">Name</label>
+                      <input name="update-name" type="text" class="form-control" id="update-name" aria-describedby="Spare Name" required>
+                      </div>
+                  
+                      <div class="mb-3">
+                      <label for="update-quantity" class="form-label">quantity</label>
+                      <input name="update-quantity" type="text" class="form-control" id="update-quantity" required>
+                      </div>
+                  
+                      <div class="mb-3">
+                          <label for="update-unit" class="form-label">Unit</label>
+                          <input name="update-unit" type="text" class="form-control" id="update-unit" required>
+                      </div>
+        
+              </div>
+              <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <input type="submit" onclick="modalData('update-form')" class="btn btn-primary" value="Update">
+              </div>
+          </form>
+          
+      </div>
+      </div>
+  </div>
+<!-- Modal update Ends -->
+
+
+<!-- Modal Issue starts -->
+    <div class="modal fade" id="issueModal" tabindex="-1" role="dialog" aria-labelledby="UpdateModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Spare Issuance</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+          </button>
+          </div>
+          <form id="issuance-form"  method="get">
+              {% csrf_token %}
+
+              <div class="modal-body">
+                      <div class="mb-3">
+                      <label for="issue-item-code" class="form-label">Item Code</label>
+                      <input name="issue-item-code" type="text" class="form-control" id="issue-item-code" readonly>
+                      </div>
+                      
+                      <div class="mb-3">
+                      <label for="issue-name" class="form-label">Name</label>
+                      <input name="issue-name" type="text" class="form-control" id="issue-name" aria-describedby="Spare Name" readonly>
+                      </div>
+                  
+                      <div class="mb-3">
+                      <label for="issue-quantity" class="form-label">Quantity</label>
+                      <input name="issue-quantity" type="number" class="form-control" id="issue-quantity" min=1 required>
+                      </div>
+                  
+                      <div class="mb-3">
+                          <label for="issue-unit" class="form-label">Unit</label>
+                          <input name="issue-unit" type="text" class="form-control" id="issue-unit" readonly>
+                      </div>
+        
+              </div>
+              <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <input type="submit" onclick="modalData('issuance-form')" class="btn btn-primary" value="Issue">
+              </div>
+          </form>
+          
+      </div>
+      </div>
+  </div>
+<!-- Modal Issue Ends -->
+
+
+
+
     <!-- Spares Table starts -->
 <table class="table table-bordered">
   <thead>
@@ -88,8 +181,24 @@
       <td>{{spare.name}}</td>
       <td>{{spare.quantity}}</td>
       <td>{{spare.unit}}</td>
-      <td><button class="btn btn-primary">Issue</button></td>
-      <td><a href="{% url 'User:spares_delete' pk=spare.pk %}"><button class="btn btn-danger">Delete</button></a></td>
+      <td><button class="btn btn-primary p-1 m-0" data-bs-toggle="modal" data-bs-target="#issueModal" onclick="issueModal(this)"
+        data-quantity="{{spare.quantity}}"
+        data-item-code="{{spare.item_code}}"
+        data-name="{{spare.name}}"
+        data-unit="{{spare.unit}}"
+        data-url = "{% url 'User:spares_issue' pk=spare.pk %}">
+        <i class="fa fa-minus"></i></button>
+      </td>
+      <td>  <button class="btn btn-warning p-1 m-0" data-bs-toggle="modal" data-bs-target="#UpdateModal" onclick="updateModal(this)" 
+        data-item-code="{{spare.item_code}}" 
+        data-name="{{spare.name}}" 
+        data-quantity="{{spare.quantity}}" 
+        data-unit="{{spare.unit}}"
+        data-url = "{% url 'User:spares_update' pk=spare.pk %}">
+        
+        <i class="fa fa-edit"></i>
+      </button></td>
+      <td><a href="{% url 'User:spares_delete' pk=spare.pk %}"><button class="btn btn-danger p-1 m-0"><i class="fa fa-trash"></i></button></a></td>
     </tr> 
     {% endfor %}
     `
