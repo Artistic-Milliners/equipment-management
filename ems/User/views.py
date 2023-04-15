@@ -122,7 +122,13 @@ def delete_machine(request, pk):
 
 
 def spare_view(request):
-    spares = models.Spares.objects.all().order_by("-pk")
+    if request.method == "GET":
+        search_filter = request.GET.get("search-bar")
+        if search_filter:
+            spares = models.Spares.objects.filter(name__icontains=search_filter).order_by("-pk")
+        else :
+            spares = models.Spares.objects.all().order_by("-pk")
+    
     return render(request, 'user/sparesDetail.html', {'spares':spares})
 
 
