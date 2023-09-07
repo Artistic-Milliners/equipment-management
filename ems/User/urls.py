@@ -2,15 +2,13 @@ from django.urls import path, include
 from . import views
 
 
-machine_crud_patterns = [
-
-]
-
 app_name = 'User'
 
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('login/', views.login_view, name="login"),
+    path('logout/', views.logout_view, name="logout"),
     path('home', views.home, name='home'),
     path('home/machine/<int:pk>', views.machine_detail, name='machineDetail'),
     path('add', views.add_machine, name='add_machine'),

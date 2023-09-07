@@ -39,6 +39,7 @@ function updateModal(btn){
     var itemUnit = btn.getAttribute("data-unit");
     var itemUrl = btn.getAttribute("data-url");
 
+
     document.getElementById("update-item-code").value = itemCode;
     document.getElementById("update-name").value = itemName;
     document.getElementById("update-quantity").value = itemQuantity;
@@ -65,7 +66,7 @@ function issueModal(btn){
     document.getElementById("issuance-form").setAttribute("data-url", url);
     
 }
-s
+
 
 
 

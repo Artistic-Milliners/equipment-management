@@ -1,0 +1,10 @@
+
+<h2>Log In</h2>
+{% if error %}
+  <h1> {{ error }} </h1>
+{% endif %}
+<form method="post" action="{% url 'User:login' %}" >
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Log In">
+</form>

@@ -14,7 +14,7 @@
     </button>
   </div>
   <div>
-    <form action="" method="get">
+    <form action="{% url  'User:spares'  %}" method="get">
       <label for="search-bar">Search</label>
       <input type="text" name="search-bar" id="search-bar">
       <button class="btn btn-primary m-0"><i class="fa fa-search"></i></button>
@@ -109,7 +109,7 @@
         
               </div>
               <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> -->
               <input type="submit" onclick="modalData('update-form')" class="btn btn-primary" value="Update">
               </div>
           </form>
@@ -130,7 +130,7 @@
               <span aria-hidden="true">&times;</span>
           </button>
           </div>
-          <form id="issuance-form"  method="get">
+          <form id="issuance-form" method="get">
               {% csrf_token %}
 
               <div class="modal-body">

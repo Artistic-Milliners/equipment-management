@@ -54,7 +54,7 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
                 </div>
-                <form id="update-form" data-url="{% url 'User:update_machine' pk=machine_detail.pk %}" method="post" enctype="multipart/form-data">
+                <form id="update-form" action="{% url 'User:update_machine' pk=machine_detail.pk %}" data-url="{% url 'User:update_machine' pk=machine_detail.pk %}" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
 
                     <div class="modal-body">

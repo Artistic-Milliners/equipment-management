@@ -1,0 +1,82 @@
+{% extends "user/home.html" %}
+9
+
+{% block title %}
+  Complain View
+{% endblock title %}
+
+{% block main-body %}
+    <div class="header">
+      <h1>Work Order Status</h1>
+      <button class="compalain"> <a href="{% url 'maintenance:complain' %}"><i class="fa fa-plus"> New</i></a></button>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th scope="col" class="bg-black" style="width: 0.4rem;">#</th>
+            <th scope="col" class="text-center bg-black" style="width: 10rem;">WORK ORDER</th>
+            <th scope="col" class="text-center bg-black description" style="width: 15rem;" >DESCRIPTION</th>
+            <th scope="col" class="text-center bg-black" style="width: 7rem;">DEPARTMENT</th>
+            <th scope="col" class="text-center bg-black">MACHINE NO.</th>
+            <th scope="col" class="text-center bg-black">PRIORITY</th>
+            <th scope="col" class="text-center bg-black">SCHEDULE DATE</th>
+            <th scope="col" class="text-center bg-black">TYPE</th>
+            <th scope="col" class="text-center bg-black">STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for issue in issue_list  %} 
+            {% if issue.priority == "H" %}
+              <tr class="table-danger align-middle text-center">
+            {% elif issue.priority == "M" %}
+             <tr class="table-warning align-bottom text-center">
+            {% else %}
+            <tr class="table-primary align-bottom text-center">
+            {% endif %}
+                <th scope="row" class="bg-black">{{ forloop.counter }}</th>
+                <td> <a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">{{ issue.ticket_num}}</a></td>
+                <td class="text-start">{{ issue.description }}</td>
+                <td></td>
+                <td>{{issue.machine.name}}</td>
+                <td>{{ issue.priority  }}</td>
+                <td> </td>
+                <td></td>
+                <td></td>
+              </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+    
+
+    {% for issue in issue_list  %}
+    <div class="issue-section">
+      <div class="issue-detail issue-side">
+        <div class="ticket">
+          <h1> <a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">Ticket# {{issue.ticket_num}}</a> <span></span> </h1>
+        </div>
+          
+        <div class="issue-detail equipment-detail">
+            <div class="equipment">
+              <h4>Equipment: {{ issue.equipment.name }} </h4>
+            </div>
+            <div class="machine">
+              <h4>Machine No: {{ issue.machine.name }} </h4>
+            </div>
+        </div>
+        <div class="issue-detail">
+            <h4>Description:</h4>
+            <p>{{ issue.description }}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+   
+
+{% endblock main-body %}
+
+
+

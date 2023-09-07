@@ -1,0 +1,97 @@
+body{
+    background: #f2f5f4;
+}
+
+.header{
+    margin: 1.5em 0 0 0;
+    /* background: #CFE2FF; */
+    display: flex;
+    direction: row;
+    justify-content: space-between;
+}
+
+.header button{
+    color: whitesmoke;
+    background:black ;
+    margin: 2em 1.5em ;
+    padding: 0.5em 0.5em;
+    border: 1px dotted darkblue;
+    border-radius: 0.4em;
+}
+
+.header a{
+    text-decoration: none;
+    color: whitesmoke;
+}
+
+table{
+    margin-top: 10px;
+}
+
+.text-center{
+    vertical-align: middle;
+}
+
+th{
+    color: whitesmoke;
+
+}
+
+th > .text-center{
+    width: 33%;
+}
+
+
+.issue-section{
+    display: none;
+    margin-top: 0.1em;
+    background-color: white;
+}
+
+
+
+.issue-side{
+    display: flex;
+    margin: 0.2rem;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1 1 auto;
+
+}
+
+img{
+    width: 100%;
+    height: 100%;
+}
+
+.issue-detail{
+    background-color: whitesmoke;
+    margin: 0.2rem 0.2rem;
+    padding: 0.1rem;
+}
+
+.equipment-detail{
+    margin: 0.2rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.equipment{
+    flex-basis: ;
+}
+
+.ticket{
+    background-color: aqua;
+    align-self: center;
+}
+
+@media screen and (max-width:780px) {
+    table{
+        display: none;
+    }
+    .issue-section{
+        display: flex;
+        margin-top: 0.4rem;
+    }
+}
