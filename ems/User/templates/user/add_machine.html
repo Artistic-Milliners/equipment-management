@@ -4,7 +4,7 @@
 {% endblock title %}
 
 {% block main-body %}
-    <form action="" method="post">
+    <form action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
         <div class="mb-3">
@@ -48,7 +48,7 @@
 
           <div class="mb-3">
             <label for="machine-image" class="form-label">Upload Image</label>
-            <input name="image"  type="file" class="form-control" id="exampleInputPassword1">
+            <input name="machine-image"  type="file" class="form-control" id="machine-image">
           </div>
     
       

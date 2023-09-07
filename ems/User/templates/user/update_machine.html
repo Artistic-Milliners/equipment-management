@@ -1,9 +1,9 @@
 {% extends "user/home.html" %}
 
 {% block main-body %}
-<form action="{% url 'User:update_machine' pk=machine_val.pk %}" method="post" enctype="multipart/form-data">
+<form action="{% url 'User:update_machine' pk= machine_val.pk %}" method="post" enctype="multipart/form-data">
     {% csrf_token %}
-
+s
     <div class="mb-3">
       <label for="machine-type" class="form-label">Type</label>
       <input name="type-of-machine" value="{{machine_val.type_of_machine}}" type="text" class="form-control" id="exampleInputPassword1">

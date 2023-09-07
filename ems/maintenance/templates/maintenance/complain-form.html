@@ -1,0 +1,86 @@
+{% extends "user/home.html" %}
+{% load static %}
+
+{% block title %}
+  Ticket | page
+{% endblock title %}
+
+{% block main-body %}
+  <h1>welcome to ticket page</h1>
+
+  <form id="ticket-form" action="" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label class="form-label me-3" for="ticket-number">Ticket No.</label>
+        <input class="form-control-inline" type="text" name="ticket-number" id="ticket-number" disabled>    
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label" for="machine-select">Select Machine</label>
+        <select class="form-control" type="text" name="machine-select" id="machine-select" onchange="getMachineDetails()" required> 
+          <option value="">List of Equipments</option>
+          {% for equipment in equipments %}
+            <option value="{{ equipment.id }}">{{ equipment.name }}</option>  
+          {% endfor %}
+        </select>   
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label" for="machine-num-select">Select Machine Number</label>
+        <select onclick="onMachineSelectChange()" class="form-control" type="text" name="machine-num-select" id="machine-num-select">
+          <option value="">Select a Equipment</option>
+        </select>      
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label" for="date-time"> Date/Time </label>
+        <input  onclick="getCurrentDateTime()" class="form-control" type="datetime-local" name="date-time" id="date-time" readonly required>    
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="machine-section">Machine section</label>
+      <input class="form-control" type="text" name="machine-section" id="machine-section">    
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="malfunction-part">Malfunction part</label>
+      <select class="form-control" type="text" name="malfunction-part" id="malfunction-part" multiple required>
+        <option value="">Select a Machine Number</option>
+      </select>    
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="malfunction-desc">Description</label>
+      <textarea class="form-control" type="text" name="malfunction-desc" id="malfunction-desc" rows="4"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <label class="form-label" for="machine-hours">Machine Hours</label>
+        <input class="form-control" type="text" name="machine-hours" id="machine-hours" required> 
+      </div>
+      <div class="col">
+        <label class="form-label" for="issue-priority">Issue Priority</label>
+        <select class="form-control" type="text" name="issue-priority" id="issue-priority">
+          <option value="H">High</option>
+          <option value="M">Medium</option>
+          <option value="L">Low</option>
+        </select>
+      </div>  
+    </div> 
+
+    <div class="mb-3">
+      <label class="form-label" for="machine-images">Upload Images</label>
+      <input class="form-control" type="file" name="machine-images[]" id="machine-images" multiple>
+    </div> 
+
+    <input class="form-control" type="submit" value="Submit">
+    
+
+    
+  </form>
+
+
+  <script src="{% static 'maintenance/js/custom-complain.js' %}"></script>
+{% endblock main-body %}

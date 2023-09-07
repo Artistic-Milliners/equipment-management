@@ -86,12 +86,13 @@ class Spares(models.Model):
     def __str__(self) -> str:
         return f'{self.name}'
 
+    
 
 class Machines(models.Model):
     
     name = models.CharField(max_length=50)
     type_of_machine = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='typeOfMachine')
-    spares = models.ManyToManyField(Spares,related_name='machines' ,blank=True)
+    machine_spare = models.ManyToManyField(Spares,related_name='machines' ,through="MachineSpares", blank=True)
     dop = models.DateField(verbose_name="Date of Purcahse", blank=True, null=True)
     purchase_cost = models.FloatField(default=0)
     model = models.CharField(max_length=50,blank=True, null=True)
@@ -109,6 +110,17 @@ class Machines(models.Model):
             img.save(self.image.path)
 
         super().save(*args,**kwargs)
+
+class ImageModel(models.Model):
+    image = models.ImageField(upload_to='images')
+
+
+class MachineSpares(models.Model):
+    spare = models.ForeignKey(Spares, on_delete=models.CASCADE)
+    machine = models.ForeignKey(Machines, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"{self.spare.name}: {self.machine.name}"
 
 
 
@@ -133,9 +145,12 @@ class MachineIssue(models.Model):
     MODERATE = 2
     LOW = 3
 
-    PENDING = 'Pending'
-    COMPLETED = 'Completed'
-    IN_PROGRESS = 'In Progress'
+    PENDING = 'Pending Approvel'
+    COMPLETED = 'Approved'
+
+    CORRECTIVE = 'CORRECTIVE'
+    PREVENTIVE = 'PREVENTIVE'
+    BREAKDOWN = 'BREAKDOWN'
 
 
 
@@ -149,23 +164,42 @@ class MachineIssue(models.Model):
 
     STATUS_CHOICES = [
 
-        
         ('PENDING',PENDING),
         ('COMPLETED',COMPLETED),
-        ('IN_PROGRESS',IN_PROGRESS),
 
     ]
 
+    TYPE_CHOICES = (
+        (CORRECTIVE, 'CORECTIVE'),
+        (PREVENTIVE, 'PREVENTIVE'),
+        (BREAKDOWN, 'BREAKDOWN')
+    )
+
 
     user = models.ForeignKey(Employee, on_delete=models.PROTECT, blank=True, null=True)
-    machine = models.ForeignKey(Machines,on_delete=models.PROTECT,default=1)
+    equipment_id = models.ForeignKey(Equipment, on_delete=models.PROTECT, default=1)
+    ticket_num = models.CharField(max_length=50,blank=True, null=True)
+    machine_id = models.ForeignKey(Machines,on_delete=models.PROTECT,default=1)
     machine_hours = models.IntegerField(blank=True, null=True)
     code = models.ForeignKey(IssueList, on_delete=models.PROTECT, blank=True, null=True)
     description = models.TextField(default="EMPTY", blank=True, null=True)
-    Images = models.ImageField(upload_to = 'images')
+    image = models.ManyToManyField(ImageModel)
     date_time = models.DateTimeField(auto_now=True)
     priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES,default=HIGH)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=PREVENTIVE)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default=PENDING)
+
+
+    def generate_ticket(self):
+
+        equipment_id = self.equipment_id
+        machine_id = self.machine_id
+        priority = self.priority
+        machine_issue_id = self.pk    
+        self.ticket_num = f"{equipment_id}-{machine_id}-{priority}-{machine_issue_id}"
+        
+        return
+    
 
     def __str__(self):
         return f"Issue Code: {self.code} \n Issue Description: {self.description}"
@@ -178,17 +212,3 @@ class IssueResolution(models.Model):
     contractor = models.ForeignKey(Contractor, related_name='resolved_issues', on_delete=models.DO_NOTHING)
     employee = models.ForeignKey(Employee, related_name="employee", on_delete=models.PROTECT, default=None)
     remarks = models.TextField(default="EMPTY")
-
-
-class Pub(models.Model):
-    name = models.CharField(max_length=50)
-
-    def __str__(self) -> str:
-        return self.name
-    
-class author(models.Model):
-    name = models.CharField(max_length=50)
-    pub = models.ManyToManyField(Pub)
-
-    def __str__(self):
-        return f"Name: {self.name}\nPub:{self.pub.name}" 

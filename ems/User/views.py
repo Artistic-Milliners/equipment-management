@@ -1,3 +1,11 @@
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import AuthenticationForm, UserChangeForm, PasswordResetForm
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.contrib.auth.decorators import login_required
+
+
 from django.shortcuts import render,redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse,HttpResponseRedirect,JsonResponse
@@ -5,14 +13,49 @@ from core import models
 from django.views.decorators.cache import never_cache
 from django.core.files.storage import default_storage
 from django.core.exceptions import ObjectDoesNotExist
-from PIL import Image
+from django.utils.datastructures import MultiValueDictKeyError
 
 # Create your views here.
+
+
+
+def login_view(request):
+    
+    if request.method == "POST":
+        try:
+            username = request.POST['username']
+            password = request.POST['password']
+
+            user = authenticate(request, username=username, password=password)
+
+            if user is not None:
+                
+                login(request, user)
+                return redirect('User:home')
+            
+            else :
+                error_message = 'Invalid Login credentials'
+                return render(request, "registration/login.html", {'error': error_message}) 
+        except MultiValueDictKeyError:
+                form = AuthenticationForm()
+                return render(request,'registration/login.html',{'form':form})
+        
+    else:
+        form = AuthenticationForm()
+        return render(request,'registration/login.html',{'form':form})
+
+def logout_view(request):
+    logout(request)
+    return redirect("User:login")
+
+
 
 def index(request):
     return render(request, "user/index.html")
 
+@login_required
 def home(request):
+    
     return render(request, "user/home.html")
 
 
@@ -28,13 +71,15 @@ def add_machine(request):
     equipments = models.Equipment.objects.all()
 
     if request.method == 'POST':
+
         name = request.POST.get('name')
         type_of_machine = request.POST.get('type-of-machine')
         spares_list = request.POST.getlist('spares-list')
         model = request.POST.get('model')
         dop = request.POST.get('dop')
         purchase_cost = request.POST.get('purchase_cost')
-        image = request.POST.get('image')
+        image = request.FILES.get('machine-image')
+
 
         
         machine_type = models.Equipment.objects.get(pk=type_of_machine)
@@ -52,7 +97,8 @@ def add_machine(request):
 
         machine.save()
 
-        machine.spares.add(*spares)
+
+        machine.machine_spare.add(*spares)
 
         return redirect("User:home")
 
@@ -67,8 +113,10 @@ def edit_machine(request,pk):
 
 @csrf_exempt
 def update_machine(request,pk):
+    
     machine = models.Machines.objects.get(pk=pk)
-    if request.method == "POST" and request.FILES.getlist('machine-image'):
+
+    if request.method == "POST" and request.FILES.get('machine-image'):
         type_of_machine = request.POST.get('type-of-machine')
         name = request.POST.get('name')
         model = request.POST.get('model')
@@ -76,9 +124,8 @@ def update_machine(request,pk):
         machine_type = models.Equipment.objects.get(name=type_of_machine)
 
         img = request.FILES.get('machine-image')
-        filename = default_storage.save(img.name, img)
-        
-        
+        filename = default_storage.save('images/'+img.name, img)
+
         machine = models.Machines(
             pk=pk,
             type_of_machine = machine_type,
@@ -90,7 +137,7 @@ def update_machine(request,pk):
 
         machine.save()
 
-        return JsonResponse({"message": "Form data received"})
+        return redirect( 'User:home' )
 
     elif request.method == "POST":
         type_of_machine = request.POST.get('type-of-machine')
@@ -99,6 +146,7 @@ def update_machine(request,pk):
         purchase_cost = request.POST.get('purchase_cost')
 
         machine_type = models.Equipment.objects.get(name=type_of_machine)
+        print(default_storage.url())
 
         machine = models.Machines(
             pk=pk,
@@ -110,7 +158,7 @@ def update_machine(request,pk):
 
         machine.save()
 
-        return JsonResponse({"message": "Form data received"})
+    return redirect( 'User:home' )
 
 
 def delete_machine(request, pk):
@@ -228,6 +276,8 @@ def spare_issue(request, pk):
             return JsonResponse({"Successful: Issue Successfully"})
     except Exception as e:
             return JsonResponse({"Error": e})
+
+    
 
 
 

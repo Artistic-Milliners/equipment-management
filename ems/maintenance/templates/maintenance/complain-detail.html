@@ -1,0 +1,20 @@
+{% extends "user/home.html" %}
+{% block title %}
+  Complain Detail
+{% endblock title %}
+
+{% block main-body %}
+  <div class="main">
+    <h1>Welcome to complain detail page</h1>
+  </div>
+  {% for image in issue.images  %}
+    {% if image %}
+    <img src="" alt="image here">
+    {% else %}
+    <p>No images</p>
+    {% endif %}
+    
+  {% endfor %}
+    
+
+{% endblock main-body %}
