@@ -21,20 +21,19 @@ def createComplain(request):
         priority = request.POST["issue-priority"]
         description = request.POST['malfunction-desc']
         images = request.FILES.getlist('machine-images[]')
-        print(images)
 
 
         if equipment_id:
-            equipment = get_object_or_404(Equipment, pk=equipment_id)
+            equipment_id = Equipment.objects.get(pk=equipment_id)
         
         if machine_id:
-            machine = get_object_or_404(Machines, pk=machine_id)
-        
+            machine_id = Machines.objects.get(pk=machine_id)
+
+        #write code for handling exceptions
 
 
         machine_issue = MachineIssue(
-            user_id = user_id,
-            equipment_id = equipment_id,
+            equipment = equipment_id,
             machine_id = machine_id,
             date_time = date_time,
             # machine_section=machine_section,
@@ -53,7 +52,7 @@ def createComplain(request):
         
 
         
-        return redirect('maintenance:complain_detail')
+        return redirect('maintenance:complain_list')
 
 
 
@@ -78,12 +77,17 @@ def get_machines(request):
 
 def view_complains(request):
     
-    issue_list = MachineIssue.objects.all()
+    issue_list = MachineIssue.objects.all().order_by("-priority")
 
     return render(request, "maintenance/complain-view.html", {'issue_list':issue_list})
 
 
 def complain_detail(request, pk):
     issue = MachineIssue.objects.get(pk=pk)
-
     return render(request, "maintenance/complain-detail.html", {'issue':issue})
+
+def complain_delete(request, pk):
+    issue = MachineIssue.objects.get(pk=pk)
+    issue.delete()
+     
+    return redirect("maintenance:complain_delete")

@@ -1,7 +1,7 @@
 from dataclasses import field
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Department, Designation,Contractor,Manufacturer,IssueList,Employee,Machines,Spares, MachineIssue
+from .models import CustomUser, Department, Designation,Contractor,Manufacturer,IssueList,Employee,Machines,Spares, MachineIssue, Equipment
 
 from django import forms
 # Register your models here.
@@ -79,6 +79,12 @@ class MachineIssueForm(forms.ModelForm):
         model = MachineIssue
         fields = "__all__"
 
+class EquipmentForm(forms.ModelForm):
+    class Meta:
+        model= Equipment
+        fields = '__all__'
+
+
 @admin.register(CustomUser)
 class UserCreation(admin.ModelAdmin):
     form = UserCreationForm
@@ -121,3 +127,7 @@ class EmployeeCreation(admin.ModelAdmin):
 @admin.register(MachineIssue)
 class MachineIssueCreate(admin.ModelAdmin):
     form = MachineIssueForm
+
+@admin.register(Equipment)
+class Equipment(admin.ModelAdmin):
+    form = EquipmentForm
