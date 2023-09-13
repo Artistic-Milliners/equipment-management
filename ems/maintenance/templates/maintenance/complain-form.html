@@ -6,7 +6,12 @@
 {% endblock title %}
 
 {% block main-body %}
-  <h1>welcome to ticket page</h1>
+  <div class="main-header">
+    <div><h1>Create New Ticket</h1></div>
+    <div><a href="{% url 'maintenance:complain_list' %}">Ticket List</a></div>
+
+  </div>
+  
 
   <form id="ticket-form" action="" method="post" enctype="multipart/form-data">
     {% csrf_token %}

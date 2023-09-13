@@ -86,6 +86,20 @@ img{
     align-self: center;
 }
 
+.main-header{
+    padding: 0.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+.main-header a{
+    color: black;
+    text-decoration: none;
+    
+}
+
 @media screen and (max-width:780px) {
     table{
         display: none;

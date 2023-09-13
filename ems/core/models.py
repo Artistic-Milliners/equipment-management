@@ -141,9 +141,9 @@ class IssueList(models.Model):
         return f"Machine: {self.c_desc}"
 
 class MachineIssue(models.Model):
-    HIGH = 1
-    MODERATE = 2
-    LOW = 3
+    HIGH = "High"
+    MODERATE = "MODERATE"
+    LOW = "LOW" 
 
     PENDING = 'Pending Approvel'
     COMPLETED = 'Approved'
@@ -177,7 +177,7 @@ class MachineIssue(models.Model):
 
 
     user = models.ForeignKey(Employee, on_delete=models.PROTECT, blank=True, null=True)
-    equipment_id = models.ForeignKey(Equipment, on_delete=models.PROTECT, default=1)
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, default=1)
     ticket_num = models.CharField(max_length=50,blank=True, null=True)
     machine_id = models.ForeignKey(Machines,on_delete=models.PROTECT,default=1)
     machine_hours = models.IntegerField(blank=True, null=True)
