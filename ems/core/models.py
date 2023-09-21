@@ -7,16 +7,20 @@ from PIL import Image
 
 # Create your models here.
 
-class CustomUser(AbstractUser):
-    is_employee = models.BooleanField(default=False)
-    is_contractor = models.BooleanField(default=False)
-
 
 class Department(models.Model):
     name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
+
+
+class CustomUser(AbstractUser):
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, default=1)
+    is_employee = models.BooleanField(default=False)
+    is_contractor = models.BooleanField(default=False)
+
+
 
 
 class Designation(models.Model):
@@ -125,7 +129,7 @@ class MachineSpares(models.Model):
 
 
 class IssueList(models.Model):
-    
+    user = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name="user", default=3)
     error_code = models.CharField(max_length = 35, null=True, default=None)
     programmer_string = models.CharField(max_length=100, null=True, default=None)
     machine_string = models.CharField(max_length=100, null=True, default=None)
@@ -141,6 +145,7 @@ class IssueList(models.Model):
         return f"Machine: {self.c_desc}"
 
 class MachineIssue(models.Model):
+    
     HIGH = "High"
     MODERATE = "MODERATE"
     LOW = "LOW" 
@@ -148,9 +153,9 @@ class MachineIssue(models.Model):
     PENDING = 'Pending Approvel'
     COMPLETED = 'Approved'
 
-    CORRECTIVE = 'CORRECTIVE'
-    PREVENTIVE = 'PREVENTIVE'
-    BREAKDOWN = 'BREAKDOWN'
+    CORRECTIVE = 'Corrective'
+    PREVENTIVE = 'Preventive'
+    BREAKDOWN = 'Breakdown'
 
 
 
@@ -170,13 +175,13 @@ class MachineIssue(models.Model):
     ]
 
     TYPE_CHOICES = (
-        (CORRECTIVE, 'CORECTIVE'),
-        (PREVENTIVE, 'PREVENTIVE'),
-        (BREAKDOWN, 'BREAKDOWN')
+        (CORRECTIVE, 'Corrective'),
+        (PREVENTIVE, 'Preventive'),
+        (BREAKDOWN, 'Breakdown')
     )
 
 
-    user = models.ForeignKey(Employee, on_delete=models.PROTECT, blank=True, null=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.PROTECT, blank=True, null=True)
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, default=1)
     ticket_num = models.CharField(max_length=50,blank=True, null=True)
     machine_id = models.ForeignKey(Machines,on_delete=models.PROTECT,default=1)
@@ -185,15 +190,15 @@ class MachineIssue(models.Model):
     description = models.TextField(default="EMPTY", blank=True, null=True)
     image = models.ManyToManyField(ImageModel)
     date_time = models.DateTimeField(auto_now=True)
-    priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES,default=HIGH)
+    priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES)
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=PREVENTIVE)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default=PENDING)
 
 
     def generate_ticket(self):
 
-        equipment_id = self.equipment_id
-        machine_id = self.machine_id
+        equipment_id = self.equipment.id
+        machine_id = self.machine_id.id
         priority = self.priority
         machine_issue_id = self.pk    
         self.ticket_num = f"{equipment_id}-{machine_id}-{priority}-{machine_issue_id}"

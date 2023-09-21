@@ -27,22 +27,22 @@
         </thead>
         <tbody>
           {% for issue in issue_list  %} 
-            {% if issue.priority == "H" %}
+            {% if issue.priority == "High" %}
               <tr class="table-danger align-middle text-center">
-            {% elif issue.priority == "M" %}
-             <tr class="table-warning align-bottom text-center">
+            {% elif issue.priority == "Moderate" %}
+             <tr class="table-warning align-middle text-center">
             {% else %}
-            <tr class="table-primary align-bottom text-center">
+            <tr class="table-primary align-middle text-center">
             {% endif %}
                 <th scope="row" class="bg-black">{{ forloop.counter }}</th>
                 <td> <a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">{{ issue.ticket_num}}</a></td>
                 <td class="text-start">{{ issue.description }}</td>
-                <td></td>
-                <td>{{issue.machine.name}}</td>
+                <td>{{ issue.user.department}}</td>
+                <td>{{ issue.machine_id.name }}</td>
                 <td>{{ issue.priority  }}</td>
-                <td> </td>
-                <td></td>
-                <td></td>
+                <td>{{ issue.date_time.date }} </td>
+                <td>{{ issue.type }}</td>
+                <td>{{issue.status}}</td>
               </tr>
           {% endfor %}
         </tbody>

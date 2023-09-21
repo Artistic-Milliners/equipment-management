@@ -74,7 +74,7 @@ function populateMalfunctionPartList(data, selectMachineId){
                 option.spares.forEach(function(spare){
                 var malfunctionPartOption = document.createElement('option');
                 malfunctionPartOption.value = spare.id;
-                malfunctionPartOption.textContent = spare.name;
+                malfunctionPartOption.textContent = spare.name+" "+spare.item_code;
                 optionsList.push(malfunctionPartOption)
             
             })
@@ -95,8 +95,23 @@ function removeChild(id){
 
 function getCurrentDateTime(){
     var now = new Date();
-    var datetime = now.toISOString().substring(0, 16)
-    document.getElementById('date-time').value = datetime
+    var datetime = now.toISOString().substring(0, 16);
+    document.getElementById('date-time').value = datetime;
 }
 
+
+function searchSpare(malfunctionId, searchId){
+    var text = document.getElementById(searchId).value;
+    Array.from(document.getElementById(malfunctionId).children).forEach((option) => {
+        if (!option.textContent.toLowerCase().includes(text)){
+            option.style.display = 'none';
+            console.log(option.textContent);
+        }
+        else{
+            option.style.display = 'block'
+        }
+    })
+    
+
+}
 

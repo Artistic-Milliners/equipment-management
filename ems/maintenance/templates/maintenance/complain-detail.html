@@ -21,6 +21,10 @@
     <a href="{% url 'maintenance:complain_list' %}">Ticket List</a>
   </div>
   <div class="detail-section">
+    <ul class="detail-item">
+      <li>{{ issue.ticket_num }}</li>
+      <li>{{ issue.description }}</li>
+    </ul>
     <div class="detail-item">
       {% if issue.image %}
         {% for image in issue.image.all %}
@@ -28,10 +32,7 @@
         {% endfor %}
       {% endif %}
     </div>
-    <ul class="detail-item">
-      <li>{{ issue.ticket_num }}</li>
-      <li>{{ issue.description }}</li>
-    </ul>
+    
   </div>
   <div>
     <a href="{% url 'maintenance:complain_delete' pk=issue.pk %}"><i class="fa fa-trash">Delete</i></a>
