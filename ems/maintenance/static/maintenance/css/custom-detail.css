@@ -18,3 +18,7 @@ img{
     flex-wrap: wrap;
     justify-content: space-evenly;
 }
+
+.detail-section ul{
+    margin: 1.5rem;
+}

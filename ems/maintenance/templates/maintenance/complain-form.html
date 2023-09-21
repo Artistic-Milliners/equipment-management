@@ -50,9 +50,12 @@
 
     <div class="mb-3">
       <label class="form-label" for="malfunction-part">Malfunction part</label>
-      <select class="form-control" type="text" name="malfunction-part" id="malfunction-part" multiple required>
-        <option value="">Select a Machine Number</option>
-      </select>    
+      <select class="form-control" type="text" name="malfunction-part" id="malfunction-part" multiple>
+        <option value="">Select Malfunctioning part if any</option>
+      </select>   
+      <label for="search-bar">Search</label>
+      <input type="text" name="search-bar" id="search-bar">
+      <button class="btn btn-primary m-0" onclick="searchSpare('malfunction-part', 'search-bar')"><i class="fa fa-search"></i></button>
     </div>
 
     <div class="mb-3">

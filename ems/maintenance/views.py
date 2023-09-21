@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from core.models import MachineIssue,Equipment, Machines, Spares, MachineSpares, ImageModel
+from core.models import MachineIssue,Equipment, Machines, Spares, MachineSpares, ImageModel, CustomUser
 from django.http import JsonResponse
 from django.db.models import Prefetch
 from django.core.files.storage import default_storage
@@ -7,7 +7,15 @@ from User.views import home
 # Create your views here.
 
 def createComplain(request):
+
+    priority_choice = (
+        ('High', 'H'),
+        ('Moderate', 'M'),
+        ('Low', 'L')
+    )
+
     user_id = request.user.id
+    user = CustomUser.objects.get(pk=user_id)
     equipments = Equipment.objects.all()
 
     if request.method == 'POST':
@@ -22,6 +30,8 @@ def createComplain(request):
         description = request.POST['malfunction-desc']
         images = request.FILES.getlist('machine-images[]')
 
+        selected_priority = next((key for key, value in dict(priority_choice).items() if value==priority), None)
+
 
         if equipment_id:
             equipment_id = Equipment.objects.get(pk=equipment_id)
@@ -33,6 +43,7 @@ def createComplain(request):
 
 
         machine_issue = MachineIssue(
+            user = user,
             equipment = equipment_id,
             machine_id = machine_id,
             date_time = date_time,
@@ -40,7 +51,7 @@ def createComplain(request):
             # malfunction_part = malfunction_part,
             description=description,
             machine_hours = machine_hours,
-            priority=priority,
+            priority=selected_priority,
         )
         
         machine_issue.save()  
@@ -68,7 +79,9 @@ def get_machines(request):
         machines = Machines.objects.filter(type_of_machine=equipment).prefetch_related(
             Prefetch('machine_spare', queryset=Spares.objects.all())
         )
-        machine_options = [{'id':machine.id, 'name':machine.name, 'spares':[{'id':spares.id, 'name':spares.name} for spares in machine.machine_spare.all()]} for machine in machines]
+        machine_options = [{'id':machine.id, 'name':machine.name, 'spares':\
+                            [{'id':spares.id, 'name':spares.name, 'item_code':spares.item_code} for spares in machine.machine_spare.all()]} \
+                                for machine in machines]
     
     else:
         machine_options = []
@@ -77,7 +90,7 @@ def get_machines(request):
 
 def view_complains(request):
     
-    issue_list = MachineIssue.objects.all().order_by("-priority")
+    issue_list = MachineIssue.objects.all().order_by("priority")
 
     return render(request, "maintenance/complain-view.html", {'issue_list':issue_list})
 
@@ -90,4 +103,4 @@ def complain_delete(request, pk):
     issue = MachineIssue.objects.get(pk=pk)
     issue.delete()
      
-    return redirect("maintenance:complain_delete")
+    return redirect("maintenance:complain_list")

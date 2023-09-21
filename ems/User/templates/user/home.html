@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="{% static 'user/css/custom.css' %}">
     <link rel="stylesheet" href="{% static 'maintenance/css/custom-complain.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/spares.css' %}">
     {% endblock head %}
     
     <title>{% block title %}
@@ -88,6 +89,8 @@
         <h1>Home Page</h1>
         <a class="btn btn-primary" href="{% url 'User:add_machine' %}"> Add Machine</a>
         <a class="btn btn-primary" href="{% url 'maintenance:complain' %}">Complain</a>
+        <a class="btn btn-primary" href="{% url 'maintenance:complain_list' %}">Ticket List</a>
+        <a class="btn btn-primary" href="{% url 'User:spares' %}">Spares</a>
         <h2>Available Machine</h2>
         {% for eq,machines in equipments.items %}
         <div class="row">
