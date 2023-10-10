@@ -9,9 +9,15 @@ from User.views import home
 def createComplain(request):
 
     priority_choice = (
-        ('High', 'H'),
-        ('Moderate', 'M'),
-        ('Low', 'L')
+        ('HIGH', 'H'),
+        ('MODERATE', 'M'),
+        ('LOW', 'L')
+    )
+
+    type_choices = (
+        ('CORRECTIVE', 'C'),
+        ('PREVENTIVE', 'P'),
+        ('BREAKDOWN', 'B')
     )
 
     user_id = request.user.id
@@ -29,9 +35,11 @@ def createComplain(request):
         priority = request.POST["issue-priority"]
         description = request.POST['malfunction-desc']
         images = request.FILES.getlist('machine-images[]')
+        issue_type = request.POST["issue-type"]
 
         selected_priority = next((key for key, value in dict(priority_choice).items() if value==priority), None)
 
+        selected_type = next((key for key, value in dict(type_choices).items() if value==issue_type), None)
 
         if equipment_id:
             equipment_id = Equipment.objects.get(pk=equipment_id)
@@ -41,17 +49,17 @@ def createComplain(request):
 
         #write code for handling exceptions
 
-
         machine_issue = MachineIssue(
             user = user,
             equipment = equipment_id,
             machine_id = machine_id,
             date_time = date_time,
-            # machine_section=machine_section,
-            # malfunction_part = malfunction_part,
             description=description,
             machine_hours = machine_hours,
             priority=selected_priority,
+            type = selected_type,
+            # machine_section=machine_section,
+            # malfunction_part = malfunction_part,
         )
         
         machine_issue.save()  

@@ -1,24 +1,250 @@
-.main{
-    margin: 1.2rem 0.5rem;
-    display: flex;
-    flex-direction:row;
-    justify-content:space-between;
-    align-items: center;
+body{
+    background-image: url("../images/background2.jpg");
+    background-repeat: no-repeat;
+    background-size: fill;
+    color: whitesmoke;
 }
+
+h1{
+    font-family: Georgia;
+    color: white;
+}
+
+h6{
+    font-size: 50px;
+}
+
+
+.nav-button{
+    display: flex;
+    justify-content: flex-end;
+}
+.nav-button a{
+    text-decoration: None;
+    color: whitesmoke;
+    border: 0.05em solid #475b85;
+    background-color: #475b85;
+    border-radius: 1em;
+    padding: 0.5rem;
+    width: auto;
+    height: auto;
+}
+
+.nav-button a:hover{
+    background-color: #39548d ;
+}
+
+
+.main{
+    background-color: #39548d;
+    opacity: 60%;
+    margin: 1.2rem 0.5rem;
+    text-align: center;
+    box-shadow: 0 0 20px #f2f2f2;
+
+}
+
+
+.detail-section{
+    padding: 1em;
+    margin: 0 auto;
+    background-color: #3D4E6F;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: space-between;
+    max-height: 500px;
+    opacity: 80%;
+    box-shadow:  0 0 8px white;
+}
+
+.description{
+    box-sizing: border-box;
+    margin: 0;
+    padding:0;
+    max-width: 500px;
+}
+
+.items{
+    display: flex;
+    justify-content: flex-start;
+    align-items: space-evenly;
+    flex-direction: column;
+    text-align: center;
+    height: auto;
+    padding:0;
+    background-image: linear-gradient(131.83deg, #ebebeb 0%,     #f8f8f8f1 99.21%);
+    border-radius: 10px;
+}
+
+
+
+.item{
+    color: #475b85;
+    z-index: 2;
+    list-style-type: none;
+    text-decoration: none;
+    box-shadow: 0 2px 40px #FBE4E0;
+    border-radius: 14px;
+ 
+    }
+
+/* .item::before {
+    top: -2px;
+    bottom: -2px;
+    left: -2px;
+    right: -2px;
+    background-image: linear-gradient(312.25deg, #FFC4BC 0%,     rgba(255, 255, 255, 0) 66.19%);
+    z-index: -1;
+    border-radius: 18px;
+    } */
+
+.detail-item{
+    font-size: larger;
+    color: black;
+    margin: 0.4em 2em;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+.detail-item p{
+    margin-left: 2em;
+}
+
+.submit-section a{
+    margin-top: 2em;
+    text-decoration: None;
+    color: whitesmoke;
+    border: 0.05em solid #475b85;
+    background-color: #475b85;
+    border-radius: 1em;
+    padding: 0.5rem;
+    width: auto;
+    height: auto;
+}
+
+.images{
+    margin: 0 auto;
+    max-width: 200px;
+    background-color: gray;
+}
+
+
+
 
 img{
     margin: 1.2rem;
     width: auto;
-    height: 200px;
+    height: 300px;
 }
 
-.detail-section{
-    background: whitesmoke;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
+.image-container{
+    margin: 0 auto;
+
 }
 
-.detail-section ul{
-    margin: 1.5rem;
+.submit-section a:hover{
+    background-color: #3D4E6F;  
+}
+
+.description-value{
+    word-wrap: break-word;
+}
+
+
+
+* {box-sizing:border-box}
+
+/* Slideshow container */
+.slideshow-container {
+  max-width: 500px;
+  position: relative;
+  margin: 0.5em 0.5em;
+}
+
+/* Hide the images by default */
+.mySlides {
+  display: none;
+}
+
+.first-img{
+    display: block;
+}
+
+
+.mySlides a img{
+    width: 100%;
+}
+
+/* Next & previous buttons */
+.prev, .next {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  width: auto;
+  margin-top: -20%;
+  padding: 0;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  transition: 0.6s ease;
+  border-radius: 0 3px 3px 0;
+  user-select: none;
+}
+
+/* Position the "next button" to the right */
+.next {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+.prev{
+    left: 0;
+}
+
+/* On hover, add a black background color with a little bit see-through */
+.prev:hover, .next:hover {
+  background-color: rgba(0,0,0,0.8);
+}
+
+/* Caption text */
+.text {
+  color: #f2f2f2;
+  font-size: 15px;
+  padding: 0px 0px;
+  position: absolute;
+  bottom: 5em;
+  width: 100%;
+  text-align: center;
+}
+
+/* Number text (1/3 etc) */
+.numbertext {
+  color: #f2f2f2;
+  font-size: 12px;
+  padding: 8px 12px;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+/* The dots/bullets/indicators */
+.dot {
+  position: absolute ;
+  bottom: 0;
+  right: 50%;
+  cursor: pointer;
+  height: 15px;
+  width: 15px;
+  margin: 0 -50px;
+  background-color: #bbb;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.active, .dot:hover {
+  background-color: #717171;
 }

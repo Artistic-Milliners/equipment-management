@@ -1,0 +1,5 @@
+.navbar-top{
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: space-between;
+}

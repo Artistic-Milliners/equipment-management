@@ -1,0 +1,17 @@
+body{
+    background-color: black;
+    background-image: url("../images/home_background.png") ;
+    background-repeat: no-repeat;
+    /* background-clip: padding-box; */
+    background-origin: padding-box;
+    background-size: cover;
+}
+
+h1{
+    margin: 20px;
+}
+
+h2{
+    margin: 20px;
+}
+
