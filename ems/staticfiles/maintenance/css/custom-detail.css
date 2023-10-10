@@ -1,0 +1,85 @@
+body{
+    background-image: url("{% static 'maintenance/images/background.jpg' %}");
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: whitesmoke;
+}
+
+h6{
+    font-size: large;
+}
+
+
+.nav-button{
+    display: flex;
+    justify-content: flex-end;
+}
+.nav-button a{
+    text-decoration: None;
+    color: whitesmoke;
+    border: 0.05em solid #475b85;
+    background-color: #475b85;
+    border-radius: 1em;
+    padding: 0.5rem;
+    width: auto;
+    height: auto;
+}
+
+
+.main{
+    margin: 1.2rem 0.5rem;
+    text-align: center;
+}
+
+
+.detail-section{
+    margin: 0 auto;
+    background-color: #3D4E6F;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: space-evenly;
+    max-width: 750px;
+    opacity: 80%;
+    box-shadow:  0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.detail-item{
+    margin: 2em 2em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-item p{
+    margin-left: 2em;
+}
+
+.submit-section a{
+    text-decoration: None;
+    color: whitesmoke;
+    border: 0.05em solid #475b85;
+    background-color: #475b85;
+    border-radius: 1em;
+    padding: 0.5rem;
+    width: auto;
+    height: auto;
+}
+
+.images{
+    margin: 0 auto;
+    max-width: 200px;
+    background-color: gray;
+}
+
+
+
+#ticket-number{
+}
+
+
+img{
+    margin: 1.2rem;
+    width: auto;
+    height: 200px;
+}

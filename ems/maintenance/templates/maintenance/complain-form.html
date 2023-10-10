@@ -17,59 +17,70 @@
     {% csrf_token %}
 
     <div class="mb-3">
-        <label class="form-label me-3" for="ticket-number">Ticket No.</label>
+        <label class="form-label me-3" for="ticket-number"><h6>Ticket No.</h6></label>
         <input class="form-control-inline" type="text" name="ticket-number" id="ticket-number" disabled>    
     </div>
     
-    <div class="mb-3">
-        <label class="form-label" for="machine-select">Select Machine</label>
-        <select class="form-control" type="text" name="machine-select" id="machine-select" onchange="getMachineDetails()" required> 
-          <option value="">List of Equipments</option>
-          {% for equipment in equipments %}
-            <option value="{{ equipment.id }}">{{ equipment.name }}</option>  
-          {% endfor %}
-        </select>   
-    </div>
-    
-    <div class="mb-3">
-        <label class="form-label" for="machine-num-select">Select Machine Number</label>
-        <select onclick="onMachineSelectChange()" class="form-control" type="text" name="machine-num-select" id="machine-num-select">
-          <option value="">Select a Equipment</option>
-        </select>      
-    </div>
-    
-    <div class="mb-3">
-        <label class="form-label" for="date-time"> Date/Time </label>
-        <input  onclick="getCurrentDateTime()" class="form-control" type="datetime-local" name="date-time" id="date-time" readonly required>    
+    <div class="row align-items-center">
+        <div class="mb-3 col">
+          <label class="form-label" for="machine-select"><h6>Select Machine</h6></label>
+          <select class="form-control" type="text" name="machine-select" id="machine-select" onchange="getMachineDetails()" required> 
+            <option value="">List of Equipments</option>
+            {% for equipment in equipments %}
+              <option value="{{ equipment.id }}">{{ equipment.name }}</option>  
+            {% endfor %}
+          </select>   
+      </div>
+      <div class="mb-3 col">
+          <label class="form-label" for="machine-num-select"><h6>Select Machine Number</h6></label>
+          <select onclick="onMachineSelectChange()" class="form-control" type="text" name="machine-num-select" id="machine-num-select">
+            <option value="">Select a Equipment</option>
+          </select>      
+      </div>
     </div>
 
-    <div class="mb-3">
-      <label class="form-label" for="machine-section">Machine section</label>
-      <input class="form-control" type="text" name="machine-section" id="machine-section">    
-    </div>
-
-    <div class="mb-3">
-      <label class="form-label" for="malfunction-part">Malfunction part</label>
+    <div class="mb-3 col">
+      <label class="form-label" for="malfunction-part"><h6>Malfunction part</h6></label>
       <select class="form-control" type="text" name="malfunction-part" id="malfunction-part" multiple>
         <option value="">Select Malfunctioning part if any</option>
-      </select>   
-      <label for="search-bar">Search</label>
-      <input type="text" name="search-bar" id="search-bar">
-      <button class="btn btn-primary m-0" onclick="searchSpare('malfunction-part', 'search-bar')"><i class="fa fa-search"></i></button>
+      </select>
+      <div class="search-part">
+        <div>
+          <label for="search-bar">Search</label>
+          <input type="text" name="search-bar" id="search-bar">
+          <button type="button" class="btn btn-primary m-0" onclick="searchSpare('malfunction-part', 'search-bar')"><i class="fa fa-search"></i></button>
+        </div>
+        
+        <div id="search-help-text" class="form-text">
+          enter your search in small letters
+        </div>
+      </div>   
+      
     </div>
+    
 
-    <div class="mb-3">
-      <label class="form-label" for="malfunction-desc">Description</label>
-      <textarea class="form-control" type="text" name="malfunction-desc" id="malfunction-desc" rows="4"></textarea>
+    <div class="row">
+      <div class="mb-3 col">
+        <label class="form-label" for="machine-section"><h6>Machine section</h6></label>
+        <input class="form-control" type="text" name="machine-section" id="machine-section">    
+      </div>
+      <div class="col">
+        <label class="form-label" for="machine-hours"><h6>Machine Hours</h6></label>
+        <input class="form-control" type="text" name="machine-hours" id="machine-hours" required> 
+      </div>
     </div>
 
     <div class="row">
       <div class="col">
-        <label class="form-label" for="machine-hours">Machine Hours</label>
-        <input class="form-control" type="text" name="machine-hours" id="machine-hours" required> 
+        <label for="issue-type"><h6>Type</h6></label>
+        <select class="form-control" type="text" name="issue-type" id="issue-type">
+          <option value="C">Corrective</option>
+          <option value="P">Preventive</option>
+          <option value="B">Breakdown</option>
+        </select>
       </div>
       <div class="col">
-        <label class="form-label" for="issue-priority">Issue Priority</label>
+        <label class="form-label" for="issue-priority"><h6>Issue Priority</h6></label>
         <select class="form-control" type="text" name="issue-priority" id="issue-priority">
           <option value="H">High</option>
           <option value="M">Medium</option>
@@ -78,12 +89,27 @@
       </div>  
     </div> 
 
+
+
+    
     <div class="mb-3">
-      <label class="form-label" for="machine-images">Upload Images</label>
+        <label class="form-label" for="date-time"> <h6>Date/Time</h6> </label>
+        <input  onclick="getCurrentDateTime()" class="form-control" type="datetime-local" name="date-time" id="date-time" readonly required>    
+    </div>
+
+
+    <div class="mb-3">
+      <label class="form-label" for="malfunction-desc"><h6>Description</h6></label>
+      <textarea class="form-control" type="text" name="malfunction-desc" id="malfunction-desc" rows="4"></textarea>
+    </div>
+
+    
+    <div class="mb-3">
+      <label class="form-label" for="machine-images"><h6>Upload Images</h6></label>
       <input class="form-control" type="file" name="machine-images[]" id="machine-images" multiple>
     </div> 
 
-    <input class="form-control" type="submit" value="Submit">
+    <input class="form-control submit-btn" type="submit" value="Submit">
     
 
     

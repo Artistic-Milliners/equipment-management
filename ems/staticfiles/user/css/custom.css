@@ -1,0 +1,82 @@
+/* body {
+    background-color: #336699;
+    background-image: url(https://www.subtlepatterns.com/patterns/velvet_blue.png);
+    background-repeat: repeat;
+    background-size: cover;
+  } */
+
+
+h1{
+    margin: 20px;
+}
+
+h2{
+    margin: 20px;
+}
+
+nav{
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-between;
+    gap: 5px;
+    align-items: center;
+}
+
+
+@media screen and (max-width:780px) {
+    .nav-icon-left{
+        justify-content: flex-end;
+        flex: 0 0 auto;
+    }
+}
+
+.nav-icon-left{
+    margin: 5px;
+}
+
+nav a{
+    color: inherit;
+    text-decoration: none;
+}
+
+
+nav a>img{
+
+    height: 10vh;
+    width: auto;
+}
+
+
+nav i.fa{
+    font-size: 1.7em;
+    margin: 0.2em;
+    width:auto;
+}
+
+
+/* .fa-gear{
+
+    font-size: 1.7em;
+    margin: 0.2em;
+    width:auto;
+}
+
+
+.fa-gear{
+
+    font-size: 1.7em;
+    margin: 0.2em;
+    width:auto;
+} */
+
+#add-issue-section{
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-between;   
+    align-items: center;
+    gap: 2px; 
+}
+
+.table-row{
+    color: red;
+}
