@@ -7,8 +7,8 @@ from .models import Contractor_Person, Employee, MachineIssue
 def create_employee(sender, instance, created, **kwargs):        
     if created:
         if instance.is_employee:
-            Employee.objects.create(name=instance.username)
-        elif instance.is_contractor:
+            Employee.objects.create(user=instance, name=instance.username)
+        if instance.is_contractor:
             Contractor_Person.objects.create(visiting_person=instance.username)
 
 

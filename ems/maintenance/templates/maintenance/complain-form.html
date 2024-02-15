@@ -18,23 +18,29 @@
 
     <div class="mb-3">
         <label class="form-label me-3" for="ticket-number"><h6>Ticket No.</h6></label>
-        <input class="form-control-inline" type="text" name="ticket-number" id="ticket-number" disabled>    
+        <input class="form-control-inline" value="{{issue.ticket_num}}" type="text" name="ticket-number" id="ticket-number" disabled>    
     </div>
     
     <div class="row align-items-center">
         <div class="mb-3 col">
           <label class="form-label" for="machine-select"><h6>Select Machine</h6></label>
           <select class="form-control" type="text" name="machine-select" id="machine-select" onchange="getMachineDetails()" required> 
-            <option value="">List of Equipments</option>
-            {% for equipment in equipments %}
-              <option value="{{ equipment.id }}">{{ equipment.name }}</option>  
-            {% endfor %}
+              <option value="">List of Equipments</option>
+              {% for equipment in equipments %}
+                <option value="{{ equipment.id }}" {% if equipment.id == issue.equipment.id %}selected{% endif %}>{{ equipment.name }}</option>  
+              {% endfor %}
           </select>   
       </div>
       <div class="mb-3 col">
           <label class="form-label" for="machine-num-select"><h6>Select Machine Number</h6></label>
-          <select onclick="onMachineSelectChange()" class="form-control" type="text" name="machine-num-select" id="machine-num-select">
-            <option value="">Select a Equipment</option>
+          <select onmouseenter="onMachineSelectChange()" class="form-control" type="text" name="machine-num-select" id="machine-num-select">
+            <option value="{{ issue.machine_id }}">
+              {% if issue %}
+                {{ issue.machine_id.name}}
+              {% else %}
+                Select a Machine Number
+              {% endif %}
+            </option>
           </select>      
       </div>
     </div>
@@ -77,6 +83,7 @@
           <option value="C">Corrective</option>
           <option value="P">Preventive</option>
           <option value="B">Breakdown</option>
+          <option value="Ca">Calibration</option>
         </select>
       </div>
       <div class="col">
@@ -91,17 +98,53 @@
 
 
 
-    
-    <div class="mb-3">
-        <label class="form-label" for="date-time"> <h6>Date/Time</h6> </label>
-        <input  onclick="getCurrentDateTime()" class="form-control" type="datetime-local" name="date-time" id="date-time" readonly required>    
+    <div class="row">
+      <div class="col">
+        <div class="mb-3">
+          <label class="form-label" for="problem-nature"> <h6>Problem Nature</h6> </label>
+          <select class="form-control" type="text" name="problem-nature" id="problem-nature">
+            <option value="El">Electrical</option>
+            <option value="Me">Mechanical</option>
+            <option value="Hy">Hydraulic</option>
+          </select>    
+        </div>  
+      </div>
+      <div class="col">
+        <div class="mb-3">
+          <label class="form-label" for="date-time"> <h6>Date/Time</h6> </label>
+          <input  onclick="getCurrentDateTime()" class="form-control" type="datetime-local" name="date-time" id="date-time" readonly required>    
+      </div>
+      </div>
+        
     </div>
-
+    
 
     <div class="mb-3">
       <label class="form-label" for="malfunction-desc"><h6>Description</h6></label>
       <textarea class="form-control" type="text" name="malfunction-desc" id="malfunction-desc" rows="4"></textarea>
     </div>
+
+    <div class="row">
+      <div class="col">
+        <div class="mb-3">
+          <label class="form-label" for="assign-to-department"> <h6>Assign To (Department)</h6> </label>
+          <select class="form-control" type="text" name="assign-to-department" id="assign-to-department">
+            {% for d in departments %}
+              <option value="{{d.pk}}">{{d.name}}</option>
+            {% endfor %}
+          </select>    
+        </div>  
+      </div>
+      <div class="col">
+        <div class="mb-3">
+          <label class="form-label" for="assign-to-person"> <h6>Assign To (Person)</h6> </label>
+          <select class="form-control" type="text" name="assign-to-person" id="assign-to-person">
+            {% for user in users %}
+              <option value="{{user.pk}}">{{user.name}}</option>
+            {% endfor %}
+          </select>     
+      </div>
+      </div>
 
     
     <div class="mb-3">

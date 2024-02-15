@@ -1,26 +1,22 @@
-from tokenize import blank_re
 from django.db import models
-from django.utils import timezone
+from datetime import datetime
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import RegexValidator
 from PIL import Image
 
 # Create your models here.
 
-
 class Department(models.Model):
+    TYPE_CHOICES = (
+        ('SERVICES', 'SERVICES'),
+        ('PRODUCTION', 'PRODUCTION'),
+        ('MAINTENANCE', 'MAINTENANCE')
+    )
+
     name = models.CharField(max_length=255)
+    dpt_type = models.CharField(max_length=50, choices=TYPE_CHOICES, null=True, blank=True)
 
     def __str__(self):
         return self.name
-
-
-class CustomUser(AbstractUser):
-    department = models.ForeignKey(Department, on_delete=models.PROTECT, default=1)
-    is_employee = models.BooleanField(default=False)
-    is_contractor = models.BooleanField(default=False)
-
-
 
 
 class Designation(models.Model):
@@ -30,9 +26,24 @@ class Designation(models.Model):
         return self.designation_name
 
 
+class CustomUser(AbstractUser):
+    is_employee = models.BooleanField(default=False)
+    is_contractor = models.BooleanField(default=False)
+
+
+def get_user():
+    return CustomUser.objects.first().pk
+
+def get_department():
+    return Department.objects.first().pk
+
+def get_employee():
+    return Employee.objects.first().pk
+
 class Employee(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.PROTECT, default=get_user, unique=True)
     name = models.CharField(max_length=255)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE, default=1)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, default=Department.objects.first)
     designation = models.ForeignKey(Designation, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
@@ -45,7 +56,6 @@ class Contractor(models.Model):
     def __str__(self):
         return self.contractor
 
-
 class Contractor_Person(models.Model):
     
     contractor_name = models.ForeignKey(Contractor, on_delete=models.CASCADE, default=1)
@@ -53,7 +63,6 @@ class Contractor_Person(models.Model):
 
     def __str__(self):
         return self.visiting_person
-
 
 class Manufacturer(models.Model):
     
@@ -63,7 +72,6 @@ class Manufacturer(models.Model):
     def __str__(self) -> str:
         return self.name
 
-
 class Equipment(models.Model):
     
     name = models.CharField(max_length=255)
@@ -71,13 +79,8 @@ class Equipment(models.Model):
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.PROTECT)
     contractor = models.ForeignKey(Contractor, on_delete=models.PROTECT, null=True, blank=True)
     
-
     def __str__(self) -> str:
         return self.name
-    
-
-
-
     
 class Spares(models.Model):
     
@@ -86,11 +89,8 @@ class Spares(models.Model):
     quantity = models.IntegerField()
     unit = models.CharField(max_length=50,blank=True, null=True)
 
-
     def __str__(self) -> str:
         return f'{self.name}'
-
-    
 
 class Machines(models.Model):
     
@@ -101,7 +101,10 @@ class Machines(models.Model):
     purchase_cost = models.FloatField(default=0)
     model = models.CharField(max_length=50,blank=True, null=True)
     image = models.ImageField(upload_to='images', blank=True, null=True)
-
+    # #machine department
+    # location = models.CharField(max_length=2000, default="Warehouse")
+    # #machine site where it is installed
+    # site = models.CharField(max_length=100, default="AM5")
 
     def __str__(self):
         return self.name
@@ -118,15 +121,12 @@ class Machines(models.Model):
 class ImageModel(models.Model):
     image = models.ImageField(upload_to='images')
 
-
 class MachineSpares(models.Model):
     spare = models.ForeignKey(Spares, on_delete=models.CASCADE)
     machine = models.ForeignKey(Machines, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
         return f"{self.spare.name}: {self.machine.name}"
-
-
 
 class IssueList(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name="user", default=3)
@@ -144,6 +144,11 @@ class IssueList(models.Model):
     def __str__(self):
         return f"Machine: {self.c_desc}"
 
+
+def get_department():
+    return Department.objects.get(name="Workshop").pk
+
+
 class MachineIssue(models.Model):
     
     HIGH = "High"
@@ -151,12 +156,16 @@ class MachineIssue(models.Model):
     LOW = "LOW" 
 
     PENDING = 'Pending Approvel'
-    COMPLETED = 'Approved'
+    APPROVED = 'Approved'
+    REJECTED  = 'Rejected'
 
     CORRECTIVE = 'Corrective'
     PREVENTIVE = 'Preventive'
     BREAKDOWN = 'Breakdown'
 
+    ELECTRICAL = 'Electrical'
+    MECHANICAL = 'Mechanical'
+    HYDRAULIC = 'Hydraulic'
 
 
     PRIORITY_CHOICES = [
@@ -170,16 +179,23 @@ class MachineIssue(models.Model):
     STATUS_CHOICES = [
 
         ('PENDING',PENDING),
-        ('COMPLETED',COMPLETED),
+        ('APPROVED',APPROVED),
+        ('REJECTED', REJECTED),
 
     ]
 
     TYPE_CHOICES = (
-        (CORRECTIVE, 'Corrective'),
-        (PREVENTIVE, 'Preventive'),
-        (BREAKDOWN, 'Breakdown')
+        ('CORRECTIVE', 'Corrective'),
+        ('PREVENTIVE', 'Preventive'),
+        ('BREAKDOWN', 'Breakdown'),
+        ('CALIBRATION', 'Calibration')
     )
 
+    PROBLEM_NATURE_CHOICES = (
+        ('ELECTRICAL', ELECTRICAL),
+        ('MECHANICAL', MECHANICAL),
+        ('HYDRAULIC', HYDRAULIC)
+    )
 
     user = models.ForeignKey(CustomUser, on_delete=models.PROTECT, blank=True, null=True)
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, default=1)
@@ -193,7 +209,11 @@ class MachineIssue(models.Model):
     priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES)
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=PREVENTIVE)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default=PENDING)
-
+    problem_nature = models.CharField(max_length=50, choices=PROBLEM_NATURE_CHOICES, default=ELECTRICAL)
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, default=get_department)
+    assign_person = models.ForeignKey(Employee, on_delete=models.PROTECT, default=get_employee)
+    
+    # malfunction_part = models.ForeignKey(Spares, on_delete=models.PROTECT, default=1 )
 
     def generate_ticket(self):
 
@@ -208,6 +228,19 @@ class MachineIssue(models.Model):
 
     def __str__(self):
         return f"Issue Code: {self.code} \n Issue Description: {self.description}"
+
+
+
+class Remarks(models.Model):
+    user_id = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name='user_remarks')
+    complain_id = models.OneToOneField(MachineIssue, on_delete=models.CASCADE, related_name = 'issue_remarks')
+    comment = models.TextField(max_length = 1000)
+    date_time= models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+       if not self.date_time:
+        self.date_time = datetime.now()
+       return super().save(*args, **kwargs)
 
 
 class IssueResolution(models.Model):

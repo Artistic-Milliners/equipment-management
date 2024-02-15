@@ -9,10 +9,10 @@ from django import forms
 
 class UserCreationForm(forms.ModelForm):
     password2 = forms.CharField(label="Confirm Password", widget=forms.PasswordInput)
-    department = Department.objects.all()
+    # department = Department.objects.all()
     class Meta:
         model = CustomUser
-        fields = ("username","email", "department","is_employee", "is_contractor","password")
+        fields = ("username","email","is_employee", "is_contractor","password")
         widgets={
             "password":forms.PasswordInput(),
         }

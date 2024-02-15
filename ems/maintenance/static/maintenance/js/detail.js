@@ -5,8 +5,6 @@ function showImage(){
     showSlides(slideIndex);
 }
 
-
-
 // Next/previous controls
 function plusSlides(n) {
   showSlides(slideIndex += n);
@@ -29,4 +27,9 @@ function showSlides(n) {
   }
 
   slides[slideIndex-1].style.display = "block";
+}
+
+function showRemarksForm(id){
+    form = document.getElementById(id)
+    form.style.display = "block"
 }
