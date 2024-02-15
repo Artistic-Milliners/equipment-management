@@ -1,4 +1,15 @@
 var data;
+
+function machine_num(){
+    let machineNum = document.querySelector('#machine-num-select')
+    let selectMachineId = machineNum.value
+    if (machineNum) {
+        populateMalfunctionPartList(data, selectMachineId);
+    }
+}
+
+
+
 function getMachineDetails(){  
     let equipmentSelect = document.querySelector('#machine-select');    
     let equipmentId = equipmentSelect.value;

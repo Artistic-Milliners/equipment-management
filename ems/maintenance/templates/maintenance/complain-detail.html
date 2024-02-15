@@ -48,7 +48,7 @@
        <li class="item">
         <div class="detail-item">
           <span class="department-label">Department:</span>
-          <span class="department-value">{{ issue.user.department }}</span>
+          <span class="department-value">{{ issue.user.employee.department }}</span>
         </div>
        </li>
        <li class="item">
@@ -56,6 +56,12 @@
           <span class="user-label">User:</span>
           <span class="user-value">{{ issue.user.username }}</span>
       </div>
+       </li>
+       <li class="item">
+        <div class="detail-item">
+          <span class="type-label">Problem Nature: </span>
+          <span class="type-value">{{ issue.problem_nature }}</span>
+        </div>
        </li>
        <li class="item">
         <div class="detail-item">
@@ -69,7 +75,23 @@
           <span class="priority-value">{{ issue.priority }}</span>
         </div>
        </li>
-       <li class="item">
+       <li>
+        <div class="detail-item">
+          <div>
+            <span class="description-label">Assign To (Department):</span>
+            <span class="description-value">{{ issue.department.name }}</span>
+          </div>
+        </div>
+       </li>
+       <li>
+        <div class="detail-item">
+          <div>
+            <span class="description-label">Assign To (Person):</span>
+            <span class="description-value">{{ issue.assign_person.name }}</span>
+          </div>
+        </div>
+       </li>
+       <li class="item"></li>
         <div class="detail-item">
           <div>
             <span class="description-label">Description:</span>
@@ -81,8 +103,18 @@
       
       <div class="detail-item submit-section">
         <a href="{% url 'maintenance:complain_delete' pk=issue.pk %}"><i class="fa fa-trash">Delete</i></a>
-        <a href=""><i class="fa fa-thumbs-up">Approve</i></a>
-        <a href=""><i class="fa fa-thumbs-down">Reject</i></a>
+        <a href="{% url 'maintenance:complain_approve' pk=issue.pk %}"><i class="fa fa-thumbs-up">Approve</i></a>
+        <a href="#" onclick="showRemarksForm('remarks-form')"><i class="fa fa-thumbs-down">Reject</i></a>
+      </div>
+
+      <div class="detail-item comment-section">
+        <form action="{% url 'maintenance:complain_reject' pk=issue.pk %}" method="post" id="remarks-form">
+            {% csrf_token %}
+            <input name="man-remarks" id="man-remarks" class="remarks" placeholder="Remarks" type="text" required>
+            <button class="btn-remarks">Submit</button>
+        </form>
+
+
       </div>
     </div>
     
@@ -93,24 +125,24 @@
     <div class="slideshow-container" onload="showImage()">
       <!-- Full-width images with number and caption text -->
       {% for image in issue.image.all  %}
-      <div class="mySlides {% if forloop.first %} first-img {% endif %}">
-        <div class="numbertext">{{ forloop.counter }}/{{issue.image.all|length }}</div>
-        <a href="{{ image.image.url }}"><img src="{{ image.image.url }}" alt="Image not available"></a>
-        <div class="text">Caption Text</div>
+        <div class="mySlides {% if forloop.first %} first-img {% endif %}">
+          <div class="numbertext">{{ forloop.counter }}/{{issue.image.all|length }}</div>
+          <a href="{{ image.image.url }}"><img src="{{ image.image.url }}" alt="Image not available"></a>
+          <div class="text">Caption Text</div>
+        </div>
+        {% endfor %}
+        
+
+        <!-- Next and previous buttons -->
+        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+
+          <!-- The dots/circles -->
+      <div style="text-align:center">
+        {% for image in issue.image.all %}
+        <span class="dot" onclick="currentSlide('{{ forloop.counter }}')"></span>
+        {% endfor %}
       </div>
-      {% endfor %}
-      
-
-      <!-- Next and previous buttons -->
-      <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
-      <a class="next" onclick="plusSlides(1)">&#10095;</a>
-
-         <!-- The dots/circles -->
-    <div style="text-align:center">
-      {% for image in issue.image.all %}
-      <span class="dot" onclick="currentSlide('{{ forloop.counter }}')"></span>
-      {% endfor %}
-    </div>
     </div>
     <br>
 

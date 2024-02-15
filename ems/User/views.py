@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import permission_required
 
 
 from django.shortcuts import render,redirect
@@ -64,7 +65,7 @@ def machine_detail(request,pk):
     machine_detail = models.Machines.objects.get(pk=pk)
     return render(request, "user/machine_detail.html", {"machine_detail":machine_detail})
 
-
+@permission_required('core.machine_create_perm', raise_exception=True)
 def add_machine(request):
 
     spares = models.Spares.objects.all()
