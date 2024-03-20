@@ -1,5 +1,6 @@
 {% extends "user/home.html" %}
 {% load static %}
+{% load app_filters %}
 
 {% block title %}
   Ticket | page
@@ -19,12 +20,16 @@
     <div class="mb-3">
         <label class="form-label me-3" for="ticket-number"><h6>Ticket No.</h6></label>
         <input class="form-control-inline" value="{{issue.ticket_num}}" type="text" name="ticket-number" id="ticket-number" disabled>    
+    </div>  
+    
+    <div class="mb-3">
+      <input class="form-control-inline" value="{{issue.id}}" type="hidden" name="issue-number" id="issue-number">    
     </div>
     
     <div class="row align-items-center">
         <div class="mb-3 col">
           <label class="form-label" for="machine-select"><h6>Select Machine</h6></label>
-          <select class="form-control" type="text" name="machine-select" id="machine-select" onchange="getMachineDetails()" required> 
+          <select class="form-control" type="text" name="machine-select" id="machine-select" required disabled> 
               <option value="">List of Equipments</option>
               {% for equipment in equipments %}
                 <option value="{{ equipment.id }}" {% if equipment.id == issue.equipment.id %}selected{% endif %}>{{ equipment.name }}</option>  
@@ -33,7 +38,7 @@
       </div>
       <div class="mb-3 col">
           <label class="form-label" for="machine-num-select"><h6>Select Machine Number</h6></label>
-          <select onmouseenter="onMachineSelectChange()" class="form-control" type="text" name="machine-num-select" id="machine-num-select">
+          <select class="form-control" type="text" name="machine-num-select" id="machine-num-select" disabled>
             <option value="{{ issue.machine_id }}">
               {% if issue %}
                 {{ issue.machine_id.name}}
@@ -48,7 +53,11 @@
     <div class="mb-3 col">
       <label class="form-label" for="malfunction-part"><h6>Malfunction part</h6></label>
       <select class="form-control" type="text" name="malfunction-part" id="malfunction-part" multiple>
-        <option value="">Select Malfunctioning part if any</option>
+
+          {% for part in issue.machine_id.machine_spare.all %}
+            <option value="{{part.id}}">{{ part.name}}</option>
+          {% endfor %}
+        
       </select>
       <div class="search-part">
         <div>
@@ -72,7 +81,7 @@
       </div>
       <div class="col">
         <label class="form-label" for="machine-hours"><h6>Machine Hours</h6></label>
-        <input class="form-control" type="text" name="machine-hours" id="machine-hours" required> 
+        <input value="{{issue.machine_hours}}" class="form-control" type="text" name="machine-hours" id="machine-hours" required disabled> 
       </div>
     </div>
 
@@ -80,39 +89,35 @@
       <div class="col">
         <label for="issue-type"><h6>Type</h6></label>
         <select class="form-control" type="text" name="issue-type" id="issue-type">
-          <option value="C">Corrective</option>
-          <option value="P">Preventive</option>
-          <option value="B">Breakdown</option>
-          <option value="Ca">Calibration</option>
+          {% for value, label in typeChoices  %}
+            <option value="{{value}}">{{label}}</option>
+          {% endfor %}
         </select>
       </div>
       <div class="col">
         <label class="form-label" for="issue-priority"><h6>Issue Priority</h6></label>
         <select class="form-control" type="text" name="issue-priority" id="issue-priority">
-          <option value="H">High</option>
-          <option value="M">Medium</option>
-          <option value="L">Low</option>
+          {% for value, label in priorityChoices %}
+            <option value="{{value}}">{{label}}</option>
+          {% endfor %}
         </select>
       </div>  
     </div> 
-
-
-
     <div class="row">
       <div class="col">
         <div class="mb-3">
           <label class="form-label" for="problem-nature"> <h6>Problem Nature</h6> </label>
           <select class="form-control" type="text" name="problem-nature" id="problem-nature">
-            <option value="El">Electrical</option>
-            <option value="Me">Mechanical</option>
-            <option value="Hy">Hydraulic</option>
+            {% for value, label in problemNatureChoices %}
+            <option value="{{value}}">{{label}}</option>
+          {% endfor %}
           </select>    
         </div>  
       </div>
       <div class="col">
         <div class="mb-3">
           <label class="form-label" for="date-time"> <h6>Date/Time</h6> </label>
-          <input  onclick="getCurrentDateTime()" class="form-control" type="datetime-local" name="date-time" id="date-time" readonly required>    
+          <input value="{{ issue.date_time|dateFormat }}" class="form-control" type="datetime-local" name="date-time" id="date-time" readonly required>    
       </div>
       </div>
         
@@ -120,8 +125,13 @@
     
 
     <div class="mb-3">
-      <label class="form-label" for="malfunction-desc"><h6>Description</h6></label>
-      <textarea class="form-control" type="text" name="malfunction-desc" id="malfunction-desc" rows="4"></textarea>
+      <label class="form-label" for="malfunction-desc"><h6>Description (Department)</h6></label>
+      <textarea class="form-control" type="text" name="malfunction-desc" id="malfunction-desc" rows="4" disabled>{{issue.description_user}}</textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="description-reviewer"><h6>Description (Engineer)</h6></label>
+      <textarea class="form-control" type="text" name="description-reviewer" id="description-reviewer" rows="4"></textarea>
     </div>
 
     <div class="row">
@@ -149,7 +159,7 @@
     
     <div class="mb-3">
       <label class="form-label" for="machine-images"><h6>Upload Images</h6></label>
-      <input class="form-control" type="file" name="machine-images[]" id="machine-images" multiple>
+      <input class="form-control" type="file" name="machine-images[]" id="machine-images[]" multiple>
     </div> 
 
     <input class="form-control submit-btn" type="submit" value="Submit">
