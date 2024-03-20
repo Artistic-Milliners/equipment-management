@@ -33,6 +33,7 @@
                 <li>{{machine_detail.type_of_machine.name}}</li>
                 <li>{{machine_detail.model}}</li>
                 <li>{{machine_detail.purchase_cost}}</li>
+                <li>{{machine_detail.machine_hours}}</li>
                 <ul>
                     {% for s in machine_detail.spares.all%}
                         <li>{{s}}</li>
@@ -78,6 +79,11 @@
                             <div class="mb-3">
                                 <label for="machine-cost" class="form-label">Cost</label>
                                 <input name="purchase_cost" value="{{machine_detail.purchase_cost}}" type="text" class="form-control" id="machine-cost">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="machine-hours" class="form-label">Hours</label>
+                                <input name="machine-hours" value="{{machine_detail.machine_hours}}" type="text" class="form-control" id="machine-hours">
                             </div>
                         
                             <div class="mb-3">

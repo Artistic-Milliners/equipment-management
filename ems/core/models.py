@@ -1,9 +1,19 @@
 from django.db import models
 from datetime import datetime
 from django.contrib.auth.models import AbstractUser
+from .fields import UnitIDField
 from PIL import Image
 
 # Create your models here.
+
+class Unit(models.Model):
+    id = UnitIDField(max_length=50, primary_key=True)
+    name = models.CharField(max_length=100)
+    location = models.CharField(max_length=255)
+
+
+def get_unit():
+    return Unit.objects.first().pk
 
 class Department(models.Model):
     TYPE_CHOICES = (
@@ -11,8 +21,8 @@ class Department(models.Model):
         ('PRODUCTION', 'PRODUCTION'),
         ('MAINTENANCE', 'MAINTENANCE')
     )
-
     name = models.CharField(max_length=255)
+    unit = models.ForeignKey(Unit, on_delete=models.PROTECT, default=get_unit)
     dpt_type = models.CharField(max_length=50, choices=TYPE_CHOICES, null=True, blank=True)
 
     def __str__(self):
@@ -100,6 +110,7 @@ class Machines(models.Model):
     dop = models.DateField(verbose_name="Date of Purcahse", blank=True, null=True)
     purchase_cost = models.FloatField(default=0)
     model = models.CharField(max_length=50,blank=True, null=True)
+    machine_hours = models.IntegerField(blank=True, null=True)
     image = models.ImageField(upload_to='images', blank=True, null=True)
     # #machine department
     # location = models.CharField(max_length=2000, default="Warehouse")
@@ -150,37 +161,56 @@ def get_department():
 
 
 class MachineIssue(models.Model):
+
     
-    HIGH = "High"
-    MODERATE = "MODERATE"
-    LOW = "LOW" 
+    STATUS_CHOICES = [
 
-    PENDING = 'Pending Approvel'
-    APPROVED = 'Approved'
-    REJECTED  = 'Rejected'
+        ('PENDING','Pending Approvel'),
+        ('REVIEWED','Reviewed'),
+        ('APPROVED','Approved'),
+        ('REJECTED', 'Rejected'),
 
-    CORRECTIVE = 'Corrective'
-    PREVENTIVE = 'Preventive'
-    BREAKDOWN = 'Breakdown'
+    ]
+    
+    user = models.ForeignKey(Employee, on_delete=models.PROTECT, blank=True, null=True, related_name='form_creator')
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, default=1)
+    ticket_num = models.CharField(max_length=50,blank=True, null=True)
+    machine_id = models.ForeignKey(Machines,on_delete=models.PROTECT,default=1)
+    machine_hours = models.IntegerField(blank=True, null=True)
+    description_user = models.TextField(default="EMPTY", blank=True, null=True) 
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
+    image = models.ManyToManyField(ImageModel)
+    date_time = models.DateTimeField(auto_now=True)    
 
-    ELECTRICAL = 'Electrical'
-    MECHANICAL = 'Mechanical'
-    HYDRAULIC = 'Hydraulic'
 
+    def generate_ticket(self):
+
+        equipment_id = self.equipment.id
+        machine_id = self.machine_id.id
+        machine_issue_id = self.pk    
+        self.ticket_num = f"{equipment_id}-{machine_id}-{machine_issue_id}"
+        return
+    
+
+    def __str__(self):
+        return f"Issue Code: {self.code} \n Issue Description: {self.description_user}"
+
+
+class MachineIssueReview(models.Model):
+    
 
     PRIORITY_CHOICES = [
-        ('HIGH',HIGH),
-        ('MODERATE',MODERATE),
-        ('LOW',LOW),
+        ('HIGH',"High"),
+        ('MODERATE',"MODERATE"),
+        ('LOW',"LOW"),
     ]
-
-    
 
     STATUS_CHOICES = [
 
-        ('PENDING',PENDING),
-        ('APPROVED',APPROVED),
-        ('REJECTED', REJECTED),
+        ('PENDING','Pending Approvel'),
+        ('REVIEWED','Reviewed'),
+        ('APPROVED','Approved'),
+        ('REJECTED', 'Rejected'),
 
     ]
 
@@ -192,43 +222,25 @@ class MachineIssue(models.Model):
     )
 
     PROBLEM_NATURE_CHOICES = (
-        ('ELECTRICAL', ELECTRICAL),
-        ('MECHANICAL', MECHANICAL),
-        ('HYDRAULIC', HYDRAULIC)
+        ('ELECTRICAL','Electrical'),
+        ('MECHANICAL','Mechanical'),
+        ('HYDRAULIC', 'Hydraulic')
     )
-
-    user = models.ForeignKey(CustomUser, on_delete=models.PROTECT, blank=True, null=True)
-    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, default=1)
-    ticket_num = models.CharField(max_length=50,blank=True, null=True)
-    machine_id = models.ForeignKey(Machines,on_delete=models.PROTECT,default=1)
-    machine_hours = models.IntegerField(blank=True, null=True)
+    
+    reviewer = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='reviewer') 
+    issue = models.ForeignKey(MachineIssue, on_delete=models.CASCADE)
     code = models.ForeignKey(IssueList, on_delete=models.PROTECT, blank=True, null=True)
-    description = models.TextField(default="EMPTY", blank=True, null=True)
-    image = models.ManyToManyField(ImageModel)
-    date_time = models.DateTimeField(auto_now=True)
-    priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES)
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=PREVENTIVE)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default=PENDING)
-    problem_nature = models.CharField(max_length=50, choices=PROBLEM_NATURE_CHOICES, default=ELECTRICAL)
-    department = models.ForeignKey(Department, on_delete=models.PROTECT, default=get_department)
-    assign_person = models.ForeignKey(Employee, on_delete=models.PROTECT, default=get_employee)
-    
+    description_reviewer = models.TextField(blank=True, null=True)
+    priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES, blank=True, null=True)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, blank=True, null=True)
+    # status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
+    problemNature = models.CharField(max_length=50, choices=PROBLEM_NATURE_CHOICES, blank=True, null=True)
+    assignDepartment = models.ForeignKey(Department, on_delete=models.PROTECT, default=get_department)
+    assignPerson = models.ForeignKey(Employee, on_delete=models.SET_NULL, blank=True, null=True, related_name='task_assigned')
+    reviewrImages = models.ManyToManyField(ImageModel)
+    reviewDate = models.DateTimeField(auto_now=True)
     # malfunction_part = models.ForeignKey(Spares, on_delete=models.PROTECT, default=1 )
-
-    def generate_ticket(self):
-
-        equipment_id = self.equipment.id
-        machine_id = self.machine_id.id
-        priority = self.priority
-        machine_issue_id = self.pk    
-        self.ticket_num = f"{equipment_id}-{machine_id}-{priority}-{machine_issue_id}"
-        
-        return
     
-
-    def __str__(self):
-        return f"Issue Code: {self.code} \n Issue Description: {self.description}"
-
 
 
 class Remarks(models.Model):

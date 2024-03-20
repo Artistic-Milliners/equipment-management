@@ -46,12 +46,14 @@ def createComplain(request):
         machine_section = request.POST['machine-section']
         # malfunction_part = request.POST['malfunction-part']
         machine_hours = request.POST['machine-hours']
-        priority = request.POST["issue-priority"]
+        # priority = request.POST["issue-priority"]
         description = request.POST['malfunction-desc']
-        images = request.FILES.getlist('machine-images[]')
+        if request.FILES.getlist('machine-images[]'):
+            images = request.FILES.getlist('machine-images[]')
         issue_type = request.POST["issue-type"]
         problem_nature = request.POST["problem-nature"]
         assign_to_dpt = request.POST['assign-to-department']
+        assign_to_person = request.POST['assign-to-person']
 
 
         selected_priority = next((key for key, value in dict(priority_choice).items() if value==priority), None)
@@ -69,6 +71,9 @@ def createComplain(request):
         if assign_to_dpt:
             department = Department.objects.get(pk=assign_to_dpt)
 
+        if assign_to_person:
+            assign_person = CustomUser.objects.get(pk=assign_to_person)
+
         #write code for handling exceptions
 
         machine_issue = MachineIssue(
@@ -82,15 +87,16 @@ def createComplain(request):
             type = selected_type,
             problem_nature = selected_problem_nature,
             department = department,
+            assign_person = assign_person,
             # machine_section=machine_section,
             # malfunction_part = malfunction_part,
         )
         
         machine_issue.save()  
-
-        for image in images:
-            image_model = ImageModel.objects.create(image=image)
-            machine_issue.image.add(image_model) 
+        if images:
+            for image in images:
+                image_model = ImageModel.objects.create(image=image)
+                machine_issue.image.add(image_model) 
 
         
 
@@ -122,7 +128,7 @@ def get_machines(request):
 
 def view_complains(request):
     
-    issue_list = MachineIssue.objects.all().order_by("priority")
+    issue_list = MachineIssue.objects.all()
 
     return render(request, "maintenance/complain-view.html", {'issue_list':issue_list})
 

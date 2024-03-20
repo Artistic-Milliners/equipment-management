@@ -1,12 +1,14 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserChangeForm, PasswordResetForm
 from django.contrib.auth.models import User
+from core.models import CustomUser, Employee, Unit, MachineIssue, Spares, Equipment, Machines, ImageModel, Department,MachineIssueReview
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import permission_required
-
-
+from django.views import View
+from django.views.generic import ListView, CreateView, DetailView
+from .forms import UnitForm
 from django.shortcuts import render,redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse,HttpResponseRedirect,JsonResponse
@@ -15,10 +17,200 @@ from django.views.decorators.cache import never_cache
 from django.core.files.storage import default_storage
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.datastructures import MultiValueDictKeyError
+from django.urls import reverse_lazy
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.renderers import JSONRenderer
+from core.serializers import machineHoursSerializer,MachineCodeSerializer
+from django.db.models import Prefetch
+from django.http import Http404
 
 # Create your views here.
 
 
+class ListUsers(ListView):
+    model = Employee
+    context_object_name = "users"
+    template_name = "user/listusers.html"
+
+class DetailUserView(DetailView):
+    pass
+
+
+class CreateUnitView(CreateView):
+    model = Unit
+    fields = ["id", "name", "location"]
+    template_name = "user/createunit.html"
+    success_url = reverse_lazy("User:list_unit")
+
+class ListUnitView(ListView):
+    model = Unit
+    template_name = "user/listunit.html"
+    context_object_name = "units"
+
+
+class InitiateComplainView(View):
+    template_name = "user/initiate-complain.html"
+    
+    def get(self, request):
+        user = request.user
+        # print(user)
+        equipment = models.Equipment.objects.all()
+        return render(request, self.template_name, {'user':user, 'equipments':equipment})
+    
+    
+    def post(self,request, *args, **kwargs):
+
+        user_id = request.user.id
+        # print(request.user)
+        try:
+            employee = Employee.objects.get(user=user_id)
+        except Employee.DoesNotExist:
+            return redirect('User:login')
+        
+        equipment_id = request.POST['equipment']
+        equipment = Equipment.objects.get(pk=equipment_id)
+        
+        machine_code = request.POST['code']
+        machine = Machines.objects.get(pk=machine_code)
+        
+        machine_hours = request.POST['machine-hours']
+        description = request.POST['description']
+        image = request.FILES.getlist('image[]')
+
+        issue = MachineIssue(
+            user = employee,
+            equipment = equipment,
+            machine_id=machine,
+            machine_hours=machine_hours,
+            description=description,
+            department = employee.department,
+        )
+
+        issue.save() 
+
+
+        if image:
+            for img in image:
+                image_model = ImageModel.objects.create(image=img)
+                issue.image.add(image_model)
+
+        
+        return redirect('maintenance:complain_list')
+
+
+
+class ComplainReviewView(View):
+    def get(self, request, pk):
+
+
+        departments = Department.objects.filter(dpt_type__in=['SERVICES','MAINTENANCE'])
+        users = Employee.objects.filter(department__in=departments)
+        
+        issue = MachineIssue.objects.select_related(
+                'machine_id'
+                ).prefetch_related(Prefetch(
+                    'machine_id__machine_spare',  queryset=Spares.objects.all())).get(pk=pk)
+        
+        priorityChoices = MachineIssueReview.PRIORITY_CHOICES
+        statusChoices = MachineIssueReview.STATUS_CHOICES
+        typeChoices = MachineIssueReview.TYPE_CHOICES 
+        problemNatureChoices = MachineIssueReview.PROBLEM_NATURE_CHOICES
+
+        context = {'priorityChoices':priorityChoices, 
+                    'statusChoices':statusChoices,
+                     'typeChoices':typeChoices,
+                      'problemNatureChoices':problemNatureChoices,
+                       "issue":issue, 
+                       'departments':departments,
+                       'users':users,
+                       }
+
+        return render(request, 'maintenance/complain-form.html',context)
+
+    def post(self, request, *args, **kwargs):
+        
+        user_id = request.user.id
+        issue_id = request.POST['issue-number']
+        description_reviewer = request.POST['description-reviewer']
+        priority = request.POST['issue-priority']
+        type = request.POST['issue-type']
+        problemNature = request.POST['problem-nature']
+        assignDepartment= request.POST['assign-to-department']
+        person = request.POST['assign-to-person']
+        reviewrImages = request.FILES.getlist('machine-images[]')
+
+        try:
+            reviewer = Employee.objects.get(user=user_id)
+            issue = MachineIssue.objects.get(pk=issue_id)
+            departmentName = Department.objects.get(pk=assignDepartment)
+            assignPerson = Employee.objects.get(pk=person)
+
+            review = MachineIssueReview(
+            reviewer = reviewer,
+            issue = issue,
+            description_reviewer = description_reviewer,
+            priority = priority,
+            type = type,
+            problemNature = problemNature,
+            assignDepartment = departmentName,
+            assignPerson = assignPerson
+        )
+
+            review.save()
+            if reviewrImages:
+                for img in reviewrImages:
+                    image = ImageModel.objects.create(img)
+                    review.reviewrImages.add(image)  
+            
+            issue.status = MachineIssue.STATUS_CHOICES[1][1]
+
+        except(ObjectDoesNotExist) as e:
+            return render(request, 'user/error/404.html', {'error':str(e)})
+
+
+
+        # print(review.reviewer)
+        return redirect('maintenance:complain_list')
+        
+
+class UserDetailAPIView(APIView):
+    pass
+    
+
+class MachineCodeAPIView(APIView):
+    
+    def get_queryset(self):
+        return models.Equipment.objects.all() 
+    
+    def get(self, request, pk):
+        
+        try:
+            equipment = self.get_queryset().get(pk=pk)
+            machines = models.Machines.objects.filter(type_of_machine=equipment)
+            machine_code = MachineCodeSerializer(machines, many=True).data
+            print(machine_code)
+            return JsonResponse(machine_code, safe=False)
+
+        except models.Equipment.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+class machineHoursAPIView(APIView):
+    def get_queryset(self):
+        return models.Machines.objects.all()
+    
+    
+    def get(self, request, pk):
+        
+        try: 
+            machine = models.Machines.objects.get(pk=pk)
+            machine_hours = machineHoursSerializer(machine)
+            # print(machine_hours.data)
+            return Response(machine_hours.data)
+        
+        except models.Machines.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 def login_view(request):
     
@@ -117,49 +309,59 @@ def update_machine(request,pk):
     
     machine = models.Machines.objects.get(pk=pk)
 
-    if request.method == "POST" and request.FILES.get('machine-image'):
+    if request.method == "POST":
         type_of_machine = request.POST.get('type-of-machine')
         name = request.POST.get('name')
         model = request.POST.get('model')
         purchase_cost = request.POST.get('purchase_cost')
+        machine_hours = request.POST.get('machine-hours')
+        # print(type_of_machine)
+
         machine_type = models.Equipment.objects.get(name=type_of_machine)
+        # print(machine_type)
+        
+        if request.FILES.get('machine-image'):
+            img = request.FILES.get('machine-image')
+            filename = default_storage.save('images/'+img.name, img)
+            machine.image = filename
 
-        img = request.FILES.get('machine-image')
-        filename = default_storage.save('images/'+img.name, img)
 
-        machine = models.Machines(
-            pk=pk,
-            type_of_machine = machine_type,
-            name=name,
-            model=model,
-            purchase_cost=purchase_cost,
-            image = filename
-        )
-
+        machine.type_of_machine = machine_type
+        machine.name=name
+        machine.model=model
+        machine.purchase_cost=purchase_cost
+        machine.machine_hours=machine_hours
+        
         machine.save()
 
         return redirect( 'User:home' )
+        
+        
+        
+        # machine = models.Machines(
+        #     pk=pk,
+        #     )
 
-    elif request.method == "POST":
-        type_of_machine = request.POST.get('type-of-machine')
-        name = request.POST.get('name')
-        model = request.POST.get('model')
-        purchase_cost = request.POST.get('purchase_cost')
+        
+    # elif request.method == "POST":
+    #     type_of_machine = request.POST.get('type-of-machine')
+    #     name = request.POST.get('name')
+    #     model = request.POST.get('model')
+    #     purchase_cost = request.POST.get('purchase_cost')
+    #     machine_type = models.Equipment.objects.get(name=type_of_machine)
+    #     # print(default_storage.url())
 
-        machine_type = models.Equipment.objects.get(name=type_of_machine)
-        print(default_storage.url())
+    #     machine = models.Machines(
+    #         pk=pk,
+    #         type_of_machine = machine_type,
+    #         name=name,
+    #         model=model,
+    #         purchase_cost=purchase_cost,
+    #     )
 
-        machine = models.Machines(
-            pk=pk,
-            type_of_machine = machine_type,
-            name=name,
-            model=model,
-            purchase_cost=purchase_cost,
-        )
+    #     machine.save()
 
-        machine.save()
-
-    return redirect( 'User:home' )
+    # return redirect( 'User:home' )
 
 
 def delete_machine(request, pk):
