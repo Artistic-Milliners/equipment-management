@@ -1,0 +1,15 @@
+{% extends 'user/home.html' %}
+
+{% block title %}
+  Approved Complains
+{% endblock title %}
+
+{% block main-body %}
+
+<div>
+<div>{{ issue.ticket_num }}</div>
+<div>{{ issue.description }}</div>
+<div>{{ issue.type }}</div>
+<div>{{ issue.status }}</div>
+</div>
+{% endblock main-body %}

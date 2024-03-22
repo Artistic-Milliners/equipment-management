@@ -1,0 +1,12 @@
+{% extends "user/home.html" %}
+{% block title %}
+    Users List
+{% endblock title %}
+
+{% block main-body %}
+    <ul>
+        {% for user in users %}
+            <a href="{% url 'User:detail_user' %}"><li>{{user.name}}</li></a>  
+        {% endfor %}
+    </ul>
+{% endblock main-body %}
