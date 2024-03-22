@@ -77,7 +77,7 @@ def get_employee():
     with transaction.atomic():
         try:
             emp_pk = Employee.objects.first().pk
-        except Employee.DoesNotExist:
+        except AttributeError as e:
             emp = Employee.objects.create(name='Wahab', Department=get_department)
             emp_pk = emp.pk 
     return emp_pk
