@@ -27,9 +27,9 @@ FIXTURE_DIR = os.path.join(BASE_DIR,'fixtures')
 SECRET_KEY = 'django-insecure-(w#^*qpgwi)ui0j091g+ou7#5k52#zdp)89&sl_bx4&v^eb%j7'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['http://ems.artistic.com/', '127.0.0.1:8000']
 
 
 # Application definition
