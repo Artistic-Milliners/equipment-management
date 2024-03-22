@@ -13,7 +13,11 @@ class Unit(models.Model):
 
 
 def get_unit():
-    return Unit.objects.first().pk
+    try:
+        unit = Unit.objects.first().pk
+    except Unit.DoesNotExist:
+        unit = Unit.objectss.create(id=005, name='Artistic Millienrs unit 5', location='Landhi Bin Qasim')
+    return unit 
 
 class Department(models.Model):
     TYPE_CHOICES = (
@@ -29,6 +33,13 @@ class Department(models.Model):
         return self.name
 
 
+def get_department():
+    try:
+        department = Department.objects.first().pk
+    except Department.DoesNotExist:
+        unit = Department.objectss.create(name='Process Automation', unit=get_unit)
+    return unit 
+
 class Designation(models.Model):
     designation_name = models.CharField(max_length=255, default='Trainee')
 
@@ -43,24 +54,31 @@ class CustomUser(AbstractUser):
 
 def get_user():
     try:
-        user = CustomUser.objects.first().pk 
+        user_pk = CustomUser.objects.first().pk 
     except:
         user = CustomUser.objects.create(username='zohaib', password='abcd@1234') 
+        user_pk = user.pk
 
-def get_department():
-    return Department.objects.first().pk
+    return user_pk
 
-def get_employee():
-    return Employee.objects.first().pk
 
 class Employee(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.PROTECT, default=get_user, unique=True)
+    user = models.OneToOneField(CustomUser, on_delete=models.PROTECT)
     name = models.CharField(max_length=255)
     department = models.ForeignKey(Department, on_delete=models.CASCADE, default=Department.objects.first)
     designation = models.ForeignKey(Designation, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return self.name
+
+
+def get_employee():
+    try:
+        emp_pk = Employee.objects.first().pk
+    except Employee.DoesNotExist:
+       emp = Employee.objects.create(name='Wahab', Department=get_department)
+       emp_pk = emp.pk 
+    return emp.pk
 
 
 class Contractor(models.Model):
