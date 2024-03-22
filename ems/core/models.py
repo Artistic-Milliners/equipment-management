@@ -3,6 +3,7 @@ from datetime import datetime
 from django.contrib.auth.models import AbstractUser
 from .fields import UnitIDField
 from PIL import Image
+from django.db import transaction
 
 # Create your models here.
 
@@ -16,7 +17,7 @@ def get_unit():
     try:
         unit = Unit.objects.first().pk
     except Unit.DoesNotExist:
-        unit = Unit.objectss.create(id=005, name='Artistic Millienrs unit 5', location='Landhi Bin Qasim')
+        unit = Unit.objectss.create(id=int('005'), name='Artistic Millienrs unit 5', location='Landhi Bin Qasim')
     return unit 
 
 class Department(models.Model):
@@ -73,12 +74,13 @@ class Employee(models.Model):
 
 
 def get_employee():
-    try:
-        emp_pk = Employee.objects.first().pk
-    except Employee.DoesNotExist:
-       emp = Employee.objects.create(name='Wahab', Department=get_department)
-       emp_pk = emp.pk 
-    return emp.pk
+    with transaction.atomic():
+        try:
+            emp_pk = Employee.objects.first().pk
+        except Employee.DoesNotExist:
+            emp = Employee.objects.create(name='Wahab', Department=get_department)
+            emp_pk = emp.pk 
+    return emp_pk
 
 
 class Contractor(models.Model):
