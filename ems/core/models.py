@@ -13,12 +13,13 @@ class Unit(models.Model):
     location = models.CharField(max_length=255)
 
 
-def get_unit():
-    try:
-        unit = Unit.objects.first().pk
-    except Unit.DoesNotExist:
-        unit = Unit.objectss.create(id=int('005'), name='Artistic Millienrs unit 5', location='Landhi Bin Qasim')
-    return unit 
+# def get_unit():
+#     with transaction.atomic():
+#         try:
+#             unit = Unit.objects.first().pk
+#         except Unit.DoesNotExist:
+#             unit = Unit.objectss.create(id=int('005'), name='Artistic Millienrs unit 5', location='Landhi Bin Qasim')
+#         return unit 
 
 class Department(models.Model):
     TYPE_CHOICES = (
@@ -27,19 +28,19 @@ class Department(models.Model):
         ('MAINTENANCE', 'MAINTENANCE')
     )
     name = models.CharField(max_length=255)
-    unit = models.ForeignKey(Unit, on_delete=models.PROTECT, default=get_unit)
+    unit = models.ForeignKey(Unit, on_delete=models.PROTECT)
     dpt_type = models.CharField(max_length=50, choices=TYPE_CHOICES, null=True, blank=True)
 
     def __str__(self):
         return self.name
 
 
-def get_department():
-    try:
-        department = Department.objects.first().pk
-    except Department.DoesNotExist:
-        unit = Department.objectss.create(name='Process Automation', unit=get_unit)
-    return unit 
+# def get_department():
+#     try:
+#         department = Department.objects.first().pk
+#     except Department.DoesNotExist:
+#         unit = Department.objectss.create(name='Process Automation', unit=get_unit)
+#     return unit 
 
 class Designation(models.Model):
     designation_name = models.CharField(max_length=255, default='Trainee')
@@ -53,34 +54,34 @@ class CustomUser(AbstractUser):
     is_contractor = models.BooleanField(default=False)
 
 
-def get_user():
-    try:
-        user_pk = CustomUser.objects.first().pk 
-    except:
-        user = CustomUser.objects.create(username='zohaib', password='abcd@1234') 
-        user_pk = user.pk
+# def get_user():
+#     try:
+#         user_pk = CustomUser.objects.first().pk 
+#     except:
+#         user = CustomUser.objects.create(username='zohaib', password='abcd@1234') 
+#         user_pk = user.pk
 
-    return user_pk
+#     return user_pk
 
 
 class Employee(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.PROTECT)
     name = models.CharField(max_length=255)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE, default=Department.objects.first)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
     designation = models.ForeignKey(Designation, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return self.name
 
 
-def get_employee():
-    with transaction.atomic():
-        try:
-            emp_pk = Employee.objects.first().pk
-        except AttributeError as e:
-            emp = Employee.objects.create(name='Wahab', Department=get_department)
-            emp_pk = emp.pk 
-    return emp_pk
+# def get_employee():
+#     with transaction.atomic():
+#         try:
+#             emp_pk = Employee.objects.first().pk
+#         except AttributeError as e:
+#             emp = Employee.objects.create(name='Wahab', department=get_department)
+#             emp_pk = emp.pk 
+#     return emp_pk
 
 
 class Contractor(models.Model):
@@ -91,7 +92,7 @@ class Contractor(models.Model):
 
 class Contractor_Person(models.Model):
     
-    contractor_name = models.ForeignKey(Contractor, on_delete=models.CASCADE, default=1)
+    contractor_name = models.ForeignKey(Contractor, on_delete=models.CASCADE)
     visiting_person = models.CharField(max_length=255)
 
     def __str__(self):
@@ -163,7 +164,7 @@ class MachineSpares(models.Model):
         return f"{self.spare.name}: {self.machine.name}"
 
 class IssueList(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name="user", default=3)
+    user = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name="user")
     error_code = models.CharField(max_length = 35, null=True, default=None)
     programmer_string = models.CharField(max_length=100, null=True, default=None)
     machine_string = models.CharField(max_length=100, null=True, default=None)
@@ -173,7 +174,7 @@ class IssueList(models.Model):
     restart_procedure = models.TextField(max_length=500, blank=True, null=True)
     flashes = models.IntegerField(blank=True, null=True)
     image = models.ImageField(upload_to='images', blank=True, null=True)
-    equipment = models.ForeignKey(Equipment, on_delete=models.PROTECT, related_name="equipment", default=1)
+    equipment = models.ForeignKey(Equipment, on_delete=models.PROTECT, related_name="equipment")
 
     def __str__(self):
         return f"Machine: {self.c_desc}"
@@ -196,9 +197,9 @@ class MachineIssue(models.Model):
     ]
     
     user = models.ForeignKey(Employee, on_delete=models.PROTECT, blank=True, null=True, related_name='form_creator')
-    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, default=1)
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
     ticket_num = models.CharField(max_length=50,blank=True, null=True)
-    machine_id = models.ForeignKey(Machines,on_delete=models.PROTECT,default=1)
+    machine_id = models.ForeignKey(Machines,on_delete=models.PROTECT)
     machine_hours = models.IntegerField(blank=True, null=True)
     description_user = models.TextField(default="EMPTY", blank=True, null=True) 
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
@@ -258,7 +259,7 @@ class MachineIssueReview(models.Model):
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, blank=True, null=True)
     # status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
     problemNature = models.CharField(max_length=50, choices=PROBLEM_NATURE_CHOICES, blank=True, null=True)
-    assignDepartment = models.ForeignKey(Department, on_delete=models.PROTECT, default=get_department)
+    assignDepartment = models.ForeignKey(Department, on_delete=models.PROTECT)
     assignPerson = models.ForeignKey(Employee, on_delete=models.SET_NULL, blank=True, null=True, related_name='task_assigned')
     reviewrImages = models.ManyToManyField(ImageModel)
     reviewDate = models.DateTimeField(auto_now=True)
