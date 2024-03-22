@@ -42,7 +42,10 @@ class CustomUser(AbstractUser):
 
 
 def get_user():
-    return CustomUser.objects.first().pk
+    try:
+        user = CustomUser.objects.first().pk 
+    except:
+        user = CustomUser.objects.create(username='zohaib', password='abcd@1234') 
 
 def get_department():
     return Department.objects.first().pk

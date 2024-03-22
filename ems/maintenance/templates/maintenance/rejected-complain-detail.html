@@ -1,0 +1,21 @@
+{% extends "user/home.html" %}
+{% load static %}
+
+{% block title %}
+  Reject Complains
+{% endblock title %}
+
+{% block main-body %}
+    <div class="container">
+        <ul>
+            <li>{{ issue.ticket_num }}</li>
+            <li>{{ issue.user.department }}</li>
+            <li>{{ issue.description }}</li>
+            <li>{{ issue.issue_remarks.comment }}</li>
+            <li>{{ issue.status }}</li>
+            <li><a href="{% url 'maintenance:complain_edit' pk=issue.pk %}"><button class="btn btn-primary">Edit</button></a></li>
+            <li><a href="{% url 'maintenance:complain_delete' pk=issue.pk %}"><button class="btn btn-danger">Delete</button></a></li>
+        </ul>
+
+    </div>
+{% endblock main-body %}
