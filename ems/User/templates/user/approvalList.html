@@ -1,0 +1,75 @@
+{% extends "user/home.html" %}
+
+{% block title %}
+  Review Complain 
+{% endblock title %}
+
+{% block main-body %}
+    <div class="header">
+      <h1><u>Reviewd Complains</u></h1>
+      <br>
+      <button class="compalain"> <a href="{% url 'User:create_complain' %}"><i class="fa fa-plus"> New</i></a></button>
+    </div>
+    <div class="table-responsive">
+      <table class="table  table-bordered">
+        <thead>
+          <tr>
+            <th scope="col" class="text-center">#</th>
+            <th scope="col" class="text-center">WORK ORDER</th>
+            <th scope="col" class="text-center">EQUIPMENT</th>
+            <th scope="col" class="text-center">Nature</th>
+            <th scope="col" class="text-center">DESCRIPTION</th>
+            <th scope="col" class="text-center">ASSIGNED (DEPARTMENT)</th>
+            <th scope="col" class="text-center">ASSIGNED (PERSON)</th>
+            <th scope="col" class="text-center">PRIORITY</th>
+            <th scope="col" class="text-center">STATUS</th> 
+          </tr>
+        </thead>
+        <tbody>
+          {% for review in reviews %} 
+                <th scope="row" class="text-center">{{ forloop.counter }}</th>
+                <td class="text-center"> <a href="#">{{ review.issue.ticket_num }}</a></td>
+                <td class="text-center">{{ review.issue.machine_id.name }}</td>
+                <td class="text-center">{{ review.problemNature}}</td>
+                <td class="text-center">{{ review.description_reviewer}}</td>
+                <td class="text-center">{{ review.assignDepartment}}</td>
+                <td class="text-center">{{ review.assignPerson}}</td>
+                <td class="text-center">{{ review.priority}}</td>
+                <td class="text-center">{{ review.issue.status}}</td>
+              </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+    
+<!-- 
+    {% for issue in issue_list  %}
+    <div class="issue-section">
+      <div class="issue-detail issue-side">
+        <div class="ticket">
+          <h1> <a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">Ticket# {{issue.ticket_num}}</a> <span></span> </h1>
+        </div>
+          
+        <div class="issue-detail equipment-detail">
+            <div class="equipment">
+              <h4>Equipment: {{ issue.equipment.name }} </h4>
+            </div>
+            <div class="machine">
+              <h4>Machine No: {{ issue.machine.name }} </h4>
+            </div>
+        </div>
+        <div class="issue-detail">
+            <h4>Description:</h4>
+            <p>{{ issue.description }}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    -->
+
+{% endblock main-body %}
+
+
+
