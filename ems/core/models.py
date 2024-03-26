@@ -217,7 +217,7 @@ class MachineIssue(models.Model):
     
 
     def __str__(self):
-        return f"Issue Code: {self.code} \n Issue Description: {self.description_user}"
+        return f"Work Order: {self.ticket_num} \n Issue Description: {self.description_user}"
 
 
 class MachineIssueReview(models.Model):

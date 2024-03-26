@@ -33,7 +33,7 @@ table{
 }
 
 th{
-    color: whitesmoke;
+    color: black;
 
 }
 
@@ -46,7 +46,7 @@ th > .text-center{
     display: none;
     margin-top: 0.1em;
     background-color: white;
-}
+    }
 
 
 

@@ -27,9 +27,9 @@ FIXTURE_DIR = os.path.join(BASE_DIR,'fixtures')
 SECRET_KEY = 'django-insecure-(w#^*qpgwi)ui0j091g+ou7#5k52#zdp)89&sl_bx4&v^eb%j7'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['http://ems.artistic.com/', '127.0.0.1:8000']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'ems',
     'core',
     'User',
     'maintenance',
@@ -156,3 +157,22 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,"media/")
 
 LOGIN_REDIRECT_URL = "/login"
+
+LOGGING = {
+    'version':1,
+    'disable_existing_loggers':False,
+    'handlers':{
+        'file':{
+            'level':'DEBUG',
+            'class':'logging.FileHandler',
+            'filename':'ems.log'
+        },
+    },
+    'loggers':{
+        'django':{
+            'handlers':['file'],
+            'level':'DEBUG',
+            'propogate':True,
+        },
+    },
+}
