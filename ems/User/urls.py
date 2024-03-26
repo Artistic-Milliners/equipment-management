@@ -26,7 +26,7 @@ urlpatterns = [
     path('home/unit/create', views.CreateUnitView.as_view(), name='create_unit'),
     path('machine-hours/<int:pk>', views.machineHoursAPIView.as_view(), name='machine_hours'),
     path('machine-code/<int:pk>', views.MachineCodeAPIView.as_view(), name='machine_code'),
-    path('home/complain/user', views.InitiateComplainView.as_view(), name='create_complain'),
+    path('home/complain', views.InitiateComplainView.as_view(), name='create_complain'),
     path('home/complain/review/<int:pk>', views.ComplainReviewView.as_view(), name='review_complain'),
-    
+    path('home/approvals', views.ApprovalListView.as_view(), name='approval_list')    
 ]

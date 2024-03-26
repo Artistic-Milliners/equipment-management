@@ -7,22 +7,24 @@
 
 {% block main-body %}
     <div class="header">
-      <h1>Work Order Status</h1>
-      <button class="compalain"> <a href="{% url 'maintenance:complain' %}"><i class="fa fa-plus"> New</i></a></button>
+      <h1><u>Work Order Status</u></h1>
+      <br>
+      <button class="compalain"> <a href="{% url 'User:create_complain' %}"><i class="fa fa-plus"> New</i></a></button>
     </div>
     <div class="table-responsive">
-      <table class="table align-middle">
+      <table class="table  table-bordered">
         <thead>
           <tr>
-            <th scope="col" class="bg-black" style="width: 0.4rem;">#</th>
-            <th scope="col" class="text-center bg-black" style="width: 10rem;">WORK ORDER</th>
-            <th scope="col" class="text-center bg-black description" style="width: 15rem;" >DESCRIPTION</th>
-            <th scope="col" class="text-center bg-black" style="width: 7rem;">DEPARTMENT</th>
-            <th scope="col" class="text-center bg-black">MACHINE NO.</th>
-            <!-- <th scope="col" class="text-center bg-black">PRIORITY</th> -->
+            <th scope="col" class="text-center">#</th>
+            <th scope="col" class="text-center">WORK ORDER</th>
+            <th scope="col" class="text-center">EQUIPMENT</th>
+            <th scope="col" class="text-center">DESCRIPTION</th>
+            <th scope="col" class="text-center">DEPARTMENT</th>
+            
+            <!-- <th scope="col" class="text- bg-black">PRIORITY</th> -->
             <!-- <th scope="col" class="text-center bg-black">SCHEDULE DATE</th> -->
             <!-- <th scope="col" class="text-center bg-black">TYPE</th> -->
-            <th scope="col" class="text-center bg-black">STATUS</th> 
+            <th scope="col" class="text-center">STATUS</th> 
           </tr>
         </thead>
         <tbody>
@@ -34,15 +36,15 @@
             <!-- {% else %} -->
             <!-- <tr class="table-primary align-middle text-center"> -->
             <!-- {% endif %} -->
-                <th scope="row" class="bg-black">{{ forloop.counter }}</th>
-                <td> <a href="{% url 'User:review_complain' pk=issue.pk %}">{{ issue.ticket_num}}</a></td>
-                <td class="text-start">{{ issue.description }}</td>
-                <td>{{ issue.user.department}}</td>
-                <td>{{ issue.machine_id.name }}</td>
+                <th scope="row" class="text-center">{{ forloop.counter }}</th>
+                <td class="text-center"> <a href="{% url 'User:review_complain' pk=issue.pk %}">{{ issue.ticket_num}}</a></td>
+                <td class="text-center">{{ issue.description_user }}</td>
+                <td class="text-center">{{ issue.user.department}}</td>
+                <td class="text-center">{{ issue.machine_id.name }}</td>
                 <!-- <td>{{ issue.priority  }}</td>
                 <td>{{ issue.date_time.date }} </td>
                 <td>{{ issue.type }}</td> -->
-                <td>{{issue.status}}</td>
+                <td class="text-center"><a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">{{issue.status}}</a></td>
               </tr>
           {% endfor %}
         </tbody>

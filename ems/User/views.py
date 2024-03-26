@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserChangeForm, PasswordResetForm
 from django.contrib.auth.models import User
-from core.models import CustomUser, Employee, Unit, MachineIssue, Spares, Equipment, Machines, ImageModel, Department,MachineIssueReview
+from core.models import CustomUser, MachineIssueReview, Employee, Unit, MachineIssue, Spares, Equipment, Machines, ImageModel, Department,MachineIssueReview
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required
@@ -25,6 +25,7 @@ from rest_framework.renderers import JSONRenderer
 from core.serializers import machineHoursSerializer,MachineCodeSerializer
 from django.db.models import Prefetch
 from django.http import Http404
+import logging
 
 # Create your views here.
 
@@ -62,39 +63,46 @@ class InitiateComplainView(View):
     
     def post(self,request, *args, **kwargs):
 
+
         user_id = request.user.id
-        # print(request.user)
-        try:
-            employee = Employee.objects.get(user=user_id)
-        except Employee.DoesNotExist:
-            return redirect('User:login')
-        
         equipment_id = request.POST['equipment']
-        equipment = Equipment.objects.get(pk=equipment_id)
-        
         machine_code = request.POST['code']
-        machine = Machines.objects.get(pk=machine_code)
-        
         machine_hours = request.POST['machine-hours']
         description = request.POST['description']
         image = request.FILES.getlist('image[]')
+        status_choice = MachineIssue.STATUS_CHOICES
+        # print(request.user)
+        
+        try:
+            employee = Employee.objects.get(user=user_id)
+            equipment = Equipment.objects.get(pk=equipment_id)    
+            machine = Machines.objects.get(pk=machine_code)
+        
+        except ObjectDoesNotExist as e:
+            return render(request, 'user/error/404.html', {'e': str(e)})
+        
+        
 
         issue = MachineIssue(
             user = employee,
             equipment = equipment,
             machine_id=machine,
             machine_hours=machine_hours,
-            description=description,
-            department = employee.department,
+            description_user=description,
         )
 
+        issue.status = status_choice[0][0]    
         issue.save() 
+        print(issue.status)
 
 
         if image:
             for img in image:
-                image_model = ImageModel.objects.create(image=img)
-                issue.image.add(image_model)
+                try:
+                    image_model = ImageModel.objects.create(image=img)
+                    issue.image.add(image_model)
+                except Exception as e:
+                    return render(request, 'user/error/404.html', {'e': str(e)})
 
         
         return redirect('maintenance:complain_list')
@@ -117,6 +125,8 @@ class ComplainReviewView(View):
         statusChoices = MachineIssueReview.STATUS_CHOICES
         typeChoices = MachineIssueReview.TYPE_CHOICES 
         problemNatureChoices = MachineIssueReview.PROBLEM_NATURE_CHOICES
+
+        print(type(issue.date_time))
 
         context = {'priorityChoices':priorityChoices, 
                     'statusChoices':statusChoices,
@@ -141,12 +151,13 @@ class ComplainReviewView(View):
         person = request.POST['assign-to-person']
         reviewrImages = request.FILES.getlist('machine-images[]')
 
-        try:
-            reviewer = Employee.objects.get(user=user_id)
+        try: 
+            user = CustomUser.objects.get(pk=user_id)
+            reviewer = Employee.objects.get(user=user)
             issue = MachineIssue.objects.get(pk=issue_id)
             departmentName = Department.objects.get(pk=assignDepartment)
             assignPerson = Employee.objects.get(pk=person)
-
+            
             review = MachineIssueReview(
             reviewer = reviewer,
             issue = issue,
@@ -156,24 +167,38 @@ class ComplainReviewView(View):
             problemNature = problemNature,
             assignDepartment = departmentName,
             assignPerson = assignPerson
-        )
-
+             )
             review.save()
             if reviewrImages:
                 for img in reviewrImages:
                     image = ImageModel.objects.create(img)
-                    review.reviewrImages.add(image)  
+                    review.reviewrImages.add(image) 
             
-            issue.status = MachineIssue.STATUS_CHOICES[1][1]
-
-        except(ObjectDoesNotExist) as e:
+        except Exception as e:
+            logging.error("Error Occured in ComplainReview Post Function:", exc_info=True)
             return render(request, 'user/error/404.html', {'error':str(e)})
+        
+
+
+        
+        
+        issue.status = MachineIssue.STATUS_CHOICES[1][0]
+        # print(issue.status)
+        issue.save()
 
 
 
         # print(review.reviewer)
-        return redirect('maintenance:complain_list')
+        return redirect('User:approval_list')
         
+
+class ApprovalListView(ListView):
+    status = MachineIssue.STATUS_CHOICES
+    template_name = 'user/approvalList.html'
+    queryset = MachineIssueReview.objects.all()
+    context_object_name = 'reviews'
+
+
 
 class UserDetailAPIView(APIView):
     pass
