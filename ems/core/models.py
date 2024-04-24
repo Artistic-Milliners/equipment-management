@@ -204,7 +204,8 @@ class MachineIssue(models.Model):
     description_user = models.TextField(default="EMPTY", blank=True, null=True) 
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
     image = models.ManyToManyField(ImageModel)
-    date_time = models.DateTimeField(auto_now=True)    
+    date_time = models.DateTimeField(auto_now=True)  
+    temp_review_id = models.IntegerField(blank=True, null=True) 
 
 
     def generate_ticket(self):
@@ -252,18 +253,17 @@ class MachineIssueReview(models.Model):
     )
     
     reviewer = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='reviewer') 
-    issue = models.ForeignKey(MachineIssue, on_delete=models.CASCADE)
+    issue = models.OneToOneField(MachineIssue, on_delete=models.CASCADE)
     code = models.ForeignKey(IssueList, on_delete=models.PROTECT, blank=True, null=True)
     description_reviewer = models.TextField(blank=True, null=True)
     priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES, blank=True, null=True)
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, blank=True, null=True)
-    # status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
     problemNature = models.CharField(max_length=50, choices=PROBLEM_NATURE_CHOICES, blank=True, null=True)
     assignDepartment = models.ForeignKey(Department, on_delete=models.PROTECT)
     assignPerson = models.ForeignKey(Employee, on_delete=models.SET_NULL, blank=True, null=True, related_name='task_assigned')
     reviewrImages = models.ManyToManyField(ImageModel)
     reviewDate = models.DateTimeField(auto_now=True)
-    # malfunction_part = models.ForeignKey(Spares, on_delete=models.PROTECT, default=1 )
+    malfunction_part = models.ForeignKey(Spares, on_delete=models.PROTECT)
     
 
 

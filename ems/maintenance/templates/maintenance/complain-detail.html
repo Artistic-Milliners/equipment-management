@@ -48,38 +48,38 @@
        <li class="item">
         <div class="detail-item">
           <span class="department-label">Department:</span>
-          <span class="department-value">{{ issue.user.employee.department }}</span>
+          <span class="department-value">{{ issue.user.department }}</span>
         </div>
        </li>
        <li class="item">
         <div class="detail-item">
           <span class="user-label">User:</span>
-          <span class="user-value">{{ issue.user.username }}</span>
+          <span class="user-value">{{ issue.user.user.username }}</span>
       </div>
        </li>
        <li class="item">
         <div class="detail-item">
           <span class="type-label">Problem Nature: </span>
-          <span class="type-value">{{ issue.problem_nature }}</span>
+          <span class="type-value">{{ issue.machineissuereview.problemNature }}</span>
         </div>
        </li>
        <li class="item">
         <div class="detail-item">
           <span class="type-label">Type:</span>
-          <span class="type-value">{{ issue.type }}</span>
+          <span class="type-value">{{ issue.machineissuereview.type }}</span>
         </div>
        </li>
        <li class="item">
         <div class="detail-item">
           <span class="priority-label">Priority:</span>
-          <span class="priority-value">{{ issue.priority }}</span>
+          <span class="priority-value">{{ issue.machineissuereview.priority }}</span>
         </div>
        </li>
        <li>
         <div class="detail-item">
           <div>
             <span class="description-label">Assign To (Department):</span>
-            <span class="description-value">{{ issue.department.name }}</span>
+            <span class="description-value">{{ issue.machineissuereview.assignDepartment.name }}</span>
           </div>
         </div>
        </li>
@@ -87,15 +87,15 @@
         <div class="detail-item">
           <div>
             <span class="description-label">Assign To (Person):</span>
-            <span class="description-value">{{ issue.assign_person.name }}</span>
+            <span class="description-value">{{ issue.machineissuereview.assignPerson.name }}</span>
           </div>
         </div>
        </li>
        <li class="item"></li>
         <div class="detail-item">
           <div>
-            <span class="description-label">Description:</span>
-            <span class="description-value">{{ issue.description }}</span>
+            <span class="description-label">Description (Reviewer):</span>
+            <span class="description-value">{{ issue.machineissuereview.description_reviewer }}</span>
           </div>
         </div>
        </li> 

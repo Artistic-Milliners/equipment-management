@@ -1,7 +1,8 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserChangeForm, PasswordResetForm
 from django.contrib.auth.models import User
-from core.models import CustomUser, MachineIssueReview, Employee, Unit, MachineIssue, Spares, Equipment, Machines, ImageModel, Department,MachineIssueReview
+from django.db.models.query import QuerySet
+from core.models import Contractor, CustomUser, MachineIssueReview, Employee, Unit, MachineIssue, Spares, Equipment, Machines, ImageModel, Department,MachineIssueReview
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required
@@ -22,7 +23,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
-from core.serializers import machineHoursSerializer,MachineCodeSerializer
+from core.serializers import machineHoursSerializer,MachineCodeSerializer, IssueSerializer
 from django.db.models import Prefetch
 from django.http import Http404
 import logging
@@ -112,7 +113,6 @@ class InitiateComplainView(View):
 class ComplainReviewView(View):
     def get(self, request, pk):
 
-
         departments = Department.objects.filter(dpt_type__in=['SERVICES','MAINTENANCE'])
         users = Employee.objects.filter(department__in=departments)
         
@@ -149,6 +149,7 @@ class ComplainReviewView(View):
         problemNature = request.POST['problem-nature']
         assignDepartment= request.POST['assign-to-department']
         person = request.POST['assign-to-person']
+        malfunction_part = request.POST.get_list('malfunction-part')
         reviewrImages = request.FILES.getlist('machine-images[]')
 
         try: 
@@ -189,8 +190,20 @@ class ComplainReviewView(View):
 
 
         # print(review.reviewer)
-        return redirect('User:approval_list')
+        return redirect('maintenance:complain_list')
+
+
+class ComplainClosingView(View):
+
+    def get(self, request, pk):
         
+        contractor_list = Contractor.objects.all()
+        issue = MachineIssue.objects.get(pk=pk)
+        review = MachineIssueReview.objects.get(issue=issue)
+        return render(request, "user/complain_closing.html", {"issue":issue, "review":review, "contractors":contractor_list})
+
+    def post(self, request, pk):
+        pass
 
 class ApprovalListView(ListView):
     status = MachineIssue.STATUS_CHOICES
@@ -202,7 +215,24 @@ class ApprovalListView(ListView):
 
 class UserDetailAPIView(APIView):
     pass
+
+class filterTicketAPIView(APIView):
+    def get_queryset(self):
+        return MachineIssue.objects.all()
     
+    def get(self, request, filter):
+        # print("User views inside filterTicketAPIView")
+        if filter == 'department':
+            print('inside if condition')
+            qs = self.get_queryset().order_by('-user__department')
+            print('Data for department query is {}'.format(qs))
+        else:
+            qs = self.get_queryset().order_by('date_time')
+            print(qs)
+        issueList = IssueSerializer(qs, many=True).data
+        return JsonResponse(issueList, safe=False)
+        
+
 
 class MachineCodeAPIView(APIView):
     
@@ -215,7 +245,7 @@ class MachineCodeAPIView(APIView):
             equipment = self.get_queryset().get(pk=pk)
             machines = models.Machines.objects.filter(type_of_machine=equipment)
             machine_code = MachineCodeSerializer(machines, many=True).data
-            print(machine_code)
+            # print(machine_code)
             return JsonResponse(machine_code, safe=False)
 
         except models.Equipment.DoesNotExist:
