@@ -126,15 +126,34 @@ def get_machines(request):
 
     return JsonResponse({'machine_options':machine_options})
 
-def view_complains(request):
+# def get_status(status):
+#     print("inside status")
+#     print(status)
+#     status_to_url = {
+#         'REVIEWED':'User:review_complain',
+#         'APPROVED':'maintenance:complain_approve',
+#     }
+#     url_name = status_to_url.get(status)
     
-    issue_list = MachineIssue.objects.all()
+#     if url_name:
+#         print(type(url_name))
+#         return f'{url_name}'
+#     else:
+#         print('status {}'.format(status))
+#         return 'maintenace:complain_list'
+
+
+def view_complains(request):
+
+    issue_list = MachineIssue.objects.all().order_by('-date_time')
+    print('rendering template from maintenance module view complain ')
 
     return render(request, "maintenance/complain-view.html", {'issue_list':issue_list})
 
 
 def complain_detail(request, pk):
     issue = MachineIssue.objects.get(pk=pk)
+    
     if issue.status == 'REJECTED':
         return render(request, "maintenance/rejected-complain-detail.html", {'issue':issue})
     if issue.status == 'APPROVED':
@@ -202,7 +221,7 @@ def complain_edit(request, pk):
         ('MODERATE', 'M'),
         ('LOW', 'L')
     )
-
+ 
     type_choices = (
         ('CORRECTIVE', 'C'),
         ('PREVENTIVE', 'P'),

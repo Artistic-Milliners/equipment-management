@@ -1,5 +1,4 @@
 {% extends "user/home.html" %}
-9
 
 {% block title %}
   Complain View
@@ -7,9 +6,17 @@
 
 {% block main-body %}
     <div class="header">
-      <h1><u>Work Order Status</u></h1>
-      <br>
+      <h1><u>Work Order Status</u></h1> 
       <button class="compalain"> <a href="{% url 'User:create_complain' %}"><i class="fa fa-plus"> New</i></a></button>
+    </div>
+    <hr>
+    <div id="filter-div">
+      <p>Filter</p>
+      <select name="filter" id="filter" onchange="filterData('filter')">
+        <option value="date_time">Date/Time</option>
+        <option value="status">Status</option>
+        <option value="department">Department</option>
+      </select>
     </div>
     <div class="table-responsive">
       <table class="table  table-bordered">
@@ -18,8 +25,8 @@
             <th scope="col" class="text-center">#</th>
             <th scope="col" class="text-center">WORK ORDER</th>
             <th scope="col" class="text-center">EQUIPMENT</th>
-            <th scope="col" class="text-center">DESCRIPTION</th>
             <th scope="col" class="text-center">DEPARTMENT</th>
+            <th scope="col" class="text-center">DESCRIPTION</th>
             
             <!-- <th scope="col" class="text- bg-black">PRIORITY</th> -->
             <!-- <th scope="col" class="text-center bg-black">SCHEDULE DATE</th> -->
@@ -37,47 +44,76 @@
             <!-- <tr class="table-primary align-middle text-center"> -->
             <!-- {% endif %} -->
                 <th scope="row" class="text-center">{{ forloop.counter }}</th>
-                <td class="text-center"> <a href="{% url 'User:review_complain' pk=issue.pk %}">{{ issue.ticket_num}}</a></td>
-                <td class="text-center">{{ issue.description_user }}</td>
-                <td class="text-center">{{ issue.user.department}}</td>
+                <td class="text-center"> 
+                  <a {% if issue.status == 'PENDING' %}
+                          href="{% url 'User:review_complain' pk=issue.pk %}"
+                        {% else %} 
+                          href="{% url 'maintenance:complain_detail' pk=issue.pk %}"
+                        {% endif %}
+                        >
+                    {{ issue.ticket_num}}
+                  </a>
+                </td>
                 <td class="text-center">{{ issue.machine_id.name }}</td>
+                <td class="text-center">{{ issue.user.department}}</td>
+                <td class="text-center">{{ issue.description_user }}</td>
                 <!-- <td>{{ issue.priority  }}</td>
                 <td>{{ issue.date_time.date }} </td>
                 <td>{{ issue.type }}</td> -->
-                <td class="text-center"><a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">{{issue.status}}</a></td>
+                <td class="text-center">{{issue.status}}</td>
               </tr>
           {% endfor %}
         </tbody>
       </table>
-
-    </div>
-    
-<!-- 
-    {% for issue in issue_list  %}
-    <div class="issue-section">
-      <div class="issue-detail issue-side">
-        <div class="ticket">
-          <h1> <a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">Ticket# {{issue.ticket_num}}</a> <span></span> </h1>
-        </div>
-          
-        <div class="issue-detail equipment-detail">
-            <div class="equipment">
-              <h4>Equipment: {{ issue.equipment.name }} </h4>
-            </div>
-            <div class="machine">
-              <h4>Machine No: {{ issue.machine.name }} </h4>
-            </div>
-        </div>
-        <div class="issue-detail">
-            <h4>Description:</h4>
-            <p>{{ issue.description }}</p>
+      
+      {% for issue in issue_list  %}
+      <div class="issue-section">
+        <div class="issue-detail issue-side">
+          <div class="ticket">
+            <h1> <a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">Ticket# {{issue.ticket_num}}</a> <span></span> </h1>
+          </div>
+  
+          <div class="issue-detail equipment-detail">
+              <div class="equipment">
+                <h4>Equipment: {{ issue.equipment.name }} </h4>
+              </div>
+              <div class="machine">
+                <h4>Machine No: {{ issue.machine.name }} </h4>
+              </div>
+          </div>
+          <div class="issue-detail">
+              <h4>Description:</h4>
+              <p>{{ issue.description }}</p>
+          </div>
         </div>
       </div>
+      {% endfor %}
+
+
+
     </div>
-    {% endfor %}
+    <script>
+      async function filterData(id){
+        const elem = document.getElementById(id);
+        // console.log(elem.value)
+        // const selectIndex = elem.selectIndex;
+        // const selectOption = elem.options[selectIndex];
+        const selectValue = elem.value;
+        console.log(selectValue)
+        const url = `http://127.0.0.1:8000/machine-issue/${selectValue}`;
+        console.log(url)
+        const response = await fetch(url);
+        const data = await response.json();
 
-    -->
+        if(!response.ok){
+          throw new Error(`Error fetching Issue List:${response.status}`);
+        }
 
+        console.log(data)
+
+
+      }
+    </script>
 {% endblock main-body %}
 
 
