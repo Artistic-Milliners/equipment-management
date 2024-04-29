@@ -6,7 +6,7 @@
 {% block main-body %}
     <ul>
         {% for user in users %}
-            <a href="{% url 'User:detail_user' %}"><li>{{user.name}}</li></a>  
+            <a href="{% url 'User:detail_user' pk=user.pk %}"><li>{{user.name}}</li></a>  
         {% endfor %}
     </ul>
 {% endblock main-body %}
