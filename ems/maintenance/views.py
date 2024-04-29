@@ -153,7 +153,6 @@ def view_complains(request):
 
 def complain_detail(request, pk):
     issue = MachineIssue.objects.get(pk=pk)
-    
     if issue.status == 'REJECTED':
         return render(request, "maintenance/rejected-complain-detail.html", {'issue':issue})
     if issue.status == 'APPROVED':

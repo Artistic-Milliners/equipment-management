@@ -91,6 +91,20 @@
           </div>
         </div>
        </li>
+       <li>
+        <div class="detail-item">
+          <div>
+            <span class="description-label">Malfunction part</span>
+            <span class="description-value">
+              {% for spares in issue.machineissuereview.malfunction_part.all  %}
+                  <ul>
+                    <li>{{ spares }}</li>
+                  </ul>           
+              {% endfor %}
+            </span>
+          </div>
+        </div>
+       </li>
        <li class="item"></li>
         <div class="detail-item">
           <div>

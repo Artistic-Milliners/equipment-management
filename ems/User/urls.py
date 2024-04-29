@@ -21,7 +21,7 @@ urlpatterns = [
     path('home/spares/deleteSpare/<int:pk>', views.spare_delete, name='spares_delete'),
     path('home/spares/issueSpare/<int:pk>', views.spare_issue, name='spares_issue'),
     path('home/users',views.ListUsers.as_view(), name='list_users'),
-    path('home/users/<int:pk>',views.ListUsers.as_view(), name='detail_user'),
+    path('home/users/<int:pk>',views.DetailUserView.as_view(), name='detail_user'),
     path('home/unit', views.ListUnitView.as_view(),name='list_unit'),
     path('home/unit/create', views.CreateUnitView.as_view(), name='create_unit'),
     path('machine-hours/<int:pk>', views.machineHoursAPIView.as_view(), name='machine_hours'),
@@ -30,5 +30,6 @@ urlpatterns = [
     path('home/complain', views.InitiateComplainView.as_view(), name='create_complain'),
     path('home/complain/review/<int:pk>', views.ComplainReviewView.as_view(), name='review_complain'),
     path('home/approvals', views.ApprovalListView.as_view(), name='approval_list'),
-    path('home/complain/closing/<int:pk>', views.ComplainClosingView.as_view(), name="complain_closing"),   
+    path('home/complain/closing/<int:pk>', views.ComplainClosingView.as_view(), name="complain_closing"),
+    path('home/complain/closing/complainList', views.ClosedComplainListView.as_view(), name="complain_closing_list")   
 ]

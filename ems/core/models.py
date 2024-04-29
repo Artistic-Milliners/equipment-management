@@ -236,6 +236,7 @@ class MachineIssueReview(models.Model):
         ('REVIEWED','Reviewed'),
         ('APPROVED','Approved'),
         ('REJECTED', 'Rejected'),
+        ('CLOSED', 'Closed')
 
     ]
 
@@ -253,7 +254,7 @@ class MachineIssueReview(models.Model):
     )
     
     reviewer = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='reviewer') 
-    issue = models.OneToOneField(MachineIssue, on_delete=models.CASCADE)
+    issue = models.OneToOneField(MachineIssue, on_delete=models.CASCADE, related_name='machineissue')
     code = models.ForeignKey(IssueList, on_delete=models.PROTECT, blank=True, null=True)
     description_reviewer = models.TextField(blank=True, null=True)
     priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES, blank=True, null=True)
@@ -263,7 +264,7 @@ class MachineIssueReview(models.Model):
     assignPerson = models.ForeignKey(Employee, on_delete=models.SET_NULL, blank=True, null=True, related_name='task_assigned')
     reviewrImages = models.ManyToManyField(ImageModel)
     reviewDate = models.DateTimeField(auto_now=True)
-    malfunction_part = models.ForeignKey(Spares, on_delete=models.PROTECT)
+    malfunction_part = models.ManyToManyField(Spares, related_name="spares" )
     
 
 
@@ -279,10 +280,19 @@ class Remarks(models.Model):
        return super().save(*args, **kwargs)
 
 
-class IssueResolution(models.Model):
-    issue = models.OneToOneField(MachineIssue, on_delete=models.DO_NOTHING)
-    date_started = models.DateTimeField(auto_now=True)
-    date_ended = models.DateTimeField(blank=True, null=True)
-    contractor = models.ForeignKey(Contractor, related_name='resolved_issues', on_delete=models.DO_NOTHING)
-    employee = models.ForeignKey(Employee, related_name="employee", on_delete=models.PROTECT, default=None)
-    remarks = models.TextField(default="EMPTY")
+class IssueClosing(models.Model):
+
+    issueReview = models.OneToOneField(MachineIssueReview, on_delete=models.DO_NOTHING)
+    date_ended = models.DateTimeField(auto_now=True)
+    contractor = models.ForeignKey(Contractor, related_name='resolved_issues', on_delete=models.DO_NOTHING, blank=True, null=True)
+    machineHours = models.IntegerField()
+    supervisor = models.CharField(max_length=50, null=True, blank=True)
+    technician = models.CharField(max_length=50, null=True, blank=True)
+    solutionDescription = models.TextField(default="EMPTY")
+    duration = models.IntegerField()
+    remarks = models.TextField(default="EMPTY") 
+    image = models.ManyToManyField(ImageModel, related_name="closingImages")
+    equipment_status = models.CharField(max_length=10)
+
+    def __str__(self) -> str:
+        return f"{self.issueReview.reviewer.name}\n{self.issueReview.issue.description_user}"

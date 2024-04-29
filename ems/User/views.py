@@ -2,7 +2,10 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserChangeForm, PasswordResetForm
 from django.contrib.auth.models import User
 from django.db.models.query import QuerySet
-from core.models import Contractor, CustomUser, MachineIssueReview, Employee, Unit, MachineIssue, Spares, Equipment, Machines, ImageModel, Department,MachineIssueReview
+from core.models import (Contractor, CustomUser, MachineIssueReview, Employee, 
+                         Unit, MachineIssue, Spares, Equipment, 
+                         Machines, ImageModel, Department,
+                         MachineIssueReview, IssueClosing)
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required
@@ -32,12 +35,16 @@ import logging
 
 
 class ListUsers(ListView):
+    
     model = Employee
     context_object_name = "users"
     template_name = "user/listusers.html"
 
 class DetailUserView(DetailView):
-    pass
+    
+    model = Employee
+    context_object_name = 'user'
+    template_name = "user/detailUser.html"
 
 
 class CreateUnitView(CreateView):
@@ -149,15 +156,20 @@ class ComplainReviewView(View):
         problemNature = request.POST['problem-nature']
         assignDepartment= request.POST['assign-to-department']
         person = request.POST['assign-to-person']
-        malfunction_part = request.POST.get_list('malfunction-part')
-        reviewrImages = request.FILES.getlist('machine-images[]')
+        malfunction_part = request.POST.getlist('malfunction-part')
+        # logging.info(f"malfunction part {malfunction_part}")
 
+        reviewrImages = request.FILES.getlist('machine-images[]')
+        
         try: 
             user = CustomUser.objects.get(pk=user_id)
             reviewer = Employee.objects.get(user=user)
             issue = MachineIssue.objects.get(pk=issue_id)
             departmentName = Department.objects.get(pk=assignDepartment)
             assignPerson = Employee.objects.get(pk=person)
+
+
+
             
             review = MachineIssueReview(
             reviewer = reviewer,
@@ -174,6 +186,10 @@ class ComplainReviewView(View):
                 for img in reviewrImages:
                     image = ImageModel.objects.create(img)
                     review.reviewrImages.add(image) 
+            if malfunction_part:
+                for pk in malfunction_part:
+                    part = Spares.objects.get(pk=pk)
+                    review.malfunction_part.add(part)
             
         except Exception as e:
             logging.error("Error Occured in ComplainReview Post Function:", exc_info=True)
@@ -200,10 +216,61 @@ class ComplainClosingView(View):
         contractor_list = Contractor.objects.all()
         issue = MachineIssue.objects.get(pk=pk)
         review = MachineIssueReview.objects.get(issue=issue)
+        department = Department.objects.all()
         return render(request, "user/complain_closing.html", {"issue":issue, "review":review, "contractors":contractor_list})
 
     def post(self, request, pk):
-        pass
+        
+        machineHoursFailure = request.POST["machine-hours"]
+        serviceProvider = request.POST["resolvedby"]
+        techName = request.POST["technician"]
+        supervisor = request.POST["supervisor"]
+        solution = request.POST["solution-description"]
+        equipment_status = request.POST["equipment-status"]
+        duration = request.POST["duration"]
+        remarks = request.POST["additional-remarks"]
+        images = request.POST.getlist("image[]")
+
+        try:
+            issue= MachineIssue.objects.select_related("machineissue").get(pk=pk)
+            if serviceProvider:
+                contractor = Contractor.objects.get(pk=serviceProvider)
+            else:
+                contractor = serviceProvider
+        except Exception as e:
+            return render(request, "user/error/404.html", {'error':str(e)})
+        
+        closingForm = IssueClosing.objects.create(
+            issueReview=issue.machineissue,
+            contractor=contractor,
+            machineHours=machineHoursFailure,
+            supervisor=supervisor,
+            technician=techName,
+            solutionDescription=solution,
+            duration=duration,
+            remarks=remarks,
+            equipment_status = equipment_status
+        )
+
+        closingForm.save()
+
+        for image in images:
+            closingForm.image.add(image)
+            closingForm.save()
+        
+        return redirect("User:complain_closing_list")
+
+
+
+class ClosedComplainListView(ListView):
+
+    template_name = 'user/closedComplainList.html'
+    queryset = IssueClosing.objects.all()
+    context_object_name = 'closedComplains'
+
+
+              
+
 
 class ApprovalListView(ListView):
     status = MachineIssue.STATUS_CHOICES
