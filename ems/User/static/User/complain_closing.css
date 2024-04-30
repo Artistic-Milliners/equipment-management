@@ -1,0 +1,122 @@
+body{
+    font-family: 'Times New Roman', Times, serif;
+}
+
+input{
+    padding: 10px;
+    margin:5px;
+}
+
+select{
+    padding: 10px;
+    margin: 5px;
+}
+
+.form-container{
+    margin: 0 auto;
+    width: 80%;
+}
+
+form{
+    display: flex;
+    flex-direction: column;
+}
+
+.three-row{
+
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 20px;
+}
+
+
+
+.dual-row{
+
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 20px;
+}
+
+.three-row > label{
+    margin:20px 2px 0px 0px;
+
+}
+
+.dual-row > label{
+    margin: 20px 2px 5px 0px;
+}
+
+
+
+.single-row > input,
+.single-row > textarea{
+    margin: 10px 0 0 0;
+    width: 100%;
+} 
+
+.single-row > label{
+    margin: 20px 0 0 0;
+
+} 
+
+form > input{
+    margin: 20px 0 0 0;
+    width: 100%;
+}
+
+form > label{
+    margin: 20px 0 0 0;
+
+}
+
+.submission{
+    display: flex;
+    justify-content: space-between;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+
+}
+
+.btn-primary{
+    color: white;
+    background-color: blue;
+    opacity: 70%;
+    border: 0cap;
+    border-radius: 5px;
+}
+
+.btn-danger{
+    color: white;
+    background-color: green;
+    opacity: 70%;
+    border: 0cap;
+    border-radius: 5px;
+}
+
+.button{
+    font-size: 1.2rem;
+    padding: 10px;
+}
+
+#spares {
+    width: 100%; /* Adjust the width as necessary, or use a specific width like 300px */
+    min-height: 20px; /* Minimum height to start with */
+    max-height: 100px; /* Optional: Set a max height if you want */
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f8f8f8;
+    font-size: 16px;
+    white-space: normal; /* Ensures that text wraps */
+    word-wrap: break-word; /* Wraps text at any character in case of overflow */
+    overflow-y: auto; /* Allows scrolling vertically if max-height is reached */
+  }
+
+  .complain-number{
+    border: black;
+  }
