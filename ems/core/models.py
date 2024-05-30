@@ -293,6 +293,20 @@ class IssueClosing(models.Model):
     remarks = models.TextField(default="EMPTY") 
     image = models.ManyToManyField(ImageModel, related_name="closingImages")
     equipment_status = models.CharField(max_length=10)
+    temprory_close = models.BooleanField()
+
+
+    def totalDays(self):
+        total_days = self.date_ended.date()-datetime.date()
+        
+        if self.temprory_close and total_days > 7:
+            pass
+
+
+             
+
+
+
 
     def __str__(self) -> str:
         return f"{self.issueReview.reviewer.name}\n{self.issueReview.issue.description_user}"

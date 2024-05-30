@@ -46,7 +46,7 @@ h6{
 
 
 .detail-section{
-    padding: 1em;
+    padding: 4em;
     margin: 0 auto;
     background-color: #3D4E6F;
     display: flex;
@@ -61,7 +61,7 @@ h6{
 .description{
     box-sizing: border-box;
     margin: 0;
-    padding:0;
+    padding:0em;
     max-width: 500px;
 }
 
@@ -72,7 +72,7 @@ h6{
     flex-direction: column;
     text-align: center;
     height: auto;
-    padding:0;
+    padding:1.5rem;
     background-image: linear-gradient(131.83deg, #ebebeb 0%,     #f8f8f8f1 99.21%);
     border-radius: 10px;
 }

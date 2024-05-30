@@ -60,57 +60,55 @@
        <li class="item">
         <div class="detail-item">
           <span class="type-label">Problem Nature: </span>
-          <span class="type-value">{{ issue.machineissuereview.problemNature }}</span>
+          <span class="type-value">{{ issue.machineissue.problemNature }}</span>
         </div>
        </li>
        <li class="item">
         <div class="detail-item">
           <span class="type-label">Type:</span>
-          <span class="type-value">{{ issue.machineissuereview.type }}</span>
+          <span class="type-value">{{ issue.machineissue.type }}</span>
         </div>
        </li>
        <li class="item">
         <div class="detail-item">
-          <span class="priority-label">Priority:</span>
-          <span class="priority-value">{{ issue.machineissuereview.priority }}</span>
+          <span class="type-label">Priority:</span>
+          <span class="type-value">{{ issue.machineissue.priority }}</span>
         </div>
        </li>
-       <li>
+       <li class="item">
         <div class="detail-item">
-          <div>
-            <span class="description-label">Assign To (Department):</span>
-            <span class="description-value">{{ issue.machineissuereview.assignDepartment.name }}</span>
-          </div>
+        
+            <span class="type-label">Assigned Depart:</span>
+            <span class="type-value">{{ issue.machineissue.assignDepartment.name }}</span>
+        
         </div>
        </li>
-       <li>
+       <li class="item">
         <div class="detail-item">
-          <div>
-            <span class="description-label">Assign To (Person):</span>
-            <span class="description-value">{{ issue.machineissuereview.assignPerson.name }}</span>
-          </div>
+          
+            <span class="type-label">Assigned Person:</span>
+            <span class="type-value">{{ issue.machineissue.assignPerson.name }}</span>
+        
         </div>
        </li>
-       <li>
+       <li class="item">
         <div class="detail-item">
-          <div>
-            <span class="description-label">Malfunction part</span>
-            <span class="description-value">
-              {% for spares in issue.machineissuereview.malfunction_part.all  %}
+          
+            <span class="type-label">Malfunction part:</span>
+            <span class="type-value">
+              {% for spares in issue.machineissue.malfunction_part.all  %}
                   <ul>
                     <li>{{ spares }}</li>
                   </ul>           
               {% endfor %}
             </span>
-          </div>
+          
         </div>
        </li>
-       <li class="item"></li>
+       <li class="item">
         <div class="detail-item">
-          <div>
-            <span class="description-label">Description (Reviewer):</span>
-            <span class="description-value">{{ issue.machineissuereview.description_reviewer }}</span>
-          </div>
+            <span class="type-label">Description (Reviewer):</span>
+            <span class="type-value">{{ issue.machineissue.description_reviewer }}</span>
         </div>
        </li> 
       </ul>
@@ -138,39 +136,39 @@
   
     <div class="slideshow-container" onload="showImage()">
       <!-- Full-width images with number and caption text -->
+      {% if issue.image.all %}
       {% for image in issue.image.all  %}
-        <div class="mySlides {% if forloop.first %} first-img {% endif %}">
-          <div class="numbertext">{{ forloop.counter }}/{{issue.image.all|length }}</div>
-          <a href="{{ image.image.url }}"><img src="{{ image.image.url }}" alt="Image not available"></a>
-          <div class="text">Caption Text</div>
-        </div>
-        {% endfor %}
-        
-
-        <!-- Next and previous buttons -->
-        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
-        <a class="next" onclick="plusSlides(1)">&#10095;</a>
-
-          <!-- The dots/circles -->
-      <div style="text-align:center">
-        {% for image in issue.image.all %}
-        <span class="dot" onclick="currentSlide('{{ forloop.counter }}')"></span>
-        {% endfor %}
+      <div class="mySlides {% if forloop.first %} first-img {% endif %}">
+        <div class="numbertext">{{ forloop.counter }}/{{issue.image.all|length }}</div>
+        <a href="{{ image.image.url }}"><img src="{{ image.image.url }}" alt="Image not available"></a>
+        <div class="text">Caption Text</div>
       </div>
-    </div>
-    <br>
-
- 
+      {% endfor %}
       
 
-    
+      <!-- Next and previous buttons -->
+      <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+      <a class="next" onclick="plusSlides(1)">&#10095;</a>
 
+        <!-- The dots/circles -->
+    <div style="text-align:center">
+      {% for image in issue.image.all %}
+      <span class="dot" onclick="currentSlide('{{ forloop.counter }}')"></span>
+      {% endfor %}  
+    </div>
 
-
+      {% else %}
+      <div>
+        <img src="{% static 'user/Image_not_available.png' %}" alt="No Images">
+      </div>  
+      
+      {% endif %}
+      
+    </div>
+    <br>
+  
+  
   </div> 
-
-
-    
   </div>
 
     

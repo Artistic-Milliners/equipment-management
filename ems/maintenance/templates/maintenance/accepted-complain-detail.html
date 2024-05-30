@@ -10,10 +10,10 @@
   <ul>
     <li>{{ issue.ticket_num }}</li>
     <li>{{ issue.description_user }}</li>
-    <li>{{ issue.machineissuereview.type }}</li>
+    <li>{{ issue.machineissue.type }}</li>
     <li>{{ issue.status }}</li>
-    <li>{{ issue.machineissuereview.assignDepartment.name }}</li>
-    {% for spare in issue.machineissuereview.malfunction_part.all %}
+    <li>{{ issue.machineissue.assignDepartment }}</li>
+    {% for spare in issue.machineissue.malfunction_part.all %}
       <li>{{spare}}</li>
     {% endfor %}
     <a class="btn-primary" href="{%url 'User:complain_closing' pk=issue.pk %}">Close Complain</a>
