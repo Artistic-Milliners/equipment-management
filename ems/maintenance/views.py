@@ -145,10 +145,10 @@ def get_machines(request):
 
 def view_complains(request):
 
+    user = request.user.id
     issue_list = MachineIssue.objects.all().order_by('-date_time')
-    print('rendering template from maintenance module view complain ')
-
-    return render(request, "maintenance/complain-view.html", {'issue_list':issue_list})
+    emp = Employee.objects.get(user=user)
+    return render(request, "maintenance/complain-view.html", {'issue_list':issue_list, 'emp':emp})
 
 
 def complain_detail(request, pk):

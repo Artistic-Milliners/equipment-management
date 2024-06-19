@@ -1,10 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{% static 'user/login.css' %}">
+  </head>
+  <body>
+    
+    <div class="container">
 
-<h2>Log In</h2>
-{% if error %}
-  <h1> {{ error }} </h1>
-{% endif %}
-<form method="post" action="{% url 'User:login' %}" >
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Log In">
-</form>
+      <div class="top-bar">
+        <img src="" alt="Logo">
+        <p>MAXIMO</p>
+      </div>
+      <h2>Log In</h2>
+    
+      {% if error %}
+        <div class="error">
+          <h1> {{ error }} </h1>
+        </div>
+      {% endif %}
+    
+      <form method="post" action="{% url 'User:login' %}" >
+          {% csrf_token %}
+          
+          <label for="username">User Name</label>
+          <input class="box" type="text" name="username" id="username">
+          
+          <label for="passowrd">Password</label>
+          <input class="box" type="password" name="password" id="password">
+
+
+          <button type="submit">Log In</button>      
+        </form>
+
+    </div>
+    
+    
+    <script src="" async defer></script>
+  </body>
+</html>

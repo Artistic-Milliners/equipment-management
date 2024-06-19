@@ -1,5 +1,199 @@
-.navbar-top{
-    display: flex;
-    flex: 0 0 auto;
-    justify-content: space-between;
+body{
+    font-family:Century Gothic,CenturyGothic,AppleGothic,sans-serif;
+    background-color:#183153;
 }
+
+hr{
+    border: none;
+    height: 2px;
+    background-color: white;
+}
+
+h1{
+    text-align: center;
+}  
+
+.navbar-top{
+    width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    background-color: #183153;
+    
+}
+.navbar-brand {
+    margin-top: 0.5em;
+    margin-left: 0.2em;
+}
+.navbar-brand > a > img{
+    width: 75%;
+    max-height: auto;
+}
+
+.nav-icon-left{
+    display: flex;
+    flex-direction: row;
+    margin-top:0.5em;
+    margin-left: 0.2em;
+    margin-right: 0.5em;
+}
+
+.nav-icon-left i{
+    color: #FFD43A;
+
+}
+
+/* The side navigation menu */
+/* .sidebar {
+    margin: 0;
+    padding: 0;
+    width: 200px;
+    background-color: #0E98BA;
+
+    position: fixed;
+    height: 100%;
+    overflow: auto;
+  } */
+
+
+  
+  /* Sidebar links */
+ .offcanvas{
+    background-color: rgba(0, 0, 0, 0.1);
+ }
+  .offcanvas-body{
+    width: 50%;
+    height:100%;
+    justify-content: center;
+    padding:0px;
+    margin: 0;
+  }
+
+  .offcanvas-header{
+    font-family: Century Gothic,CenturyGothic,AppleGothic,sans-serif;
+    background-color: #183153;
+    color: white;
+    justify-content: space-between;
+    margin: 0;
+  }
+
+  .btn-close{
+    background-color: white;
+    justify-self: flex-end;
+  }
+
+  .offcanvas-title{
+    font-size: x-large;
+    font-weight: Bold;
+  }
+
+ 
+  .sidebar{
+    font-family: Century Gothic,CenturyGothic,AppleGothic,sans-serif; 
+    height: 100%;
+    margin-top: 0;
+    background-color: #183153;
+    opacity: 1;
+    justify-content: flex-start;
+    padding: 1em;
+    padding-left:1em;
+    z-index: 1;
+}
+
+  .sidebar ul{
+    list-style-type: None;
+  }
+
+  .sidebar li{
+    font-size: large;
+    color: white;
+    padding:2px;
+    margin-top:1.5rem ;
+    text-align: start;
+  }
+
+  .sidebar li > a{
+    text-decoration: none;
+    color: white;
+  }
+  
+  /* Active/current link */
+  .sidebar li.active {
+    background-color: #04AA6D;
+    color: white;
+  }
+  
+  /* Links on mouse-over */
+  .sidebar a:hover {
+    background-color: white;
+    color: white;
+  }
+
+.btn-info
+.fa-bars{
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.container{
+    padding:0;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    
+}
+.card{
+    margin-left: 10%;
+    margin-top: 30%;
+    padding: 4%;
+    width: 35vw;
+    height: 15vh;
+    border: 2px solid none;
+    border-style: outset;
+    background-color: rgb(255, 212, 59,1);   
+    border-radius: 15px;
+}
+
+.card i{
+    color: #183153;
+    padding-top: 1.5rem;
+    align-content: center;
+    text-align: center;
+}
+.card p, a{
+    text-decoration: none;
+    color: #183153;
+    align-content: center;
+    text-align: center;
+}
+
+
+  
+  /* Page content. The value of the margin-left property should match the value of the sidebar's width property */
+  /* div.content {
+    margin-left: 200px;
+    padding: 1px 16px;
+    height: 1000px;
+  } */
+  
+  /* On screens that are less than 700px wide, make the sidebar into a topbar */
+  /* @media screen and (max-width: 700px) {
+    .sidebar {
+      width: 100%;
+      height: auto;
+      position: relative;
+    }
+    .sidebar a {float: left;}
+    div.content {margin-left: 0;}
+  } */
+  
+  /* On screens that are less than 400px, display the bar vertically, instead of horizontally */
+  /* @media screen and (max-width: 400px) {
+    .sidebar a {
+      text-align: center;
+      float: none;
+    }
+  } */
+
+
+  
+  

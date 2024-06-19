@@ -60,13 +60,14 @@ class ListUnitView(ListView):
 
 
 class InitiateComplainView(View):
-    template_name = "user/initiate-complain.html"
     
+    template_name = "user/initiate-complain.html"
+
     def get(self, request):
         user = request.user
-        # print(user)
         equipment = models.Equipment.objects.all()
-        return render(request, self.template_name, {'user':user, 'equipments':equipment})
+        departments = Department.objects.filter(dpt_type__in=['SERVICES','MAINTENANCE'])
+        return render(request, self.template_name, {'user':user, 'equipments':equipment, 'departments':departments})
     
     
     def post(self,request, *args, **kwargs):
@@ -79,12 +80,14 @@ class InitiateComplainView(View):
         description = request.POST['description']
         image = request.FILES.getlist('image[]')
         status_choice = MachineIssue.STATUS_CHOICES
+        error_department = request.POST["error-department"]
         # print(request.user)
         
         try:
             employee = Employee.objects.get(user=user_id)
             equipment = Equipment.objects.get(pk=equipment_id)    
             machine = Machines.objects.get(pk=machine_code)
+            error_department = Department.objects.get(pk=error_department)
         
         except ObjectDoesNotExist as e:
             return render(request, 'user/error/404.html', {'e': str(e)})
@@ -97,6 +100,7 @@ class InitiateComplainView(View):
             machine_id=machine,
             machine_hours=machine_hours,
             description_user=description,
+            error_department=error_department
         )
 
         issue.status = status_choice[0][0]    
@@ -356,8 +360,8 @@ def login_view(request):
                 return render(request,'registration/login.html',{'form':form})
         
     else:
-        form = AuthenticationForm()
-        return render(request,'registration/login.html',{'form':form})
+        # form = AuthenticationForm()
+        return render(request,'registration/login.html')
 
 def logout_view(request):
     logout(request)
