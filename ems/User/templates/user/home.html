@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="https://kit.fontawesome.com/a06ab02596.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="{% static 'user/css/custom.css' %}">
-    <link rel="stylesheet" href="{% static 'maintenance/css/custom-complain.css' %}">
-    <link rel="stylesheet" href="{% static 'user/css/spares.css' %}">
+    <link rel="stylesheet" href="{% static 'maintenance/css/complain-list.css' %}">
+    <link rel="stylesheet" href="{% static 'User/home.css' %}">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
@@ -23,29 +23,25 @@
     {% endblock title %}</title>
 </head>
 <body>
-    <div class="container">
+    <div class="">
             <!-- NAVBAR STARTS -->
     <nav class="navbar-top">
-        <a class="navbar-brand" href="{% url 'User:home' %}">
-            <img src="{% static 'index/images/am_logo.png' %}" alt="Logo" >
-        </a>
-        <div class="nav-icon-left">
-            <a href="{% url 'User:spares' %}">
-                <i class="fa fa-gear"></i>
-                <!-- <img  src="{% static 'user/images/Spares.png' %}" alt="Spares" /> -->
+        <div class="navbar-brand">
+            <a  href="{% url 'User:home' %}">
+                <img src="{% static 'index/images/output-onlinepngtools (1).png' %}" alt="Logo" >
             </a>
-
+        </div>
+        
+        <div class="nav-icon-left">
             <a href="{% url 'User:logout' %}">
-
                 {% if user.is_authenticated %}
                     <i class="fa fa-sign-out" aria-hidden="true"></i>  
                 {% endif %}
-                
             </a>
             
-            <button class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">
+            <div type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">
                 <i class="fa fa-bars"></i>
-            </button>
+            </div>
           
         </div>
           
@@ -53,54 +49,63 @@
     </nav>
 
     <!-- NAVBAR ENDS -->
+    <hr>
     <!-- SIDEBAR STARTS -->
-
 
     <div class="offcanvas offcanvas-start" data-bs-scroll="true" tabindex="-1" id="offcanvasWithBothOptions" aria-labelledby="offcanvasWithBothOptionsLabel">
         <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="offcanvasWithBothOptionsLabel">Equipments</h5>
+            <h5 class="offcanvas-title" id="offcanvasWithBothOptionsLabel">MENU</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-            <ul class="list-unstyled components">
-                {% block sidebar %}
-                {% for equipment,machines in equipments.items %}
-                <li>
-                    <a class="btn dropdown-toggle m-1" data-bs-toggle="collapse" href="#equipment" role="button" aria-expanded="false" aria-controls="collapseExample">
-                        {{equipment|safe}}
-                    </a><i class="fas fa-caret-down"></i>
-                </li>
-                <div class="collapse" id="equipment">
-                    {% for m in machines  %}
-                    <a class="btn btn-primary m-1" href="{% url 'User:machineDetail' pk=m.pk%}"><li>{{m.name}}</li></a>  
-                    {% endfor %}        
-                    </li>  
-                </div>
-                {% endfor %} 
-
-                {% endblock sidebar %}
-            </ul>
+            {% block sidebar %}
+            <div class="sidebar">
+                <ul class="list-unstyled">
+                    
+                    
+                        <li><a  href="{% url 'User:add_machine' %}"> Add Machine</a></li>
+                        <li><a  href="{% url 'User:create_complain' %}">Complain</a></li>
+                        <li><a  href="{% url 'maintenance:complain_list' %}">Ticket List</a></li>
+                        <li><a  href="{% url 'User:spares' %}">Spares</a></li>
+                        <li><a  href="{% url 'User:list_unit' %}">Unit Detail</a></li>
+                        <li><a  href="{% url 'User:list_users' %}">User List</a></li>
+    
+                    
+                </ul>
+            </div>
+            {% endblock sidebar %}
         </div>
     </div>
     <!-- SIDEBAR ENDS -->
 
     <!-- MAIN BODY STARTS -->
+
+    
     
     <div class="container">
 
+    
         {% block main-body %}
-        <h1>Home Page</h1>
-        <a class="btn btn-primary" href="{% url 'User:add_machine' %}"> Add Machine</a>
-        <a class="btn btn-primary" href="{% url 'User:create_complain' %}">Complain</a>
-        <a class="btn btn-primary" href="{% url 'maintenance:complain_list' %}">Ticket List</a>
-        <a class="btn btn-primary" href="{% url 'User:spares' %}">Spares</a>
-        <a class="btn btn-primary" href="{% url 'User:list_unit' %}">Unit Detail</a>
-        <a class="btn btn-primary" href="{% url 'User:list_users' %}">User List</a>
-        <h2>Available Machine</h2>
+        <div class="card">
+            <a href="{% url 'User:create_complain' %}"><i class=" fa fa-file fa-2x"></i></a>
+            <p>Complain</p>
+            
+            
+        </div>
+        <div class="card">
+            <a href="{% url 'maintenance:complain_list' %}"><i class="fa fa-ticket fa-2x"></i></a>
+            <p>Tickets</p>
+        </div>
+        <div class="card">
+            <a href="{% url 'User:spares' %}"><i class="fa fa-cog fa-2x" aria-hidden="true"></i></a>
+            <p>Inventory</p>
+        </div>
+
+        <!-- <h1 class="Main-head">Available Machines</h1>
         {% for eq,machines in equipments.items %}
         <div class="row">
             {% if machines %}
-            <h1>{{eq}}</h1>
+            <h2>{{eq}}</h2>
             <div class="col-sm">
                 {% for m in machines %}
                 <div class="card m-4" style="width: 18rem; float: left;">
@@ -123,7 +128,7 @@
            
 
 
-        {% endfor %}
+        {% endfor %} --> 
 
         {% endblock main-body %}
 

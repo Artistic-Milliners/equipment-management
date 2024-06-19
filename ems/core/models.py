@@ -195,17 +195,18 @@ class MachineIssue(models.Model):
         ('REJECTED', 'Rejected'),
 
     ]
+
     
     user = models.ForeignKey(Employee, on_delete=models.PROTECT, blank=True, null=True, related_name='form_creator')
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
     ticket_num = models.CharField(max_length=50,blank=True, null=True)
     machine_id = models.ForeignKey(Machines,on_delete=models.PROTECT)
     machine_hours = models.IntegerField(blank=True, null=True)
-    description_user = models.TextField(default="EMPTY", blank=True, null=True) 
+    description_user = models.TextField(default="EMPTY", blank=True, null=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, blank=True, null=True)
     image = models.ManyToManyField(ImageModel)
-    date_time = models.DateTimeField(auto_now=True)  
-    temp_review_id = models.IntegerField(blank=True, null=True) 
+    date_time = models.DateTimeField(auto_now=True)
+    error_department = models.ForeignKey( Department, on_delete=models.CASCADE)
 
 
     def generate_ticket(self):
@@ -293,7 +294,7 @@ class IssueClosing(models.Model):
     remarks = models.TextField(default="EMPTY") 
     image = models.ManyToManyField(ImageModel, related_name="closingImages")
     equipment_status = models.CharField(max_length=10)
-    temprory_close = models.BooleanField()
+    # temprory_close = models.BooleanField()
 
 
     def totalDays(self):

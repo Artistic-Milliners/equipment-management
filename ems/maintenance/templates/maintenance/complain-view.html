@@ -6,19 +6,19 @@
 
 {% block main-body %}
     <div class="header">
-      <h1><u>Work Order Status</u></h1> 
+      <h1>Work Order Status</h1> 
       <button class="compalain"> <a href="{% url 'User:create_complain' %}"><i class="fa fa-plus"> New</i></a></button>
-    </div>
-    <hr>
-    <div id="filter-div">
-      <p>Filter</p>
-      <select name="filter" id="filter" onchange="filterData('filter')">
+      <!-- <p>Filter</p> -->
+      <!-- <select name="filter" id="filter" onchange="filterData('filter')">
         <option value="date_time">Date/Time</option>
         <option value="status">Status</option>
         <option value="department">Department</option>
-      </select>
+      </select> -->
+    
     </div>
-    <div class="table-responsive">
+    <hr>
+
+    <!-- <div class="table-responsive">
       <table class="table  table-bordered">
         <thead>
           <tr>
@@ -27,22 +27,11 @@
             <th scope="col" class="text-center">EQUIPMENT</th>
             <th scope="col" class="text-center">DEPARTMENT</th>
             <th scope="col" class="text-center">DESCRIPTION</th>
-            
-            <!-- <th scope="col" class="text- bg-black">PRIORITY</th> -->
-            <!-- <th scope="col" class="text-center bg-black">SCHEDULE DATE</th> -->
-            <!-- <th scope="col" class="text-center bg-black">TYPE</th> -->
             <th scope="col" class="text-center">STATUS</th> 
           </tr>
         </thead>
         <tbody>
           {% for issue in issue_list  %} 
-            <!-- {% if issue.priority == "High" %} -->
-              <!-- <tr class="table-danger align-middle text-center"> -->
-            <!-- {% elif issue.priority == "Moderate" %} -->
-             <!-- <tr class="table-warning align-middle text-center"> -->
-            <!-- {% else %} -->
-            <!-- <tr class="table-primary align-middle text-center"> -->
-            <!-- {% endif %} -->
                 <th scope="row" class="text-center">{{ forloop.counter }}</th>
                 <td class="text-center"> 
                   <a {% if issue.status == 'PENDING' %}
@@ -57,41 +46,26 @@
                 <td class="text-center">{{ issue.machine_id.name }}</td>
                 <td class="text-center">{{ issue.user.department}}</td>
                 <td class="text-center">{{ issue.description_user }}</td>
-                <!-- <td>{{ issue.priority  }}</td>
-                <td>{{ issue.date_time.date }} </td>
-                <td>{{ issue.type }}</td> -->
                 <td class="text-center">{{issue.status}}</td>
               </tr>
           {% endfor %}
         </tbody>
       </table>
-      
+    </div>   -->
+
       {% for issue in issue_list  %}
+      {% if issue.user.id == emp.id or issue.user.department == emp.department or issue.error_department == emp.department %}
       <div class="issue-section">
-        <div class="issue-detail issue-side">
-          <div class="ticket">
-            <h1> <a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">Ticket# {{issue.ticket_num}}</a> <span></span> </h1>
-          </div>
-  
-          <div class="issue-detail equipment-detail">
-              <div class="equipment">
-                <h4>Equipment: {{ issue.equipment.name }} </h4>
-              </div>
-              <div class="machine">
-                <h4>Machine No: {{ issue.machine.name }} </h4>
-              </div>
-          </div>
-          <div class="issue-detail">
-              <h4>Description:</h4>
-              <p>{{ issue.description }}</p>
-          </div>
-        </div>
-      </div>
+        <!-- <h1> Ticket# {{issue.ticket_num}}</a></h1> -->
+        <h1>{{ issue.equipment.name }}</a></h4>
+        <h6><a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">{{ issue.description_user }}</a></h6>
+        <div class="priority">{{issue.status}}</div>
+      </div>  
+      {% endif %}
+      
       {% endfor %}
 
-
-
-    </div>
+    
     <script>
       async function filterData(id){
         const elem = document.getElementById(id);
