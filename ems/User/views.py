@@ -120,6 +120,11 @@ class InitiateComplainView(View):
         return redirect('maintenance:complain_list')
 
 
+class ComplainTrackingView(View):
+    def get(self, request, pk):
+
+        issue = MachineIssue.objects.get(pk=pk)
+        return render(request, 'user/complain-tracking.html', {'issue':issue} )
 
 class ComplainReviewView(View):
     def get(self, request, pk):
@@ -164,6 +169,7 @@ class ComplainReviewView(View):
         # logging.info(f"malfunction part {malfunction_part}")
 
         reviewrImages = request.FILES.getlist('machine-images[]')
+        print(reviewrImages)
         
         try: 
             user = CustomUser.objects.get(pk=user_id)
@@ -186,17 +192,21 @@ class ComplainReviewView(View):
             assignPerson = assignPerson
              )
             review.save()
+            print("review saved")
             if reviewrImages:
                 for img in reviewrImages:
-                    image = ImageModel.objects.create(img)
-                    review.reviewrImages.add(image) 
+                    image = ImageModel.objects.create(image=img)
+                    print(image)
+                    review.reviewrImages.add(image)
+                review.save() 
             if malfunction_part:
                 for pk in malfunction_part:
                     part = Spares.objects.get(pk=pk)
                     review.malfunction_part.add(part)
-            
+                review.save()
         except Exception as e:
-            logging.error("Error Occured in ComplainReview Post Function:", exc_info=True)
+            # logging.error("Error Occured in ComplainReview Post Function:", exc_info=True)
+            print(str(e))
             return render(request, 'user/error/404.html', {'error':str(e)})
         
 

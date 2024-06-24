@@ -67,7 +67,7 @@ class CustomUser(AbstractUser):
 class Employee(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.PROTECT)
     name = models.CharField(max_length=255)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, blank=True, null=True)
     designation = models.ForeignKey(Designation, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):

@@ -2,169 +2,127 @@
 {% load static %}
 {% load app_filters %}
 
+{% block head %}
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://kit.fontawesome.com/a06ab02596.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="{% static 'user/css/custom.css' %}">
+<!-- <link rel="stylesheet" href="{% static 'maintenance/css/complain-list.css' %}"> -->
+<link rel="stylesheet" href="{% static 'User/home.css' %}">
+<link rel="stylesheet" href="{% static 'User/complain-detail.css' %}">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% endblock head %}
+
+
+
 {% block title %}
-  Ticket | page
+  Complain Detail | page
 {% endblock title %}
 
 {% block main-body %}
+<div class="container">
   <div class="main-header">
-    <div><h1>Create New Ticket</h1></div>
+    <div><h1>ENGINEER'S DEN</h1></div>
     <div><a href="{% url 'maintenance:complain_list' %}">Ticket List</a></div>
-
   </div>
+
+  <div>
+    <div class="issue-section">
+      <!-- <h1> Ticket# {{issue.ticket_num}}</a></h1> -->
+      <h1>{{ issue.equipment.name }}</a></h4>
+        
+        <h6><a href="{% if issue.status == 'PENDING' %}
+          {% url 'User:review_complain' pk=issue.pk %}
+          {% elif issue.status == 'REVIEWED' %}
+          {% url 'maintenance:complain_detail' pk=issue.pk %}
+          {% endif %}">{{ issue.description_user }}</a></h6>    
+          
+    <div class="priority">T#{{issue.ticket_num}}</div>
+    
+  </div>
+  
   
 
   <form id="ticket-form" action="" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
+      {% csrf_token %}
+  
 
-    <div class="mb-3">
-        <label class="form-label me-3" for="ticket-number"><h6>Ticket No.</h6></label>
-        <input class="form-control-inline" value="{{issue.ticket_num}}" type="text" name="ticket-number" id="ticket-number" disabled>    
-    </div>  
-    
-    <div class="mb-3">
-      <input class="form-control-inline" value="{{issue.id}}" type="hidden" name="issue-number" id="issue-number">    
-    </div>
-    
-    <div class="row align-items-center">
-        <div class="mb-3 col">
-          <label class="form-label" for="machine-select"><h6>Select Machine</h6></label>
-          <select class="form-control" type="text" name="machine-select" id="machine-select" required disabled> 
-              <option value="">List of Equipments</option>
-              {% for equipment in equipments %}
-                <option value="{{ equipment.id }}" {% if equipment.id == issue.equipment.id %}selected{% endif %}>{{ equipment.name }}</option>  
-              {% endfor %}
-          </select>   
-      </div>
-      <div class="mb-3 col">
-          <label class="form-label" for="machine-num-select"><h6>Select Machine Number</h6></label>
-          <select class="form-control" type="text" name="machine-num-select" id="machine-num-select" disabled>
-            <option value="{{ issue.machine_id }}">
-              {% if issue %}
-                {{ issue.machine_id.name}}
-              {% else %}
-                Select a Machine Number
-              {% endif %}
-            </option>
-          </select>      
-      </div>
-    </div>
-
-    <div class="mb-3 col">
-      <label class="form-label" for="malfunction-part"><h6>Malfunction part</h6></label>
-      <select class="form-control" type="text" name="malfunction-part" id="malfunction-part" multiple>
-
-          {% for part in issue.machine_id.machine_spare.all %}
-            <option value="{{part.id}}">{{ part.name}}</option>
-          {% endfor %}
-        
-      </select>
-      <div class="search-part">
-        <div>
-          <label for="search-bar">Search</label>
-          <input type="text" name="search-bar" id="search-bar">
-          <button type="button" class="btn btn-primary m-0" onclick="searchSpare('malfunction-part', 'search-bar')"><i class="fa fa-search"></i></button>
-        </div>
-        
-        <div id="search-help-text" class="form-text">
-          enter your search in small letters
-        </div>
-      </div>   
+      <input class="form-control-inline" value="{{issue.id}}" type="hidden" name="issue-number" id="issue-number">       
       
-    </div>
+      <label  for="malfunction-part"><h6>Malfunction part</h6></label>
+      <select type="text" name="malfunction-part" id="malfunction-part" multiple>
+          
+        {% if issue.machine_id.machine_spare.all|length == 0  %}
+          <option value="">There are no spares</option>
+        {% endif %}
+        {% for part in issue.machine_id.machine_spare.all %}
+            <option value="{{part.id}}">{{ part.name}}</option>
+          {% endfor %}   
+      </select>
+      
+      <label for="search-bar">Search</label>
+      <input type="text" name="search-bar" id="search-bar">
+      <div class="search-box">
+        <button type="button" class="btn" onclick="searchSpare('malfunction-part', 'search-bar')"><i class="fa fa-search"></i></button>
+        <p>enter your search in small letters</p>
+      </div>
+      
+      <label  for="machine-section"><h6>Machine section</h6></label>
+      <input  type="text" name="machine-section" id="machine-section">    
+      
+      <label  for="machine-hours"><h6>Machine Hours</h6></label>
+      <input value="{{issue.machine_hours}}" type="number" name="machine-hours" id="machine-hours" required> 
+      
+      <label for="issue-type"><h6>Type</h6></label>
+      <select type="text" name="issue-type" id="issue-type">
+        {% for value, label in typeChoices  %}
+          <option value="{{value}}">{{label}}</option>
+        {% endfor %}
+      </select>
+      
+      <label  for="issue-priority"><h6>Issue Priority</h6></label>
+      <select  type="text" name="issue-priority" id="issue-priority">
+        {% for value, label in priorityChoices %}
+          <option value="{{value}}">{{label}}</option>
+        {% endfor %}
+      </select>
+     
+      <label  for="problem-nature"> <h6>Problem Nature</h6> </label>
+      <select type="text" name="problem-nature" id="problem-nature">
+        {% for value, label in problemNatureChoices %}
+        <option value="{{value}}">{{label}}</option>
+      {% endfor %}
+      </select>
+      
+      <label  for="description-reviewer"><h6>Description</h6></label>
+      <textarea  type="text" name="description-reviewer" id="description-reviewer" rows="4"></textarea>
+      
+      <label  for="assign-to-department"> <h6>Assign To (Department)</h6> </label>
+      <select  type="text" name="assign-to-department" id="assign-to-department">
+        {% for d in departments %}
+          <option value="{{d.pk}}">{{d.name}}</option>
+        {% endfor %}
+      </select>
+      
+      <label  for="assign-to-person"> <h6>Assign To (Person)</h6> </label>
+      <select  type="text" name="assign-to-person" id="assign-to-person">
+        {% for user in users %}
+          <option value="{{user.pk}}">{{user.name}}</option>
+        {% endfor %}
+      </select>     
+      
+      <label  for="machine-images"><h6>Upload Images</h6></label>
+      <input  type="file" name="machine-images[]" id="machine-images[]" multiple>
     
-
-    <div class="row">
-      <div class="mb-3 col">
-        <label class="form-label" for="machine-section"><h6>Machine section</h6></label>
-        <input class="form-control" type="text" name="machine-section" id="machine-section">    
-      </div>
-      <div class="col">
-        <label class="form-label" for="machine-hours"><h6>Machine Hours</h6></label>
-        <input value="{{issue.machine_hours}}" class="form-control" type="number" name="machine-hours" id="machine-hours" required> 
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col">
-        <label for="issue-type"><h6>Type</h6></label>
-        <select class="form-control" type="text" name="issue-type" id="issue-type">
-          {% for value, label in typeChoices  %}
-            <option value="{{value}}">{{label}}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col">
-        <label class="form-label" for="issue-priority"><h6>Issue Priority</h6></label>
-        <select class="form-control" type="text" name="issue-priority" id="issue-priority">
-          {% for value, label in priorityChoices %}
-            <option value="{{value}}">{{label}}</option>
-          {% endfor %}
-        </select>
-      </div>  
-    </div> 
-    <div class="row">
-      <div class="col">
-        <div class="mb-3">
-          <label class="form-label" for="problem-nature"> <h6>Problem Nature</h6> </label>
-          <select class="form-control" type="text" name="problem-nature" id="problem-nature">
-            {% for value, label in problemNatureChoices %}
-            <option value="{{value}}">{{label}}</option>
-          {% endfor %}
-          </select>    
-        </div>  
-      </div>
-      <div class="col">
-        <div class="mb-3">
-          <label class="form-label" for="date-time"> <h6>Date/Time</h6> </label>
-          <input value="{{ issue.date_time|dateFormat }}" class="form-control" type="datetime-local" name="date-time" id="date-time" readonly required>    
-      </div>
-      </div>
-        
-    </div>
-    
-
-    <div class="mb-3">
-      <label class="form-label" for="malfunction-desc"><h6>Description (Department)</h6></label>
-      <textarea class="form-control" type="text" name="malfunction-desc" id="malfunction-desc" rows="4" disabled>{{issue.description_user}}</textarea>
-    </div>
-
-    <div class="mb-3">
-      <label class="form-label" for="description-reviewer"><h6>Description (Engineer)</h6></label>
-      <textarea class="form-control" type="text" name="description-reviewer" id="description-reviewer" rows="4"></textarea>
-    </div>
-
-    <div class="row">
-      <div class="col">
-        <div class="mb-3">
-          <label class="form-label" for="assign-to-department"> <h6>Assign To (Department)</h6> </label>
-          <select class="form-control" type="text" name="assign-to-department" id="assign-to-department">
-            {% for d in departments %}
-              <option value="{{d.pk}}">{{d.name}}</option>
-            {% endfor %}
-          </select>    
-        </div>  
-      </div>
-      <div class="col">
-        <div class="mb-3">
-          <label class="form-label" for="assign-to-person"> <h6>Assign To (Person)</h6> </label>
-          <select class="form-control" type="text" name="assign-to-person" id="assign-to-person">
-            {% for user in users %}
-              <option value="{{user.pk}}">{{user.name}}</option>
-            {% endfor %}
-          </select>     
-      </div>
-      </div>
-
-    
-    <div class="mb-3">
-      <label class="form-label" for="machine-images"><h6>Upload Images</h6></label>
-      <input class="form-control" type="file" name="machine-images[]" id="machine-images[]" multiple>
-    </div> 
-
-    <input class="form-control submit-btn" type="submit" value="Submit">
+      <button type="submit">Submit</button>
   </form>
 
+</div>
+  
 
   <script src="{% static 'maintenance/js/custom-complain.js' %}"></script>
 {% endblock main-body %}
