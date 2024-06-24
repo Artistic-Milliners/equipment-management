@@ -56,9 +56,20 @@
       {% for issue in issue_list  %}
       {% if issue.user.id == emp.id or issue.user.department == emp.department or issue.error_department == emp.department %}
       <div class="issue-section">
-        <!-- <h1> Ticket# {{issue.ticket_num}}</a></h1> -->
-        <h1>{{ issue.equipment.name }}</a></h4>
-        <h6><a href="{% url 'maintenance:complain_detail' pk=issue.pk %}">{{ issue.description_user }}</a></h6>
+        <h1>{{ issue.equipment.name }}</a></h1>
+          <h6><a href="
+            
+            {% if emp.department.dpt_type == 'PRODUCTION'   %}
+              {% url 'User:complain_track' pk=issue.pk %}
+            {% elif emp.department.dpt_type != 'PRODUCTION' %}
+              {% if issue.status == 'PENDING' %}
+                {% url 'User:review_complain' pk=issue.pk %}  
+              {% elif issue.status == 'REVIEWED'%}
+                {% url 'maintenance:complain_detail' pk=issue.pk %}    
+              {% endif %}
+            {% endif %}"
+            >{{ issue.description_user }}</a></h6>    
+           
         <div class="priority">{{issue.status}}</div>
       </div>  
       {% endif %}

@@ -28,6 +28,7 @@ urlpatterns = [
     path('machine-issue/<str:filter>', views.filterTicketAPIView.as_view(), name='filter_ticket'),
     path('machine-code/<int:pk>', views.MachineCodeAPIView.as_view(), name='machine_code'),
     path('home/complain', views.InitiateComplainView.as_view(), name='create_complain'),
+    path('home/complain/complainTracking/<int:pk>', views.ComplainTrackingView.as_view(), name='complain_track'),
     path('home/complain/review/<int:pk>', views.ComplainReviewView.as_view(), name='review_complain'),
     path('home/approvals', views.ApprovalListView.as_view(), name='approval_list'),
     path('home/complain/closing/<int:pk>', views.ComplainClosingView.as_view(), name="complain_closing"),
