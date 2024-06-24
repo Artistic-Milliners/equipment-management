@@ -1,0 +1,79 @@
+.header{
+    color: white;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+}
+.header button{
+    margin: 10px auto;
+    background-color: #FFD43B;
+    width: 30vw;
+    padding: 10px;
+    height: 5vh;
+    border: None;
+    border-radius: 30px;
+}
+
+.header p {
+    align-self: flex-end;
+    margin-right: 10px;
+}
+.header select{
+    margin-right: 10px;
+    width: 30vw;
+    height: 5vh;
+    padding: 10px;
+    align-self: flex-end;
+    border-radius: 25px;
+    border: none;
+    background-color: #FFD43B;
+    color: white;
+}
+
+.issue-section{
+display: flex;
+flex-direction: column;
+color: white;
+position: relative;
+background-color:#FFD43B;
+margin: 5px auto;
+padding: 15px;
+width:80vw;
+}
+
+.issue-section::after{
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 10px; /* Width of the zigzag */
+    height: 100%;
+    background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 5px,
+        #183153 5px,
+        #183153 10px
+    );
+}
+
+.issue-section h1{
+    margin: 0px;
+    margin-bottom: 10px;
+    padding:0px;
+    color: #183153;
+    text-align: left;
+}
+
+.issue-section div{
+    position: absolute;
+    margin-top: 0;
+    padding: 3px;
+    background-color: #183153;
+    width:fit-content;
+    height: 25%;
+    border: #183153;
+    /* text-align: right; */
+    align-self: flex-end;
+    justify-self: flex-start;
+}

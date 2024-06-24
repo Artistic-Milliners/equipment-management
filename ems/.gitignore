@@ -1,5 +1,5 @@
 # created by virtualenv automatically
-*
+
 #local development files
 *.sqlite3
 db.sqlite3

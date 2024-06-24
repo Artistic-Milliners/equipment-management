@@ -1,0 +1,13 @@
+{% extends "user/home.html" %}
+{% block title %}
+  Closed Complains
+{% endblock title %}
+
+{% block main-body %}
+  <ul>
+    <li>test</li>
+    {% for complain in closedComplains %}
+      <li>{{ complain }}</li>
+    {% endfor %}
+  </ul>
+{% endblock main-body %}

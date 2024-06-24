@@ -1,0 +1,74 @@
+body{
+    background-color: #2D3E5C;
+    font-family:Century Gothic,CenturyGothic,AppleGothic,sans-serif;
+}
+
+.container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #FFD43A;
+    
+
+}
+
+.top-bar{
+    margin-top: 5vh;
+}
+.top-bar p{
+    margin-top: 10px;
+    font-weight: bolder;
+}
+
+div h2{
+    font-size: xx-large;
+    margin-top: 15vh;
+}
+
+.error h1{
+    font-weight: light;
+    font-size: 12px;
+    color: red;
+}
+
+form{
+    margin-top: 10vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+}
+
+form label{
+    color: #FFD43A;
+    text-align: center;
+}
+
+form input{
+    background-color:#2D3E5C !important; 
+    color: #FFD43A !important; 
+    border: 3px solid #FFD43A ;
+    box-shadow: 3px 3px 5px #888888, -3px -3px 5px #aaaaaa;
+    padding: 0.5em;
+    border-radius: 5%;
+    margin: 0.5em 1.5em;
+}
+
+form button{
+    background-color: #2D3E5C;
+    color: #FFD43A;
+    border:1px solid #FFD43A;
+    margin-top: 2em;
+    padding: 0.7em;
+    width: 20vw;
+    align-self: center;
+}
+
+/* .box{
+    background-color: #2D3E5C;
+    color: #FFD43A;
+    padding: 0.5em;
+    margin:0.2em 1em 2em 1em;
+} */
