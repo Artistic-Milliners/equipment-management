@@ -1,0 +1,12 @@
+{% extends "user/home.html" %}
+{% block title %}
+  User Detail
+{% endblock title %}
+
+{% block main-body %}
+  <ul>
+    <li> {{user.name}} </li>
+    <li> {{user.department.name}} </li>
+    <li> {{user.designation}} </li>
+  </ul>
+{% endblock main-body %}
