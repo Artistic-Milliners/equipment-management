@@ -4,6 +4,7 @@
 *.sqlite3
 db.sqlite3
 ems/ems.log
+ems.log
 
 #Virtual environment
 venv/
