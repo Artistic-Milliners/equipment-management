@@ -35,11 +35,7 @@
       <!-- <h1> Ticket# {{issue.ticket_num}}</a></h1> -->
       <h1>{{ issue.equipment.name }}</a></h4>
         
-        <h6><a href="{% if issue.status == 'PENDING' %}
-          {% url 'User:review_complain' pk=issue.pk %}
-          {% elif issue.status == 'REVIEWED' %}
-          {% url 'maintenance:complain_detail' pk=issue.pk %}
-          {% endif %}">{{ issue.description_user }}</a></h6>    
+        <h6><a href="#">{{ issue.description_user }}</a></h6>    
           
     <div class="priority">T#{{issue.ticket_num}}</div>
     

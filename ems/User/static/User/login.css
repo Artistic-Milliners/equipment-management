@@ -17,6 +17,14 @@ body{
 .top-bar{
     margin-top: 5vh;
 }
+
+.top-bar img{
+    padding: 10px;
+    background-color: #FFD43A;
+    width: 20vw;
+    height: inherit;
+    border-radius: 10px;
+}
 .top-bar p{
     margin-top: 10px;
     font-weight: bolder;
