@@ -1,109 +1,139 @@
-.container{
-    color: #FFD43A;;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.container {
+  color: #ffd43a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-
-.issue-section{
-    display: flex;
-    flex-direction: column;
-    color: white;
-    position: relative;
-    background-color:#FFD43B;
-    margin: 1em auto;
-    padding: 15px;
-    width:80vw;
-    height: fit-content;
-    }
-    
-    .issue-section::after{
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 10px; /* Width of the zigzag */
-        height: 100%;
-        background: repeating-linear-gradient(
-            -45deg,
-            transparent,
-            transparent 5px,
-            #183153 5px,
-            #183153 10px
-        );
-    }
-    
-    .issue-section h1{
-        margin: 0px;
-        margin-bottom: 10px;
-        padding:0px;
-        color: #183153;
-        text-align: left;
-    }
-    
-    .issue-section div{
-        position: absolute;
-        margin-top: 0;
-        padding: 3px;
-        background-color: #183153;
-        width:fit-content;
-        height: 25%;
-        border: #183153;
-        /* text-align: right; */
-        align-self: flex-end;
-        justify-self: flex-start;
-    }
-    
-
-form{
-    display: flex;
-    flex-direction: column;
-    align-items: left   ;
+.issue-section {
+  display: flex;
+  flex-direction: column;
+  color: white;
+  position: relative;
+  background-color: #ffd43b;
+  margin: 1em auto;
+  padding: 15px;
+  width: 80vw;
+  height: fit-content;
 }
 
-label{
-    color: #FFD43A;
-    align-items: left;
-    font-weight: bold;
-    margin: 0.5em 0.8em;
-    width: 80vw;
+.issue-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px; /* Width of the zigzag */
+  height: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    #183153 5px,
+    #183153 10px
+  );
+}
+
+.issue-section h1 {
+  margin: 0px;
+  margin-bottom: 10px;
+  padding: 0px;
+  color: #183153;
+  text-align: left;
+}
+
+.issue-section div {
+  position: absolute;
+  margin-top: 0;
+  padding: 3px;
+  background-color: #183153;
+  width: fit-content;
+  height: 25%;
+  border: #183153;
+  /* text-align: right; */
+  align-self: flex-end;
+  justify-self: flex-start;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+}
+
+label {
+  color: #ffd43a;
+  align-items: left;
+  font-weight: bold;
+  margin: 0.5em 0.8em;
+  width: 80vw;
 }
 
 form input,
 form select,
-form textarea{
-    background-color: #183153;
-    color: #FFD43A;
-    padding: 0.5em;
-    border: 1px solid #FFD43B;
-    width: 80vw;
-    margin-top: 0.1em;
-    margin-bottom: 0.5em;
-    align-self: center;
+form textarea {
+  background-color: #183153;
+  color: #ffd43a;
+  padding: 0.5em;
+  border: 1px solid #ffd43b;
+  width: 80vw;
+  margin-top: 0.1em;
+  margin-bottom: 0.5em;
+  align-self: center;
 }
 
-.search-box{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 1em;    
+.search-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 1em;
 }
 
-.search-box p{
-    margin-left: 10px;
+.search-box p {
+  margin-left: 10px;
 }
 
-.btn{
-    background-color: #FFD43A;
-    color: #183153;
+.btn {
+  background-color: #ffd43a;
+  color: #183153;
 }
 
-form button{
-    background-color: #183153;
-    color: #FFD43A;
-    border: 1px solid #FFD43A;
-    width: 25vw;
-    padding: 0.5em;
-    align-self: center;
+form button {
+  background-color: #183153;
+  color: #ffd43a;
+  border: 1px solid #ffd43a;
+  width: 25vw;
+  padding: 0.5em;
+  align-self: center;
+}
+
+/* Styling for File Upload Button */
+
+.file-upload-input {
+  display: none;
+}
+
+.file-upload-label {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #ffd43b;
+  color: #183153;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  text-align: center;
+  width: auto;
+  margin-top: 0;
+}
+
+.file-upload-filename {
+  display: block;
+  font-size: 14px;
+  color: #ffd43b;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.submit-btn {
+  margin-bottom: 1rem;
 }
