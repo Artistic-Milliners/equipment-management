@@ -117,36 +117,6 @@
         <h6>Choose Files</h6>
       </label> -->
 
-      <style>
-        .file-upload-input {
-          display: none;
-        }
-
-        .file-upload-label {
-          display: inline-block;
-          padding: 10px 20px;
-          background-color: #FFD43B; 
-          color: #183153;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          font-size: 16px;
-          text-align: center;
-          width: auto;
-          margin-top: 0;
-        }
-
-        /* Style for the file name display */
-        .file-upload-filename {
-          display: block;
-          font-size: 14px;
-          color: #FFD43B;
-          text-align: center;
-          margin-bottom: 10px;
-        }
-
-      </style>
-
       <label><h6>Upload Images</h6></label>
       <input type="file" name="machine-images[]" id="machine-images" class="file-upload-input" multiple>
       <label for="machine-images" class="file-upload-label">
@@ -167,7 +137,7 @@
         });
       </script>
 
-      <button type="submit">Submit</button>
+      <button class="submit-btn" type="submit">Submit</button>
   </form>
 
 </div>
