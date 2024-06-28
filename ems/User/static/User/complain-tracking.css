@@ -1,5 +1,7 @@
 .timeline-main-heading {
     color: #ffd43b;
+    font-size: large; 
+    font-weight: bold;
 }
 
 .timeline {
