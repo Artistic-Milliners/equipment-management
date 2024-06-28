@@ -37,6 +37,7 @@
 }
 
 .timeline-point {
+    margin-top: 0.7rem;
     display: flex;
     align-self: baseline;
     border: 2px solid #ffd43b;
@@ -47,6 +48,7 @@
 }
 
 .timeline-track {
+    margin-bottom: -0.7rem;
     flex-grow: 1;
     background-color: #ffd43b;
     width: 2px;
