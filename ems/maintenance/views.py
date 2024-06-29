@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from core.models import MachineIssue,Equipment, Machines, Spares, MachineSpares, ImageModel, CustomUser, Remarks, Department, Employee  
+from core.models import MachineIssue,Equipment, Machines, Spares, MachineSpares, ImageModel, CustomUser, MachineIssueApproval, Department, Employee  
 from django.http import JsonResponse
 from django.db.models import Prefetch
 from django.contrib.auth.decorators import permission_required, login_required
@@ -111,7 +111,6 @@ from User.views import home
 def get_machines(request):
     
     equipment_id = request.GET['equipment_id']
-    
     if equipment_id:
         equipment = get_object_or_404(Equipment, pk=equipment_id)
         machines = Machines.objects.filter(type_of_machine=equipment).prefetch_related(
@@ -143,6 +142,8 @@ def get_machines(request):
 #         return 'maintenace:complain_list'
 
 
+
+@login_required
 def view_complains(request):
 
     user = request.user.id
@@ -166,42 +167,68 @@ def complain_delete(request, pk):
     return redirect("maintenance:complain_list")
 
 
-def complain_reject(request, pk):
+# def complain_reject(request, pk):
     
-    issue = MachineIssue.objects.get(pk=pk)
-    try: 
-        if issue.issue_remarks:
-            issue.status = 'REJECTED'
-            issue.save()
-            return render(request, "maintenance/rejected-complain-detail.html", {'issue':issue})
-    except MachineIssue.issue_remarks.RelatedObjectDoesNotExist:
-        if request.method == 'POST':
-            user = request.user.id
-            user_id = CustomUser.objects.get(pk=user)
-            remarks = request.POST['man-remarks']
-            print(remarks)
+#     issue = MachineIssue.objects.get(pk=pk)
+#     try: 
+#         if issue.issue_remarks:
+#             issue.status = 'REJECTED'
+#             issue.save()
+#             return render(request, "maintenance/rejected-complain-detail.html", {'issue':issue})
+#     except MachineIssue.issue_remarks.RelatedObjectDoesNotExist:
+#         if request.method == 'POST':
+#             user = request.user.id
+#             user_id = CustomUser.objects.get(pk=user)
+#             remarks = request.POST['man-remarks']
+#             print(remarks)
 
-            new_comment = Remarks(
-                user_id = user_id,
-                complain_id = issue,
-                comment = remarks
-            )
+#             new_comment = Remarks(
+#                 user_id = user_id,
+#                 complain_id = issue,
+#                 comment = remarks
+#             )
 
-            new_comment.save()
+#             new_comment.save()
 
-            issue.status = 'REJECTED'
-            issue.save()
+#             issue.status = 'REJECTED'
+#             issue.save()
 
-            return redirect("maintenance:complain_list")
+#             return redirect("maintenance:complain_list")
         
 
 
 def complain_approve(request, pk):
     
-    user = CustomUser.objects.get(pk=request.user.id)
-    issue = MachineIssue.objects.get(pk=pk)
-    issue.status = 'APPROVED'
-    issue.save()
+    choices = MachineIssue.STATUS_CHOICES
+
+    if request.method == 'POST':
+        
+        user = CustomUser.objects.get(pk=request.user.id)   
+        issue = MachineIssue.objects.get(pk=pk)
+        status = request.POST["status"]
+        
+        if status == 'Approved':
+            issue.status = choices[2][1]
+        else:
+            issue.status = choices[3][1]
+        
+        comment = request.POST['man-remarks']    
+            
+        issue.save()
+        
+        try:
+            approval = MachineIssueApproval(
+            user_id = user,
+            complain_id = issue,
+            comment = comment,
+            )
+            approval.save()
+            print("approved complain")
+        
+        except Exception as e:
+            print(str(e))
+        
+
     return redirect('maintenance:complain_list')
 
 def complain_edit(request, pk):

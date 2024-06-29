@@ -264,15 +264,14 @@ class MachineIssueReview(models.Model):
     assignDepartment = models.ForeignKey(Department, on_delete=models.PROTECT)
     assignPerson = models.ForeignKey(Employee, on_delete=models.SET_NULL, blank=True, null=True, related_name='task_assigned')
     reviewrImages = models.ManyToManyField(ImageModel)
-    reviewDate = models.DateTimeField(auto_now=True)
+    reviewDate = models.DateTimeField(auto_now=True)    
     malfunction_part = models.ManyToManyField(Spares, related_name="spares" )
-    
 
 
-class Remarks(models.Model):
+class MachineIssueApproval(models.Model):
     user_id = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name='user_remarks')
     complain_id = models.OneToOneField(MachineIssue, on_delete=models.CASCADE, related_name = 'issue_remarks')
-    comment = models.TextField(max_length = 1000)
+    comment = models.TextField(max_length = 1000, blank=True, null=True)
     date_time= models.DateTimeField()
 
     def save(self, *args, **kwargs):

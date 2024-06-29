@@ -66,6 +66,8 @@
                 {% url 'User:review_complain' pk=issue.pk %}  
               {% elif issue.status == 'REVIEWED'%}
                 {% url 'maintenance:complain_detail' pk=issue.pk %}    
+              {% elif issue.status == 'Approved' or issue.status == 'Rejected'%}
+                {% url 'User:complain_closing' pk=issue.pk %}    
               {% endif %}
             {% endif %}"
             >{{ issue.description_user }}</a></h6>    
