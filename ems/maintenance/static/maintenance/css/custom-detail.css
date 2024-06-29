@@ -1,284 +1,36 @@
 body{
-    background-image: url("../images/background2.jpg");
-    background-repeat: no-repeat;
-    background-size: fill;
-    color: whitesmoke;
+    font-family:Century Gothic,CenturyGothic,AppleGothic,sans-serif;
+    color: #FFD43A;
 }
 
-h1{
-    font-family: Georgia;
-    color: white;
+form .comment-section{
+    margin: 1rem;
 }
 
-h6{
-    font-size: 50px;
-}
-
-
-.nav-button{
+form .comment-section > button{
     display: flex;
-    justify-content: flex-end;
-}
-.nav-button a{
-    text-decoration: None;
-    color: whitesmoke;
-    border: 0.05em solid #475b85;
-    background-color: #475b85;
-    border-radius: 1em;
-    padding: 0.5rem;
-    width: auto;
-    height: auto;
-}
-
-.nav-button a:hover{
-    background-color: #39548d ;
-}
-
-
-.main{
-    background-color: #39548d;
-    opacity: 60%;
-    margin: 1.2rem 0.5rem;
-    text-align: center;
-    box-shadow: 0 0 20px #f2f2f2;
-
-}
-
-
-.detail-section{
-    padding: 4em;
-    margin: 0 auto;
-    background-color: #3D4E6F;
-    display: flex;
-    flex-wrap: wrap;
     flex-direction: row;
-    justify-content: space-between;
-    /* max-height: 500px; */
-    opacity: 80%;
-    box-shadow:  0 0 8px white;
-}
-
-.description{
-    box-sizing: border-box;
-    margin: 0;
-    padding:0em;
-    max-width: 500px;
-}
-
-.items{
-    display: flex;
-    justify-content: flex-start;
-    align-items: space-evenly;
-    flex-direction: column;
-    text-align: center;
-    height: auto;
-    padding:1.5rem;
-    background-image: linear-gradient(131.83deg, #ebebeb 0%,     #f8f8f8f1 99.21%);
+    background-color:#FFD43A;
+    color: #2D3E5C;
     border-radius: 10px;
-}
-
-
-
-.item{
-    color: #475b85;
-    list-style-type: none;
-    text-decoration: none;
-    box-shadow: 0 2px 40px #FBE4E0;
-    border-radius: 14px;
-    padding: 0.5em;
- 
-    }
-
-/* .item::before {
-    top: -2px;
-    bottom: -2px;
-    left: -2px;
-    right: -2px;
-    background-image: linear-gradient(312.25deg, #FFC4BC 0%,     rgba(255, 255, 255, 0) 66.19%);
-    z-index: -1;
-    border-radius: 18px;
-    } */
-
-.detail-item{
-    font-size: larger;
-    color: black;
-    margin: 0.4em 0;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-
-}
-
-.detail-item p{
-    margin-left: 2em;
-}
-
-.submit-section a{
-    margin-top: 2em;
-    text-decoration: None;
-    color: whitesmoke;
-    border: 0.05em solid #475b85;
-    background-color: #475b85;
-    border-radius: 1em;
+    margin-top: 1em;
+    margin-left: 10px;
     padding: 0.5rem;
-    width: auto;
-    height: auto;
 }
 
-.images{
-    margin: 0 auto;
-    max-width: 200px;
-    background-color: gray;
+form .comment-section > input{
+    background-color: #2D3E5C;
+    border: 1px solid #FFD43A;
+    padding: 0.5rem;
+    color: #FFD43A;
 }
 
-
-
-
-img{
-    margin: 1.2rem;
-    width: auto;
-    height: 300px;
-}
-
-.image-container{
-    margin: 0 auto;
+form .submit-section > button{
+    background-color: #FFD43A;
+    color: #2D3E5C;
+    padding: 0.5rem;
+    border-radius: 10px;
+    margin: 1rem;
 
 }
 
-.submit-section a:hover{
-    background-color: #3D4E6F;  
-}
-
-.description-value{
-    word-wrap: break-word;
-}
-
-
-
-.comment-section form{
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-}
-
-.comment-section input{
-    width: 100%;
-    border-radius: 0.3rem;
-    padding: 0.2em;
-}
-
-
-.comment-section button{
-    margin: 0.5em 0;
-    padding: 0.3rem 0.5rem;
-    align-self: center;
-    /* justify-self: center; */
-    border: 2px solid 3D4E6F;
-    background-color: #39548d;
-    color: white;
-    border-radius: 1rem;
-}
-
-#remarks-form{
-    display: none;
-}
-
-
-
-
-
-* {box-sizing:border-box}
-
-/* Slideshow container */
-.slideshow-container {
-  max-width: 500px;
-  position: relative;
-  margin: 0.5em 0.5em;
-}
-
-/* Hide the images by default */
-.mySlides {
-  display: none;
-}
-
-.first-img{
-    display: block;
-}
-
-
-.mySlides a img{
-    width: 100%;
-}
-
-/* Next & previous buttons */
-.prev, .next {
-  cursor: pointer;
-  position: absolute;
-  top: 50%;
-  width: auto;
-  margin-top: -20%;
-  padding: 0;
-  color: white;
-  font-weight: bold;
-  font-size: 18px;
-  transition: 0.6s ease;
-  border-radius: 0 3px 3px 0;
-  user-select: none;
-}
-
-/* Position the "next button" to the right */
-.next {
-  right: 0;
-  border-radius: 3px 0 0 3px;
-}
-
-.prev{
-    left: 0;
-}
-
-/* On hover, add a black background color with a little bit see-through */
-.prev:hover, .next:hover {
-  background-color: rgba(0,0,0,0.8);
-}
-
-/* Caption text */
-.text {
-  color: #f2f2f2;
-  font-size: 15px;
-  padding: 0px 0px;
-  position: absolute;
-  bottom: 5em;
-  width: 100%;
-  text-align: center;
-}
-
-/* Number text (1/3 etc) */
-.numbertext {
-  color: #f2f2f2;
-  font-size: 12px;
-  padding: 8px 12px;
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-/* The dots/bullets/indicators */
-.dot {
-  position: absolute ;
-  bottom: 0;
-  right: 50%;
-  cursor: pointer;
-  height: 15px;
-  width: 15px;
-  margin: 0 -50px;
-  background-color: #bbb;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.active, .dot:hover {
-  background-color: #717171;
-}

@@ -22,8 +22,7 @@
 
 
 {% block main-body %}
-  <h1>{{ issue.description }}</h1>
-  <div style="color: white;">
+  <div>
     <span style="font-size: large; font-weight: bold;">Complaint Resolved</span>
     <span style="color: lightgrey; font-size: small">on Mon 19 Oct 20</span>
   </div>
@@ -39,14 +38,13 @@
             Complaint Raised
           </span>
           <span class="timeline-date">
-            Mon 13-Oct-20
+            {{ issue.date_time }}
           </span>
         </div>
         <div class="timeline-description">
           <span>
             Your complain has been recieved
-          </span>
-          <span>2:32 PM</span>
+          </span>   
         </div>
       </div>
     </div>
@@ -58,18 +56,24 @@
       <div class="timeline-content">
         <div>
           <span class="timeline-heading">
-            Task Assigned
+            Engineer Review
           </span>
+          {% if issue.status == 'REVIEWED' or issue.status == 'Approved' %}
           <span class="timeline-date">
-            Mon 13-Oct-20
+            {{ issue.machineissue.reviewDate }}
           </span>
-        </div>
-        <div class="timeline-description">
-          <span>
-            Your complain has been recieved
+          <div class="timeline-description">
+            <span>
+              {{ issue.machineissue.description_reviewer }}
+            </span>
+          </div>
+          {% else %}
+          <span class="timeline-date">
+            Pending review
           </span>
-          <span>2:32 PM</span>
+          {% endif %}
         </div>
+
       </div>
     </div>
     <div class="timeline-event">
@@ -80,17 +84,22 @@
       <div class="timeline-content">
         <div>
           <span class="timeline-heading">
-            Staff on Site
+            HOD Approval
           </span>
-          <span class="timeline-date">
-            Mon 13-Oct-20
-          </span>
-        </div>
+          {% if issue.status == "Approved" %}
+            <span class="timeline-date">
+                {{ issue.issue_remarks.date_time }}
+            </span>
         <div class="timeline-description">
-          <span>
-            Your complain has been recieved
+            <span>
+                Complain has been approved
+            </span>
+        </div>
+          {% else %}
+          <span class="timeline-date">
+            Pending HOD approval
           </span>
-          <span>2:32 PM</span>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -102,17 +111,22 @@
       <div class="timeline-content">
         <div>
           <span class="timeline-heading">
-            Compaint Resolved
+            Complain Closing
           </span>
+          {% if issue.status == 'CLOSED' %}
           <span class="timeline-date">
-            Mon 13-Oct-20
+            {{ issue.machineissue.issueclosing.date_ended }}
           </span>
-        </div>
-        <div class="timeline-description">
-          <span>
-            Your complain has been recieved
+          <div class="timeline-description">
+            <span>
+              {{ issue.machineissue.issueclosing.remarks }}
+            </span>
+          </div>
+          {% else %}
+          <span class="timeline-date">
+            Pending
           </span>
-          <span>2:32 PM</span>
+          {% endif %}
         </div>
       </div>
     </div>

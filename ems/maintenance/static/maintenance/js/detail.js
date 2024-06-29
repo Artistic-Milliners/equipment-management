@@ -1,35 +1,16 @@
-let slideIndex = 1;
-
-function showImage(){
-    
-    showSlides(slideIndex);
-}
-
-// Next/previous controls
-function plusSlides(n) {
-  showSlides(slideIndex += n);
-}
-
-// Thumbnail image controls
-function currentSlide(n) {
-  showSlides(slideIndex = n);
-}
-
-function showSlides(n) {
-  let i;
-  let slides = document.getElementsByClassName("mySlides");
-  console.log(slides)
-  let dots = document.getElementsByClassName("dot");
-  if (n > slides.length) {slideIndex = 1}
-  if (n < 1) {slideIndex = slides.length}
-  for (i = 0; i < slides.length; i++) {
-    slides[i].style.display = "none";
+function createInputElem(value){
+  var hiddenAction = document.createElement("input");
+  var form = document.querySelector('#remarks-form')
+  form.appendChild(hiddenAction)
+  console.log("value")
+  hiddenAction.type='hidden';
+  hiddenAction.value=value;
+  hiddenAction.name='status'
+  hiddenAction.id='status'
+  if (hiddenAction.value==='Rejected'){
+    document.querySelector('#remarks-form').submit()
   }
+  console.log('created hidden input')
 
-  slides[slideIndex-1].style.display = "block";
 }
 
-function showRemarksForm(id){
-    form = document.getElementById(id)
-    form.style.display = "block"
-}
