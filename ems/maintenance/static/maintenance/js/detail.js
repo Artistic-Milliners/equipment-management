@@ -1,4 +1,5 @@
 function createInputElem(value){
+  ins
   var hiddenAction = document.createElement("input");
   var form = document.querySelector('#remarks-form')
   form.appendChild(hiddenAction)

@@ -1,3 +1,9 @@
+.timeline-main-heading {
+    color: #ffd43b;
+    font-size: large; 
+    font-weight: bold;
+}
+
 .timeline {
     display: flex;
     flex-grow: 1;
@@ -19,7 +25,8 @@
 .timeline-content {
     flex: 1;
     padding: 0 1rem;
-    color: #fff;
+    color: #ffd43b;
+    width: auto;
 }
 
 .timeline-point-track-container {
@@ -30,18 +37,20 @@
 }
 
 .timeline-point {
+    margin-top: 0.7rem;
     display: flex;
     align-self: baseline;
-    border: 2px solid #95f31b;
+    border: 2px solid #ffd43b;
     border-radius: 50%;
     width: 10px;
     height: 10px;
-    background-color: #95f31b;
+    background-color: #ffd43b;
 }
 
 .timeline-track {
+    margin-bottom: -0.7rem;
     flex-grow: 1;
-    background-color: #95f31b;
+    background-color: #ffd43b;
     width: 2px;
 }
 
@@ -62,6 +71,6 @@
 }
 
 .heighlight {
-    background-color: #95f31b;
+    background-color: #ffd43b;
     box-shadow: 0 4px 8px #8db8e4;
 }
