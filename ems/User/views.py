@@ -122,9 +122,10 @@ class InitiateComplainView(View):
 
 class ComplainTrackingView(View):
     def get(self, request, pk):
-
         issue = MachineIssue.objects.get(pk=pk)
-        return render(request, 'user/complain-tracking.html', {'issue':issue} )
+        return render(request, 'user/complain-tracking.html', {'issue':issue})
+    
+    
 
 class ComplainReviewView(View):
     def get(self, request, pk):
@@ -227,10 +228,15 @@ class ComplainClosingView(View):
 
     def get(self, request, pk):
         
-        contractor_list = Contractor.objects.all()
-        issue = MachineIssue.objects.get(pk=pk)
-        review = MachineIssueReview.objects.get(issue=issue)
-        department = Department.objects.all()
+        try:
+            contractor_list = Contractor.objects.all()
+            issue = MachineIssue.objects.get(pk=pk)
+            review = MachineIssueReview.objects.get(issue=issue)
+            department = Department.objects.all()
+       
+        except Exception as e:
+            return render(request, "user/error/404.html", {'error':str(e)})
+        
         return render(request, "user/complain_closing.html", {"issue":issue, "review":review, "contractors":contractor_list})
 
     def post(self, request, pk):

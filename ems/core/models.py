@@ -255,7 +255,7 @@ class MachineIssueReview(models.Model):
     )
     
     reviewer = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='reviewer') 
-    issue = models.OneToOneField(MachineIssue, on_delete=models.CASCADE, related_name='machineissue')
+    issue = models.OneToOneField(MachineIssue, on_delete=models.PROTECT, related_name='machineissue')
     code = models.ForeignKey(IssueList, on_delete=models.PROTECT, blank=True, null=True)
     description_reviewer = models.TextField(blank=True, null=True)
     priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES, blank=True, null=True)
