@@ -2,44 +2,121 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title></title>
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{% static 'user/login.css' %}">
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{% static 'user/login.css' %}" />
+    <style>
+      body {
+        overflow-x: auto;
+      }
+      .top-circle-img {
+        position: absolute;
+        top: -36px;
+        left: -82px;
+        width: 150px;
+        height: 150px;
+        filter: invert(1) sepia(1) saturate(10) hue-rotate(4deg);
+      }
+      .logo-img {
+        position: absolute;
+        bottom: -35px;
+        right: -58px;
+        width: 200px;
+        height: 200px;
+        filter: invert(1) sepia(1) saturate(10) hue-rotate(4deg);
+      }
+      .top-circle-left {
+        position: absolute;
+        top: 16px;
+        left: 37px;
+        height: 65px;
+        width: 65px;
+        /* background-color: #ffd43a; */
+        border-radius: 50%;
+        border: 3px solid #ffd43a; 
+      }
+      .top-circle-right {
+        position: absolute;
+        top: -30px;
+        right: -44px;
+        height: 100px;
+        width: 100px;
+        /* background-color: #ffd43a; */
+        border-radius: 50%;
+        border: 5.8px solid #ffd43a; 
+      }
+      .left-circle {
+        position: absolute;
+        top: 134px;
+        left: -15px;
+        height: 30px;
+        width: 30px;
+        background-color: #ffd43a;
+        border-radius: 50%;
+        border: none;
+      }
+      .right-circle {
+        position: absolute;
+        top: 94px;
+        right: -22px;
+        height: 30px;
+        width: 30px;
+        background-color: #ffd43a;
+        border-radius: 50%;
+        border: none;
+      }
+      .bottom-circle {
+        position: absolute;
+        bottom: -11px;
+        right: 117px;
+        height: 50px;
+        width: 50px;
+        background-color: #ffd43a;
+        border-radius: 50%;
+        border: none;
+      }
+    </style>
   </head>
   <body>
-    
+    <img class="top-circle-img" src="{% static 'index/images/logo1.svg' %}" alt="" />
+    <div class="top-circle-left"></div>
+    <div class="left-circle"></div>
+    <div class="top-circle-right"></div>
+    <div class="right-circle"></div>
+    <div class="bottom-circle"></div>
+    <img class="logo-img" src="{% static 'index/images/logo1.svg' %}" alt="" />
     <div class="container">
-
       <div class="top-bar">
-        <img src="{% static 'index/images/fullLogo.png' %}" alt="Logo">
+        <!-- <img src="{% static 'index/images/fullLogo.png' %}" alt="Logo"> -->
+        <img
+          src="{% static 'index/images/fulllogo_transparent_nobuffer.png' %}"
+          alt="Logo"
+        />
       </div>
-      <h2>Log In</h2>
-    
+      <p class="main-heading">WELCOME to your Maintenance 911</p>
+
       {% if error %}
-        <div class="error">
-          <h1> {{ error }} </h1>
-        </div>
+      <div class="error">
+        <h1>{{ error }}</h1>
+      </div>
       {% endif %}
-    
-      <form method="post" action="{% url 'User:login' %}" >
-          {% csrf_token %}
-          
-          <label for="username">User Name</label>
-          <input class="box" type="text" name="username" id="username">
-          
-          <label for="passowrd">Password</label>
-          <input class="box" type="password" name="password" id="password">
 
+      <form method="post" action="{% url 'User:login' %}">
+        {% csrf_token %}
 
-          <button type="submit">Log In</button>      
-        </form>
+        <label for="username">User Name</label>
+        <input class="box" type="text" name="username" id="username" />
 
+        <label for="passowrd">Password</label>
+        <input class="box" type="password" name="password" id="password" />
+
+        <button type="submit">Log In</button>
+      </form>
     </div>
-    
-    
+
     <script src="" async defer></script>
   </body>
 </html>
