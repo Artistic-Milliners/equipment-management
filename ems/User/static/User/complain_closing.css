@@ -1,15 +1,5 @@
 body{
-    font-family: 'Times New Roman', Times, serif;
-}
-
-input{
-    padding: 10px;
-    margin:5px;
-}
-
-select{
-    padding: 10px;
-    margin: 5px;
+    font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
 }
 
 .form-container{
@@ -17,76 +7,70 @@ select{
     width: 80%;
 }
 
+
 form{
     display: flex;
     flex-direction: column;
-}
-
-.three-row{
-
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-top: 20px;
+    margin: 10px;
+    align-items: center;
+    color: #ffd43a;
 }
 
 
-
-.dual-row{
-
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-top: 20px;
-}
-
-.three-row > label{
-    margin:20px 2px 0px 0px;
-
-}
-
-.dual-row > label{
-    margin: 20px 2px 5px 0px;
-}
-
-
-
-.single-row > input,
-.single-row > textarea{
-    margin: 10px 0 0 0;
+form label{
+    font-weight: bold;
+    margin-bottom: 0.5em;
     width: 100%;
-} 
+    /* text-align: center; */
+}
 
-.single-row > label{
-    margin: 20px 0 0 0;
 
-} 
-
-form > input{
-    margin: 20px 0 0 0;
+form input, select, textarea{
+    background-color: #183153;
+    color: #ffd43a;
+    padding: 0.5em;
+    margin-bottom: 0.5em;
     width: 100%;
-}
-
-form > label{
-    margin: 20px 0 0 0;
+    border: 1px solid #ffd43a;
 
 }
+
+
+#spares {
+    width: 100%; /* Adjust the width as necessary, or use a specific width like 300px */
+    min-height: 20px; /* Minimum height to start with */
+    max-height: 100px; /* Optional: Set a max height if you want */
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ffd43a;
+    border-radius: 4px;
+    background-color: #183153;
+    font-size: 16px;
+    white-space: normal; /* Ensures that text wraps */
+    word-wrap: break-word; /* Wraps text at any character in case of overflow */
+    overflow-y: auto; /* Allows scrolling vertically if max-height is reached */
+  }
+
+
 
 .submission{
     display: flex;
     justify-content: space-between;
     margin-left: auto;
     margin-right: auto;
-    width: 50%;
+    width: 100%;
 
 }
 
 .btn-primary{
-    color: white;
-    background-color: blue;
+    font-size: small;
+    color: #183153;
+    background-color: #ffd43a;
     opacity: 70%;
     border: 0cap;
     border-radius: 5px;
+    width: 35vw;
+    padding: 0;
 }
 
 .btn-danger{
@@ -95,6 +79,7 @@ form > label{
     opacity: 70%;
     border: 0cap;
     border-radius: 5px;
+    width: 35vw;
 }
 
 .button{
@@ -102,21 +87,7 @@ form > label{
     padding: 10px;
 }
 
-#spares {
-    width: 100%; /* Adjust the width as necessary, or use a specific width like 300px */
-    min-height: 20px; /* Minimum height to start with */
-    max-height: 100px; /* Optional: Set a max height if you want */
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f8f8f8;
-    font-size: 16px;
-    white-space: normal; /* Ensures that text wraps */
-    word-wrap: break-word; /* Wraps text at any character in case of overflow */
-    overflow-y: auto; /* Allows scrolling vertically if max-height is reached */
-  }
 
   .complain-number{
-    border: black;
+    border: 1px solid #ffd43a;
   }
