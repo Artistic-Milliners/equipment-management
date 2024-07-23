@@ -34,19 +34,6 @@ h1 {
   color: #ffd43a;
 }
 
-/* The side navigation menu */
-/* .sidebar {
-    margin: 0;
-    padding: 0;
-    width: 200px;
-    background-color: #0E98BA;
-
-    position: fixed;
-    height: 100%;
-    overflow: auto;
-  } */
-
-/* Sidebar links */
 .offcanvas {
   background-color: rgba(0, 0, 0, 0.1);
 }
@@ -77,7 +64,7 @@ h1 {
 }
 
 .sidebar {
-  font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
+   font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
   height: 100%;
   margin-top: 0;
   background-color: #183153;
@@ -122,36 +109,158 @@ h1 {
 }
 
 .container {
-  padding: 0;
+  margin: 0 auto;
+  padding: 1em;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  justify-content: space-between;
+  width: 90vw;
 }
 .card {
-  margin-left: 10%;
-  margin-top: 30%;
-  padding: 4%;
+  margin:0.5em;
   width: 35vw;
-  height: 15vh;
+  height: 35vw;
+  max-width: 400px;
+  max-height:400px ;
   border: 2px solid none;
   border-style: outset;
   background-color: rgb(255, 212, 59, 1);
   border-radius: 15px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  /* flex: 1; */
 }
 
-.card i {
-  color: #183153;
-  padding-top: 1.5rem;
-  align-content: center;
-  text-align: center;
+
+.card p{
+  font-size: 30px;
 }
-.card p,
-a {
+
+
+.card i {
+  font-size: 8vw;
+  color: #183153;
+  align-items: center;
+  text-align: center;
+  margin: 0 auto;
+}
+
+
+.card a {
+  display: flex;
   text-decoration: none;
   color: #183153;
-  align-content: center;
-  text-align: center;
+  align-items: center;
+  justify-content: center;
+  
 }
+
+
+
+
+@media (max-width:1024px) {
+
+  .maximo-icon {
+    margin: 0 0 0 15px;
+    height: 50px;
+  }
+  
+  .maximo-text {
+    width: 70px;
+    height: 18px;
+  }
+  
+  
+  .container{
+    flex-direction: row;
+    align-items: center;
+  }
+  .card{
+    width: 35vw;
+    height: 35vw;
+    margin: 2em;
+
+  }
+  .card i{
+    font-size: 12vw;
+  }
+
+  .card p{
+    font-size: 20px;
+  }
+}
+
+@media (max-width:900px) {
+
+  .maximo-icon {
+    margin: 0 0 0 15px;
+    height: 50px;
+  }
+  
+  .maximo-text {
+    width: 70px;
+    height: 18px;
+  }
+  
+  
+  .container{
+    flex-direction: column;
+    align-items: center;
+  }
+  .card{
+    width: 35vw;
+    height: 35vw;
+    margin: 2em;
+
+  }
+  .card i{
+    font-size: 12vw;
+  }
+
+  .card p{
+    font-size: 20px;
+  }
+}
+
+@media (max-width:600px) {
+
+  .maximo-icon {
+    margin: 0 0 0 15px;
+    height: 50px;
+  }
+  
+  .maximo-text {
+    width: 70px;
+    height: 18px;
+  }
+  
+  
+  .container{
+    flex-direction: column;
+    align-items: center;
+  }
+  .card{
+    width: 35vw;
+    height: 35vw;
+    margin: 1em;
+
+  }
+  .card i{
+    font-size: 10vw;
+  }
+
+  .card p{
+    font-size: 15px;
+  }
+}
+
+
+
+
+
+
 
 /* Page content. The value of the margin-left property should match the value of the sidebar's width property */
 /* div.content {
