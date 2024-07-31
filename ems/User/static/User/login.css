@@ -1,19 +1,29 @@
+html {
+  width: 100%;
+}
+
 body {
   background-color: #2d3e5c;
   font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
 }
 
+/* * {
+  outline: solid 1px red;
+} */
+
 .container {
-  display: flex;
-  flex-direction: column;
+  /* display: flex; */
+  /* flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: center; */
   text-align: center;
   color: #ffd43a;
+  align-items: center;
+  margin: auto;
 }
 
 .top-bar {
-  margin-top: 3vh;
+  margin-top: 5vh;
 }
 
 .top-bar img {
@@ -24,9 +34,9 @@ body {
 }
 
 .main-heading {
-    margin-top: 6vh;
-    font-weight: bold;
-    font-size: large;
+  margin-top: 6vh;
+  font-weight: bold;
+  font-size: large;
 }
 
 .error h1 {
@@ -52,7 +62,7 @@ form input {
   color: #ffd43a !important;
   border: 3px solid #ffd43a;
   box-shadow: 3px 3px 5px #888888, -3px -3px 5px #aaaaaa;
-  padding: 0.5em;
+  padding: 0.7em;
   border-radius: 5%;
   margin: 0.5em 1.5em;
 }
@@ -73,3 +83,92 @@ form button {
     padding: 0.5em;
     margin:0.2em 1em 2em 1em;
 } */
+
+@media (min-width: 600px) {
+  .container {
+    max-width: 540px;
+  }
+
+  .main-heading {
+    font-size: larger;
+  }
+
+  body {
+    font-size: 18px;
+  }
+
+  button {
+    font-size: 1.1rem;
+    padding: 12px 24px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    align-items: center;
+    margin: auto;
+  }
+
+  .main-heading {
+    font-size: larger;
+  }
+
+  body {
+    font-size: 20px;
+  }
+
+  button {
+    font-size: 1.2rem;
+    padding: 14px 28px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    align-items: center;
+    margin: auto;
+  }
+
+  .top-bar img {
+    width: 30%;
+    height: 30%;
+  }
+
+  .main-heading {
+    font-size: larger;
+  }
+
+  body {
+    font-size: 22px;
+  }
+
+  button {
+    font-size: 1.3rem;
+    padding: 16px 32px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    align-items: center;
+    margin: auto;
+  }
+
+  .top-bar img {
+    width: 30%;
+    height: 30%;
+  }
+
+  .main-heading {
+    font-size: larger;
+  }
+
+  body {
+    font-size: 24px;
+  }
+
+  button {
+    font-size: 1.4rem;
+    padding: 18px 36px;
+  }
+}
