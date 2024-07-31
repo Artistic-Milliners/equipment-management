@@ -36,7 +36,7 @@ body {
 .main-heading {
   margin-top: 6vh;
   font-weight: bold;
-  font-size: large;
+  font-size: larger;
 }
 
 .error h1 {
@@ -62,7 +62,7 @@ form input {
   color: #ffd43a !important;
   border: 3px solid #ffd43a;
   box-shadow: 3px 3px 5px #888888, -3px -3px 5px #aaaaaa;
-  padding: 0.7em;
+  padding: 0.9em;
   border-radius: 5%;
   margin: 0.5em 1.5em;
 }
