@@ -9,9 +9,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="{% static 'user/login.css' %}" />
     <style>
-      body {
-        overflow-x: auto;
-      }
       .top-circle-img {
         position: absolute;
         top: -36px;
@@ -36,7 +33,7 @@
         width: 65px;
         /* background-color: #ffd43a; */
         border-radius: 50%;
-        border: 3px solid #ffd43a; 
+        border: 3px solid #ffd43a;
       }
       .top-circle-right {
         position: absolute;
@@ -46,7 +43,7 @@
         width: 100px;
         /* background-color: #ffd43a; */
         border-radius: 50%;
-        border: 5.8px solid #ffd43a; 
+        border: 5.8px solid #ffd43a;
       }
       .left-circle {
         position: absolute;
@@ -81,7 +78,11 @@
     </style>
   </head>
   <body>
-    <img class="top-circle-img" src="{% static 'index/images/logo1.svg' %}" alt="" />
+    <img
+      class="top-circle-img"
+      src="{% static 'index/images/logo1.svg' %}"
+      alt=""
+    />
     <div class="top-circle-left"></div>
     <div class="left-circle"></div>
     <div class="top-circle-right"></div>
@@ -90,7 +91,6 @@
     <img class="logo-img" src="{% static 'index/images/logo1.svg' %}" alt="" />
     <div class="container">
       <div class="top-bar">
-        <!-- <img src="{% static 'index/images/fullLogo.png' %}" alt="Logo"> -->
         <img
           src="{% static 'index/images/fulllogo_transparent_nobuffer.png' %}"
           alt="Logo"
