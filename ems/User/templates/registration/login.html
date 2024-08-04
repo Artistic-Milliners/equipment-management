@@ -9,6 +9,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="{% static 'user/login.css' %}" />
     <style>
+      .container {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+      }
       .top-circle-img {
         position: absolute;
         top: -36px;
@@ -25,13 +31,20 @@
         height: 200px;
         filter: invert(1) sepia(1) saturate(10) hue-rotate(4deg);
       }
+      .top-circle-left,
+      .top-circle-right,
+      .left-circle,
+      .right-circle,
+      .bottom-circle {
+        overflow: hidden;
+        box-sizing: border-box;
+      }
       .top-circle-left {
         position: absolute;
         top: 16px;
         left: 37px;
         height: 65px;
         width: 65px;
-        /* background-color: #ffd43a; */
         border-radius: 50%;
         border: 3px solid #ffd43a;
       }
@@ -41,7 +54,6 @@
         right: -44px;
         height: 100px;
         width: 100px;
-        /* background-color: #ffd43a; */
         border-radius: 50%;
         border: 5.8px solid #ffd43a;
       }
@@ -78,43 +90,49 @@
     </style>
   </head>
   <body>
-    <img
-      class="top-circle-img"
-      src="{% static 'index/images/logo1.svg' %}"
-      alt=""
-    />
-    <div class="top-circle-left"></div>
-    <div class="left-circle"></div>
-    <div class="top-circle-right"></div>
-    <div class="right-circle"></div>
-    <div class="bottom-circle"></div>
-    <img class="logo-img" src="{% static 'index/images/logo1.svg' %}" alt="" />
     <div class="container">
-      <div class="top-bar">
-        <img
-          src="{% static 'index/images/fulllogo_transparent_nobuffer.png' %}"
-          alt="Logo"
-        />
+      <img
+        class="top-circle-img"
+        src="{% static 'index/images/logo1.svg' %}"
+        alt=""
+      />
+      <div class="top-circle-left"></div>
+      <div class="left-circle"></div>
+      <div class="top-circle-right"></div>
+      <div class="right-circle"></div>
+      <div class="bottom-circle"></div>
+      <img
+        class="logo-img"
+        src="{% static 'index/images/logo1.svg' %}"
+        alt=""
+      />
+      <div class="inner-container">
+        <div class="top-bar">
+          <img
+            src="{% static 'index/images/fulllogo_transparent_nobuffer.png' %}"
+            alt="Logo"
+          />
+        </div>
+        <p class="main-heading">WELCOME to your Maintenance 911</p>
+
+        {% if error %}
+        <div class="error">
+          <h1>{{ error }}</h1>
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'User:login' %}">
+          {% csrf_token %}
+
+          <label for="username">User Name</label>
+          <input class="box" type="text" name="username" id="username" />
+
+          <label for="passowrd">Password</label>
+          <input class="box" type="password" name="password" id="password" />
+
+          <button type="submit">Log In</button>
+        </form>
       </div>
-      <p class="main-heading">WELCOME to your Maintenance 911</p>
-
-      {% if error %}
-      <div class="error">
-        <h1>{{ error }}</h1>
-      </div>
-      {% endif %}
-
-      <form method="post" action="{% url 'User:login' %}">
-        {% csrf_token %}
-
-        <label for="username">User Name</label>
-        <input class="box" type="text" name="username" id="username" />
-
-        <label for="passowrd">Password</label>
-        <input class="box" type="password" name="password" id="password" />
-
-        <button type="submit">Log In</button>
-      </form>
     </div>
 
     <script src="" async defer></script>
