@@ -8,6 +8,8 @@ h1 {
 }
 
 .navbar-top {
+  display: flex;
+  justify-content: space-between;
   width: 100%;
   background-color: #183153;
   align-items: center;
@@ -26,6 +28,7 @@ h1 {
 }
 
 .nav-icon-left {
+  margin-right: 5%;
   display: flex;
   flex-direction: row;
 }
