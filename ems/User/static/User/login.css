@@ -82,7 +82,7 @@ form button {
 
 @media (min-width: 600px) {
   .container {
-    max-width: 540px;
+    max-width: 100%;
   }
 
   .main-heading {
@@ -151,8 +151,8 @@ form button {
   }
 
   .top-bar img {
-    width: 30%;
-    height: 30%;
+    width: 15%;
+    height: 15%;
   }
 
   .main-heading {
@@ -166,5 +166,15 @@ form button {
   button {
     font-size: 1.4rem;
     padding: 18px 36px;
+  }
+
+  form input {
+    width: 50%;
+    margin: auto;
+    padding: 1.5em;
+  }
+
+  form label {
+    padding: 0.5em;
   }
 }
