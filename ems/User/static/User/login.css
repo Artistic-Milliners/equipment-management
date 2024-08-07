@@ -105,6 +105,11 @@ form button {
     margin: auto;
   }
 
+  .top-bar img {
+    width: 20%;
+    height: 20%;
+  }
+
   .main-heading {
     font-size: larger;
   }
@@ -117,6 +122,16 @@ form button {
     font-size: 1.2rem;
     padding: 14px 28px;
   }
+
+  form input {
+    width: 70%;
+    margin: auto;
+    padding: 1.5em;
+  }
+
+  form label {
+    padding: 0.5em;
+  }
 }
 
 @media (min-width: 992px) {
@@ -126,8 +141,8 @@ form button {
   }
 
   .top-bar img {
-    width: 30%;
-    height: 30%;
+    width: 20%;
+    height: 20%;
   }
 
   .main-heading {
@@ -141,6 +156,16 @@ form button {
   button {
     font-size: 1.3rem;
     padding: 16px 32px;
+  }
+
+  form input {
+    width: 50%;
+    margin: auto;
+    padding: 1.5em;
+  }
+
+  form label {
+    padding: 0.5em;
   }
 }
 
