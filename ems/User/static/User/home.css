@@ -113,7 +113,7 @@ h1 {
   padding: 1em;
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   justify-content: space-between;
   width: 90vw;
 }
