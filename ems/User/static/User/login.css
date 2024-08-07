@@ -242,14 +242,14 @@ form button {
   }
 
   .top-bar img {
-    width: 13%;
-    height: 13%;
+    width: 11%;
+    height: 11%;
   }
 
   form input {
     width: 50%;
     margin: auto;
-    padding: 1em;
+    padding: 0.7em;
   }
 
   form label {
