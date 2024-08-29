@@ -9,82 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="{% static 'user/login.css' %}" />
     <style>
-      .container {
-        position: relative;
-        width: 100%;
-        height: 100vh;
-        overflow: hidden;
-      }
-      .top-circle-img {
-        position: absolute;
-        top: -36px;
-        left: -82px;
-        width: 150px;
-        height: 150px;
-      }
-      .logo-img {
-        position: absolute;
-        bottom: -35px;
-        right: -58px;
-        width: 200px;
-        height: 200px;
-      }
-      .top-circle-left,
-      .top-circle-right,
-      .left-circle,
-      .right-circle,
-      .bottom-circle {
-        overflow: hidden;
-        box-sizing: border-box;
-      }
-      .top-circle-left {
-        position: absolute;
-        top: 16px;
-        left: 37px;
-        height: 65px;
-        width: 65px;
-        border-radius: 50%;
-        border: 3px solid #ffd43a;
-      }
-      .top-circle-right {
-        position: absolute;
-        top: -30px;
-        right: -44px;
-        height: 100px;
-        width: 100px;
-        border-radius: 50%;
-        border: 5.8px solid #ffd43a;
-      }
-      .left-circle {
-        position: absolute;
-        top: 134px;
-        left: -15px;
-        height: 30px;
-        width: 30px;
-        background-color: #ffd43a;
-        border-radius: 50%;
-        border: none;
-      }
-      .right-circle {
-        position: absolute;
-        top: 94px;
-        right: -22px;
-        height: 30px;
-        width: 30px;
-        background-color: #ffd43a;
-        border-radius: 50%;
-        border: none;
-      }
-      .bottom-circle {
-        position: absolute;
-        bottom: -11px;
-        right: 117px;
-        height: 50px;
-        width: 50px;
-        background-color: #ffd43a;
-        border-radius: 50%;
-        border: none;
-      }
+      
     </style>
   </head>
   <body>
@@ -122,11 +47,11 @@
         <form method="post" action="{% url 'User:login' %}">
           {% csrf_token %}
 
-          <label for="username">User Name</label>
-          <input class="box" type="text" name="username" id="username" />
+          {% comment %} <label for="username">UserName</label> {% endcomment %}
+          <input class="box" type="text" name="username" id="username" placeholder="username"/>
 
-          <label for="passowrd">Password</label>
-          <input class="box" type="password" name="password" id="password" />
+          {% comment %} <label for="passowrd">Password</label> {% endcomment %}
+          <input class="box" type="password" name="password" id="password" placeholder="password"/>
 
           <button type="submit">Log In</button>
         </form>

@@ -14,66 +14,6 @@
 <link rel="stylesheet" href="{% static 'User/home.css' %}">
 <link rel="stylesheet" href="{% static 'maintenance/css/custom-detail.css' %}">
 <script src="{% static 'maintenance/js/detail.js'%}"></script>
-<style>
-  /* body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-  } */
-  .container {
-    display: inline-block;
-  }
-  .ticket-container {
-    margin: auto;
-    width: 335px;
-    /* border: 1px solid #ccc; */
-    padding: 5px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    /* background-color: #fff; */
-    font-size: small;
-  }
-
-  .ticket-row {
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    padding: 6px 0;
-  }
-
-  .ticket-row:last-child {
-    border-bottom: none;
-  }
-
-  .label {
-    font-weight: bold;
-    color: #FFD43A;
-    width: 155px;
-    text-align: right;
-    /* padding-right: 10px; */
-  }
-
-  .separator {
-    width: 1px;
-    background-color: #ccc;
-    height: 100%;
-    margin: 0 10px;
-  }
-
-  .value {
-    color: #FFD43A;
-    width: calc(100% - 150px);
-    text-align: left;
-  }
-
-  .status-open {
-    color: green;
-  }
-</style>
 {% endblock head %}
 
 {% block title %}
@@ -259,6 +199,19 @@ Complain Detail
     <div class="separator"></div>
     <span class="value">{{ issue.machineissue.description_reviewer }}</span>
   </div>
+  <form action="{% url 'maintenance:complain_approve' pk=issue.pk %}" method="post" id="remarks-form">
+    {% csrf_token %}
+    <div class="detail-item comment-section">
+          
+          <textarea name="man-remarks" id="man-remarks" class="remarks" placeholder="Remarks" type="text" required></textarea>
+          
+          <div class="submit">
+            <button type="button" onclick="createInputElem('Approved')" ><i class="fa fa-thumbs-up">Approve</i></button>
+            <button type="button" onclick="createInputElem('Rejected')"><i class="fa fa-thumbs-down">Reject</i></button>
+          </div>
+          
+    </div>  
+  </form>
   <!-- <div style="border-left: 2px solid grey; height: 400px; position: absolute; left: 48%; top: 17%;"></div> -->
 </div>
 
