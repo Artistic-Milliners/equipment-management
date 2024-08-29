@@ -24,10 +24,10 @@
 {% endblock title %}
 
 {% block main-body %}
-<div class="container">
+<div class="main-container">
   <div class="main-header">
     <div><h1>ENGINEER'S DEN</h1></div>
-    <div><a href="{% url 'maintenance:complain_list' %}">Ticket List</a></div>
+    {% comment %} <div><a href="{% url 'maintenance:complain_list' %}">Ticket List</a></div> {% endcomment %}
   </div>
 
   <div>
@@ -68,7 +68,7 @@
       </div>
       
       <label  for="machine-section"><h6>Machine section</h6></label>
-      <input  type="text" name="machine-section" id="machine-section">    
+      <input  type="text" name="machine-section" id="machine-section" required>    
       
       <label  for="machine-hours"><h6>Machine Hours</h6></label>
       <input value="{{issue.machine_hours}}" type="number" name="machine-hours" id="machine-hours" required> 
@@ -95,7 +95,7 @@
       </select>
       
       <label  for="description-reviewer"><h6>Description</h6></label>
-      <textarea  type="text" name="description-reviewer" id="description-reviewer" rows="4"></textarea>
+      <textarea  type="text" name="description-reviewer" id="description-reviewer" rows="4" required></textarea>
       
       <label  for="assign-to-department"> <h6>Assign To (Department)</h6> </label>
       <select  type="text" name="assign-to-department" id="assign-to-department">

@@ -84,11 +84,11 @@
         <!-- MAIN BODY STARTS -->
 
 
-
+        {% block main-body %}
         <div class="container">
 
 
-            {% block main-body %}
+            
             <div class="card">
                 <a href="{% url 'User:create_complain' %}"><i class=" fa fa-file fa-2x"></i></a>
                 <p>Complain</p>
@@ -131,10 +131,10 @@
 
         {% endfor %} -->
 
-            {% endblock main-body %}
+            
 
         </div>
-
+        {% endblock main-body %}
 
         <!-- MAIN BODY ENDS -->
 
