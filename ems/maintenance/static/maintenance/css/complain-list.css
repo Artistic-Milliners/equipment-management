@@ -87,3 +87,16 @@ max-width: 400px;
     align-self: flex-end;
     justify-self: flex-start;
 }
+
+
+@media (min-width:1024px){
+
+    .header button{
+        max-width: 10vw;    
+    }
+
+    .header{
+        flex-wrap: wrap;
+    }
+    
+}
