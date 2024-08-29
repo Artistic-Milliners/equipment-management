@@ -26,50 +26,6 @@
     <div class="header">
       <h1>Work Order Status</h1> 
       <button class="compalain"> <a href="{% url 'User:create_complain' %}"><i class="fa fa-plus"> New</i></a></button>
-      <!-- <p>Filter</p> -->
-      <!-- <select name="filter" id="filter" onchange="filterData('filter')">
-        <option value="date_time">Date/Time</option>
-        <option value="status">Status</option>
-        <option value="department">Department</option>
-      </select> -->
-    
-    </div>
-    <hr>
-
-    <!-- <div class="table-responsive">
-      <table class="table  table-bordered">
-        <thead>
-          <tr>
-            <th scope="col" class="text-center">#</th>
-            <th scope="col" class="text-center">WORK ORDER</th>
-            <th scope="col" class="text-center">EQUIPMENT</th>
-            <th scope="col" class="text-center">DEPARTMENT</th>
-            <th scope="col" class="text-center">DESCRIPTION</th>
-            <th scope="col" class="text-center">STATUS</th> 
-          </tr>
-        </thead>
-        <tbody>
-          {% for issue in issue_list  %} 
-                <th scope="row" class="text-center">{{ forloop.counter }}</th>
-                <td class="text-center"> 
-                  <a {% if issue.status == 'PENDING' %}
-                          href="{% url 'User:review_complain' pk=issue.pk %}"
-                        {% else %} 
-                          href="{% url 'maintenance:complain_detail' pk=issue.pk %}"
-                        {% endif %}
-                        >
-                    {{ issue.ticket_num}}
-                  </a>
-                </td>
-                <td class="text-center">{{ issue.machine_id.name }}</td>
-                <td class="text-center">{{ issue.user.department}}</td>
-                <td class="text-center">{{ issue.description_user }}</td>
-                <td class="text-center">{{issue.status}}</td>
-              </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>   -->
 
       {% for issue in issue_list  %}
       {% if issue.user.id == emp.id or issue.user.department == emp.department or issue.error_department == emp.department %}
@@ -91,7 +47,8 @@
             >{{ issue.description_user }}</a></h6>    
            
         <div class="priority">{{issue.status}}</div>
-      </div>  
+      </div>
+    
       {% endif %}
       
       {% endfor %}
