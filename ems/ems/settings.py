@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+import datetime
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,6 +32,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+JWT_SECRET_KEY = 'your_jwt_secret_key_here'
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRATION_DELTA = datetime.timedelta(hours=1) 
 
 # Application definition
 
@@ -42,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'ems',
+    'api',
     'core',
     'User',
     'maintenance',
@@ -53,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    # 'api.utils.DisableCSRFForAPI',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -89,8 +95,12 @@ WSGI_APPLICATION = 'ems.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'ems',
+        'USER': 'zohaib',
+        'PASSWORD':'abcd@1234',
+        'HOST':'localhost',
+        'PORT':'5432',
     }
 }
 

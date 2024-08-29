@@ -33,12 +33,14 @@
 .issue-section{
 display: flex;
 flex-direction: column;
+flex-wrap: nowrap;
 color: white;
 position: relative;
 background-color:#FFD43B;
 margin: 5px auto;
 padding: 15px;
 width:80vw;
+max-width: 400px;
 }
 
 .issue-section::after{

@@ -8,6 +8,9 @@ h1 {
 }
 
 .navbar-top {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
   width: 100%;
   background-color: #183153;
   align-items: center;
@@ -28,10 +31,13 @@ h1 {
 .nav-icon-left {
   display: flex;
   flex-direction: row;
+  margin-right: 0.5em;
 }
 
 .nav-icon-left i {
   color: #ffd43a;
+  font-size: 30px;
+  margin: 0.2em;
 }
 
 .offcanvas {
@@ -121,8 +127,8 @@ h1 {
   margin:0.5em;
   width: 35vw;
   height: 35vw;
-  max-width: 400px;
-  max-height:400px ;
+  max-width: 250px;
+  max-height:250px ;
   border: 2px solid none;
   border-style: outset;
   background-color: rgb(255, 212, 59, 1);
@@ -140,7 +146,7 @@ h1 {
 
 
 .card i {
-  font-size: 8vw;
+  font-size: 50px;
   color: #183153;
   align-items: center;
   text-align: center;
@@ -160,7 +166,7 @@ h1 {
 
 
 
-@media (max-width:1024px) {
+@media (min-width:1024px) {
 
   .maximo-icon {
     margin: 0 0 0 15px;
@@ -178,13 +184,15 @@ h1 {
     align-items: center;
   }
   .card{
-    width: 35vw;
-    height: 35vw;
+    width: 25vw;
+    height: 25vw;
     margin: 2em;
 
   }
   .card i{
-    font-size: 12vw;
+
+    font-size: 75px;
+  
   }
 
   .card p{
@@ -210,8 +218,8 @@ h1 {
     align-items: center;
   }
   .card{
-    width: 35vw;
-    height: 35vw;
+    width: 25vw;
+    height: 25vw;
     margin: 2em;
 
   }

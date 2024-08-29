@@ -235,6 +235,7 @@ class ComplainClosingView(View):
             department = Department.objects.all()
        
         except Exception as e:
+            
             return render(request, "user/error/404.html", {'error':str(e)})
         
         return render(request, "user/complain_closing.html", {"issue":issue, "review":review, "contractors":contractor_list})

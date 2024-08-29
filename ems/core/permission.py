@@ -29,7 +29,6 @@ def create_group(name):
         return
     else:
         grp_name = Group.objects.create(name=name)
-   
     return grp_name
 
 def assign_permission(group_name, permission):

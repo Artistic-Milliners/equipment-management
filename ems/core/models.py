@@ -13,13 +13,6 @@ class Unit(models.Model):
     location = models.CharField(max_length=255)
 
 
-# def get_unit():
-#     with transaction.atomic():
-#         try:
-#             unit = Unit.objects.first().pk
-#         except Unit.DoesNotExist:
-#             unit = Unit.objectss.create(id=int('005'), name='Artistic Millienrs unit 5', location='Landhi Bin Qasim')
-#         return unit 
 
 class Department(models.Model):
     TYPE_CHOICES = (
@@ -35,13 +28,6 @@ class Department(models.Model):
         return self.name
 
 
-# def get_department():
-#     try:
-#         department = Department.objects.first().pk
-#     except Department.DoesNotExist:
-#         unit = Department.objectss.create(name='Process Automation', unit=get_unit)
-#     return unit 
-
 class Designation(models.Model):
     designation_name = models.CharField(max_length=255, default='Trainee')
 
@@ -54,16 +40,6 @@ class CustomUser(AbstractUser):
     is_contractor = models.BooleanField(default=False)
 
 
-# def get_user():
-#     try:
-#         user_pk = CustomUser.objects.first().pk 
-#     except:
-#         user = CustomUser.objects.create(username='zohaib', password='abcd@1234') 
-#         user_pk = user.pk
-
-#     return user_pk
-
-
 class Employee(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.PROTECT)
     name = models.CharField(max_length=255)
@@ -73,15 +49,6 @@ class Employee(models.Model):
     def __str__(self):
         return self.name
 
-
-# def get_employee():
-#     with transaction.atomic():
-#         try:
-#             emp_pk = Employee.objects.first().pk
-#         except AttributeError as e:
-#             emp = Employee.objects.create(name='Wahab', department=get_department)
-#             emp_pk = emp.pk 
-#     return emp_pk
 
 
 class Contractor(models.Model):
@@ -269,9 +236,10 @@ class MachineIssueReview(models.Model):
 
 
 class MachineIssueApproval(models.Model):
+
     user_id = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name='user_remarks')
     complain_id = models.OneToOneField(MachineIssue, on_delete=models.CASCADE, related_name = 'issue_remarks')
-    comment = models.TextField(max_length = 1000, blank=True, null=True)
+    comment = models.TextField(max_length=1000, blank=True, null=True)
     date_time= models.DateTimeField()
 
     def save(self, *args, **kwargs):
@@ -293,20 +261,12 @@ class IssueClosing(models.Model):
     remarks = models.TextField(default="EMPTY") 
     image = models.ManyToManyField(ImageModel, related_name="closingImages")
     equipment_status = models.CharField(max_length=10)
-    # temprory_close = models.BooleanField()
-
 
     def totalDays(self):
         total_days = self.date_ended.date()-datetime.date()
         
         if self.temprory_close and total_days > 7:
             pass
-
-
-             
-
-
-
 
     def __str__(self) -> str:
         return f"{self.issueReview.reviewer.name}\n{self.issueReview.issue.description_user}"
