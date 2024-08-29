@@ -1,3 +1,54 @@
+.container {
+    display: inline-block;
+  }
+  .ticket-container {
+    margin: auto;
+    width: 335px;
+    /* border: 1px solid #ccc; */
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    /* background-color: #fff; */
+    font-size: small;
+  }
+
+  .ticket-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding: 6px 0;
+  }
+
+  .ticket-row:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    font-weight: bold;
+    color: #FFD43A;
+    width: 155px;
+    text-align: right;
+    /* padding-right: 10px; */
+  }
+
+  .separator {
+    width: 1px;
+    background-color: #ccc;
+    height: 100%;
+    margin: 0 10px;
+  }
+
+  .value {
+    color: #FFD43A;
+    width: calc(100% - 150px);
+    text-align: left;
+  }
+
+  .status-open {
+    color: green;
+  }
+
+
 body{
     font-family:Century Gothic,CenturyGothic,AppleGothic,sans-serif;
     color: #FFD43A;
@@ -18,19 +69,24 @@ form .comment-section > button{
     padding: 0.5rem;
 }
 
-form .comment-section > input{
+form .comment-section > textarea{
+    width: 100%;
     background-color: #2D3E5C;
     border: 1px solid #FFD43A;
     padding: 0.5rem;
     color: #FFD43A;
 }
 
-form .submit-section > button{
+form button{
     background-color: #FFD43A;
     color: #2D3E5C;
     padding: 0.5rem;
     border-radius: 10px;
+    text-align: center;
     margin: 1rem;
-
 }
 
+
+.comment-section>.submit{
+    text-align: center;
+}
