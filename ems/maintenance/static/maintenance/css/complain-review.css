@@ -1,9 +1,27 @@
-.container {
+.main-container {
+  width: 100%;
   color: #ffd43a;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
+
+
+.main-header{
+  text-align: center;
+  
+}
+
+.main-header div>a{
+  text-decoration: none;
+  border: 1px solid #ffd43a;
+  border-radius: 10px;
+  background-color: #ffd43a;
+  padding: 0.5em;
+  color: #183153;
+}
+
 
 .issue-section {
   display: flex;
@@ -54,11 +72,19 @@
   justify-self: flex-start;
 }
 
+.issue-section h6>a{
+  text-decoration: none;
+  color: #183153;
+}
+
 form {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: left;
+  box-sizing: border-box;
 }
+
 
 label {
   color: #ffd43a;
@@ -101,7 +127,8 @@ form button {
   background-color: #183153;
   color: #ffd43a;
   border: 1px solid #ffd43a;
-  width: 25vw;
+  width: 100%;
+  max-width: 20vw;
   padding: 0.5em;
   align-self: center;
 }
@@ -137,3 +164,36 @@ form button {
 .submit-btn {
   margin-bottom: 1rem;
 }
+
+
+@media (min-width: 1024px) {
+
+  .issue-section{
+    width: 100%;
+    max-width: 35vw;
+  }
+  form {
+    width: 100%;
+    max-width: 35vw;
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+
+  label,
+  form input,
+  form select,
+  form textarea {
+    width: 100%; /* Make the elements take the full width of the form */
+    max-width: 35vw; /* Ensure the form elements respect the form's max-width */
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  form button {
+    width: 5vw; /* Make the button match the form's width */
+  }
+}
+
