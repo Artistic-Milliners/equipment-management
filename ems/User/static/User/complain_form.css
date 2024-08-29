@@ -92,6 +92,20 @@
   }
 
 
+@media (min-width:1024px){
+  .form-item > input,
+  .form-item > select,
+  .form-item > textarea{
+    
+    background-color: #2D3E5C;
+    color: #FFD43A;
+    border: 0.5px solid #FFD43A;
+    width: 30vw;
+    padding: 0.5em;
+    margin-top: 0.5em;
+  }    
+}
+
 
 
   
