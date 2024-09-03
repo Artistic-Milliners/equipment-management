@@ -23,8 +23,7 @@
 
 {% block main-body %}
   <div class="timeline-main-heading">
-    <span style="font-size: large; font-weight: bold;">Complaint Resolved</span>
-    <span class="timeline-description">on Mon 19 Oct 20</span>
+    <span style="font-size: large; font-weight: bold;">Complaint Tracking</span>
   </div>
   <div class="timeline">
     <div class="timeline-event">
@@ -43,7 +42,7 @@
         </div>
         <div class="timeline-description">
           <span>
-            Your complain has been recieved
+            Description: {{ issue.description_user }}
           </span>   
         </div>
       </div>
@@ -90,11 +89,16 @@
             <span class="timeline-date">
                 {{ issue.issue_remarks.date_time }}
             </span>
-        <div class="timeline-description">
+        <div class="timeline-description approved">
             <span>
                 Complain has been approved
             </span>
         </div>
+        <div class="timeline-description">
+          <span>
+              Description: {{ issue.issue_remarks.comment}}
+          </span>
+      </div>
           {% else %}
           <span class="timeline-date">
             Pending HOD approval
@@ -126,7 +130,7 @@
           <span class="timeline-date">
             Pending
           </span>
-          {% endif %}
+          {% endif %}   
         </div>
       </div>
     </div>

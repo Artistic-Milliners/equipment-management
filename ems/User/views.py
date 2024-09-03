@@ -232,6 +232,7 @@ class ComplainClosingView(View):
             contractor_list = Contractor.objects.all()
             issue = MachineIssue.objects.get(pk=pk)
             review = MachineIssueReview.objects.get(issue=issue)
+            print(issue.machineissue.malfunction_part.all())
             department = Department.objects.all()
        
         except Exception as e:

@@ -1,7 +1,9 @@
 .timeline-main-heading {
-    color: #ffd43b;
-    font-size: large; 
-    font-weight: bold;
+    text-align: center;
+    color: #ffd43b; 
+    margin-left: 1em;
+    margin-top: 1em;
+    margin-bottom: 2.5em;
 }
 
 .timeline {
@@ -73,4 +75,12 @@
 .heighlight {
     background-color: #ffd43b;
     box-shadow: 0 4px 8px #8db8e4;
+}
+
+.approved{
+    background-color: green;
+}
+
+.rejected{
+    background-color: red;
 }
