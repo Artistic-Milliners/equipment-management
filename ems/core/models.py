@@ -1,5 +1,5 @@
 from django.db import models
-from datetime import datetime
+from datetime import datetime, date
 from django.contrib.auth.models import AbstractUser
 from .fields import UnitIDField
 from PIL import Image
@@ -89,6 +89,11 @@ class Spares(models.Model):
     name = models.CharField(max_length=255)
     quantity = models.IntegerField()
     unit = models.CharField(max_length=50,blank=True, null=True)
+    leadtime = models.IntegerField(blank=True, null=True)
+    shelflife = models.IntegerField(blank=True, null=True)
+    servicelife = models.IntegerField(blank=True, null=True)
+    date_of_purchase = models.DateField(default=date.fromisoformat('2024-01-04'))
+
 
     def __str__(self) -> str:
         return f'{self.name}'

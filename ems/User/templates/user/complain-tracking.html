@@ -30,9 +30,13 @@
 =======
 >>>>>>> d0320c4 (Update complain-tracking.html)
   <div class="timeline-main-heading">
+<<<<<<< HEAD
 >>>>>>> 20b8dd1 (Color Updates)
     <span style="font-size: large; font-weight: bold;">Complaint Resolved</span>
     <span class="timeline-description">on Mon 19 Oct 20</span>
+=======
+    <span style="font-size: large; font-weight: bold;">Complaint Tracking</span>
+>>>>>>> b9a44c2 (made changes in complain closing.css and spares model)
   </div>
   <div class="timeline">
     <div class="timeline-event">
@@ -51,7 +55,7 @@
         </div>
         <div class="timeline-description">
           <span>
-            Your complain has been recieved
+            Description: {{ issue.description_user }}
           </span>   
         </div>
       </div>
@@ -98,11 +102,16 @@
             <span class="timeline-date">
                 {{ issue.issue_remarks.date_time }}
             </span>
-        <div class="timeline-description">
+        <div class="timeline-description approved">
             <span>
                 Complain has been approved
             </span>
         </div>
+        <div class="timeline-description">
+          <span>
+              Description: {{ issue.issue_remarks.comment}}
+          </span>
+      </div>
           {% else %}
           <span class="timeline-date">
             Pending HOD approval
@@ -134,7 +143,7 @@
           <span class="timeline-date">
             Pending
           </span>
-          {% endif %}
+          {% endif %}   
         </div>
       </div>
     </div>

@@ -3,10 +3,6 @@ body {
   font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
 }
 
-/* * {
-  outline: solid 1px red;
-} */
-
 .container {
   position: relative;
   width: 100%;
