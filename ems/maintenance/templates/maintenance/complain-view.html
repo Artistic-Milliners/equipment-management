@@ -41,7 +41,9 @@
               {% elif issue.status == 'REVIEWED'%}
                 {% url 'maintenance:complain_detail' pk=issue.pk %}    
               {% elif issue.status|lower == 'approved' or issue.status|lower == 'rejected'%}
-                {% url 'User:complain_closing' pk=issue.pk %}    
+                {% url 'User:complain_closing' pk=issue.pk %}
+              {% elif issue.status|lower == 'closed' %}
+                {% url 'User:complain_closing_list' %}    
               {% endif %}
             {% endif %}"
             >{{ issue.description_user }}</a></h6>    

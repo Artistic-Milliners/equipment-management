@@ -5,7 +5,7 @@ from django.db.models.query import QuerySet
 from core.models import (Contractor, CustomUser, MachineIssueReview, Employee, 
                          Unit, MachineIssue, Spares, Equipment, 
                          Machines, ImageModel, Department,
-                         MachineIssueReview, IssueClosing)
+                         MachineIssueReview, IssueClosing, MachineSpares)
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required
@@ -231,18 +231,21 @@ class ComplainClosingView(View):
         try:
             contractor_list = Contractor.objects.all()
             issue = MachineIssue.objects.get(pk=pk)
+            machine_id = issue.machine_id
+            spares = MachineSpares.objects.filter(machine=machine_id)
             review = MachineIssueReview.objects.get(issue=issue)
-            print(issue.machineissue.malfunction_part.all())
             department = Department.objects.all()
-       
+            
+            return render(request, "user/complain_closing.html", {"issue":issue, "review":review, "contractors":contractor_list, "spares":spares})
+        
         except Exception as e:
             
             return render(request, "user/error/404.html", {'error':str(e)})
         
-        return render(request, "user/complain_closing.html", {"issue":issue, "review":review, "contractors":contractor_list})
+        
 
     def post(self, request, pk):
-        
+
         machineHoursFailure = request.POST["machine-hours"]
         serviceProvider = request.POST["resolvedby"]
         techName = request.POST["technician"]
@@ -251,7 +254,7 @@ class ComplainClosingView(View):
         equipment_status = request.POST["equipment-status"]
         duration = request.POST["duration"]
         remarks = request.POST["additional-remarks"]
-        images = request.POST.getlist("image[]")
+        images = request.FILES.getlist("image[]")
 
         try:
             issue= MachineIssue.objects.select_related("machineissue").get(pk=pk)
@@ -259,10 +262,8 @@ class ComplainClosingView(View):
                 contractor = Contractor.objects.get(pk=serviceProvider)
             else:
                 contractor = serviceProvider
-        except Exception as e:
-            return render(request, "user/error/404.html", {'error':str(e)})
-        
-        closingForm = IssueClosing.objects.create(
+
+            closingForm = IssueClosing.objects.create(
             issueReview=issue.machineissue,
             contractor=contractor,
             machineHours=machineHoursFailure,
@@ -274,13 +275,22 @@ class ComplainClosingView(View):
             equipment_status = equipment_status
         )
 
-        closingForm.save()
-
-        for image in images:
-            closingForm.image.add(image)
             closingForm.save()
+
+            if images:
+                for image in images:
+                    closingForm.image.add(image)
+                    closingForm.save()
+            
+            issue.status = MachineIssue.STATUS_CHOICES[4][0]
+            issue.save()
+
+            return redirect("User:complain_closing_list")
         
-        return redirect("User:complain_closing_list")
+        except Exception as e:
+            return render(request, "user/error/404.html", {'error':str(e)})
+        
+
 
 
 

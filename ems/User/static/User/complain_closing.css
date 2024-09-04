@@ -25,6 +25,21 @@ form label{
 }
 
 
+#search-div{
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+#search-div>#search{
+    width: 50%;
+    background-color: #ffd43a;
+    color: #183153;
+}
+
 form input, select, textarea{
     background-color: #183153;
     color: #ffd43a;
@@ -36,6 +51,7 @@ form input, select, textarea{
 }
 
 #spares-box{
+    background-color: gray;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -45,6 +61,7 @@ form input, select, textarea{
     overflow-y: auto;
     border: 1px solid #ffd43a;
     border-radius: 4px;
+    margin-bottom: 1em ;
 }
 
 #spares>select {
@@ -57,13 +74,17 @@ form input, select, textarea{
     color: #ffd43a;
   }
 
+  :disabled{
+    background-color: grey;
+  }
+
 
 
 /* Styling the dropdown options container */
 /* .my-dropdown-class .select2-results__options {
     background-color: #f0f8ff;
     color: #333; */
-}
+/* } */
 
 /* Styling the selection box */
 /* .my-selection-class .select2-selection {
