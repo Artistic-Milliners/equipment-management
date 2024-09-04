@@ -165,6 +165,7 @@ class MachineIssue(models.Model):
         ('REVIEWED','Reviewed'),
         ('APPROVED','Approved'),
         ('REJECTED', 'Rejected'),
+        ('CLOSED', 'Closed')
 
     ]
 
@@ -207,9 +208,6 @@ class MachineIssueReview(models.Model):
 
         ('PENDING','Pending Approvel'),
         ('REVIEWED','Reviewed'),
-        ('APPROVED','Approved'),
-        ('REJECTED', 'Rejected'),
-        ('CLOSED', 'Closed')
 
     ]
 
@@ -236,16 +234,25 @@ class MachineIssueReview(models.Model):
     assignDepartment = models.ForeignKey(Department, on_delete=models.PROTECT)
     assignPerson = models.ForeignKey(Employee, on_delete=models.SET_NULL, blank=True, null=True, related_name='task_assigned')
     reviewrImages = models.ManyToManyField(ImageModel)
-    reviewDate = models.DateTimeField(auto_now=True)    
+    reviewDate = models.DateTimeField(auto_now=True)
+    status = models.CharField( max_length=50, default=STATUS_CHOICES[0][0])    
     malfunction_part = models.ManyToManyField(Spares, related_name="spares" )
 
 
 class MachineIssueApproval(models.Model):
 
+    STATUS_CHOICES = [
+
+        ('PENDING','PENDING APPROVAL'),
+        ('APPROVED','APPROVED'),
+
+    ]
+
     user_id = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name='user_remarks')
     complain_id = models.OneToOneField(MachineIssue, on_delete=models.CASCADE, related_name = 'issue_remarks')
     comment = models.TextField(max_length=1000, blank=True, null=True)
-    date_time= models.DateTimeField()
+    date_time = models.DateTimeField()
+    status = models.CharField(max_length=50, default=STATUS_CHOICES[0][0])
 
     def save(self, *args, **kwargs):
        if not self.date_time:
@@ -254,6 +261,14 @@ class MachineIssueApproval(models.Model):
 
 
 class IssueClosing(models.Model):
+
+    
+    STATUS_CHOICES = [
+
+        ('PENDING','Pending Closing'),
+        ('CLOSED','Closed'),
+
+    ]
 
     issueReview = models.OneToOneField(MachineIssueReview, on_delete=models.DO_NOTHING)
     date_ended = models.DateTimeField(auto_now=True)
@@ -266,7 +281,8 @@ class IssueClosing(models.Model):
     remarks = models.TextField(default="EMPTY") 
     image = models.ManyToManyField(ImageModel, related_name="closingImages")
     equipment_status = models.CharField(max_length=10)
-
+    status = models.CharField(max_length=50, default=STATUS_CHOICES[0][0])
+    
     def totalDays(self):
         total_days = self.date_ended.date()-datetime.date()
         
