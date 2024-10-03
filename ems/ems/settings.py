@@ -25,12 +25,15 @@ FIXTURE_DIR = os.path.join(BASE_DIR,'fixtures')
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(w#^*qpgwi)ui0j091g+ou7#5k52#zdp)89&sl_bx4&v^eb%j7'
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(os.environ.get("DEBUG", default=0))
 
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOST").split()
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', 'web']
+
+# print('ALLOWED HOST', ALLOWED_HOSTS)
 
 JWT_SECRET_KEY = 'your_jwt_secret_key_here'
 JWT_ALGORITHM = 'HS256'
@@ -95,12 +98,12 @@ WSGI_APPLICATION = 'ems.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'ems',
-        'USER': 'zohaib',
-        'PASSWORD':'abcd@1234',
-        'HOST':'localhost',
-        'PORT':'5432',
+        'ENGINE': os.environ.get("SQL_ENGINE", 'django.db.backends.sqlite3'),
+        'NAME': os.environ.get("SQL_DATABASE", BASE_DIR / "db.sqlite3"),
+        'USER': os.environ.get("SQL_USER", "zohaib"),
+        'PASSWORD':os.environ.get("SQL_PASSWORD", "abcd@1234"),
+        'HOST':os.environ.get("SQL_HOST", "localhost"),
+        'PORT':os.environ.get("SQL_PORT", "5432"),
     }
 }
 

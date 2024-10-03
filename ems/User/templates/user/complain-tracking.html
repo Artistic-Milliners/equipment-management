@@ -57,7 +57,7 @@
           <span class="timeline-heading">
             Engineer Review
           </span>
-          {% if issue.status == 'REVIEWED' or issue.status == 'Approved' %}
+          {% if issue.machineissue.status == 'REVIEWED' %}
           <span class="timeline-date">
             {{ issue.machineissue.reviewDate }}
           </span>
@@ -85,7 +85,7 @@
           <span class="timeline-heading">
             HOD Approval
           </span>
-          {% if issue.status == "Approved" %}
+          {% if issue.issue_remarks.status == 'APPROVED' %}
             <span class="timeline-date">
                 {{ issue.issue_remarks.date_time }}
             </span>
@@ -117,7 +117,7 @@
           <span class="timeline-heading">
             Complain Closing
           </span>
-          {% if issue.status == 'CLOSED' %}
+          {% if issue.machineissue.issueclosing.status == 'CLOSED' %}
           <span class="timeline-date">
             {{ issue.machineissue.issueclosing.date_ended }}
           </span>

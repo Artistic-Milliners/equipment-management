@@ -58,7 +58,7 @@ def complain_approve(request, pk):
         user = CustomUser.objects.get(pk=request.user.id)   
         issue = MachineIssue.objects.get(pk=pk)
         status = request.POST["status"]
-        
+
         if status == 'Approved':
             issue.status = choices[2][1]
         else:
@@ -74,8 +74,10 @@ def complain_approve(request, pk):
             complain_id = issue,
             comment = comment,
             )
+            approval.status = approval.STATUS_CHOICES[1][0]
             approval.save()
-            print("approved complain")
+            # print("approved complain")
+            
         
         except Exception as e:
             print(str(e))

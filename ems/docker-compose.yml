@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./ems/:/use/src/ems
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.dev
+  db:
+    image: postgres:16
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=zohaib
+      - POSTGRES_PASSWORD=abcd@1234
+      - POSTGRES_DB=ems
+
+volumes:
+  postgres_data:

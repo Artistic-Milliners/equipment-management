@@ -157,7 +157,10 @@ class ComplainReviewView(View):
         return render(request, 'maintenance/complain-form.html',context)
 
     def post(self, request, *args, **kwargs):
-        
+
+
+        status_choices=MachineIssueReview.STATUS_CHOICES
+
         user_id = request.user.id
         issue_id = request.POST['issue-number']
         description_reviewer = request.POST['description-reviewer']
@@ -170,7 +173,7 @@ class ComplainReviewView(View):
         # logging.info(f"malfunction part {malfunction_part}")
 
         reviewrImages = request.FILES.getlist('machine-images[]')
-        print(reviewrImages)
+        # print(reviewrImages)
         
         try: 
             user = CustomUser.objects.get(pk=user_id)
@@ -190,7 +193,8 @@ class ComplainReviewView(View):
             type = type,
             problemNature = problemNature,
             assignDepartment = departmentName,
-            assignPerson = assignPerson
+            assignPerson = assignPerson,
+            status=status_choices[1][0]
              )
             review.save()
             print("review saved")
@@ -246,6 +250,8 @@ class ComplainClosingView(View):
 
     def post(self, request, pk):
 
+        status_choices = IssueClosing.STATUS_CHOICES
+
         machineHoursFailure = request.POST["machine-hours"]
         serviceProvider = request.POST["resolvedby"]
         techName = request.POST["technician"]
@@ -272,7 +278,8 @@ class ComplainClosingView(View):
             solutionDescription=solution,
             duration=duration,
             remarks=remarks,
-            equipment_status = equipment_status
+            equipment_status = equipment_status,
+            status = status_choices[1][0]
         )
 
             closingForm.save()

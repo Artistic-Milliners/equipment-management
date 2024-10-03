@@ -1,0 +1,47 @@
+FROM python:3.12.6-slim-bookworm as builder
+
+WORKDIR /usr/src/ems
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+RUN apt-get update && apt-get install -y --no-install-recommends gcc
+
+RUN pip install --upgrade pip
+RUN pip install flake8==6.0.0
+COPY . /usr/src/app
+
+COPY ./requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/ems/wheels -r requirements.txt
+
+#########
+# Final #
+#########
+
+FROM python:3.12.6-slim-bookworm
+RUN mkdir -p /home/app
+RUN addgroup --system ems && adduser --system --group ems
+
+ENV HOME=/home/app
+ENV APP_HOME=/home/app/web
+RUN mkdir $APP_HOME
+WORKDIR $APP_HOME
+
+RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd 
+COPY --from=builder /usr/src/ems/wheels /wheels
+COPY --from=builder /usr/src/ems/requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache /wheels/*
+
+COPY ./entrypoint.prod.sh .
+RUN sed -i 's/\r$//g'  $APP_HOME/entrypoint.prod.sh
+RUN chmod +x  $APP_HOME/entrypoint.prod.sh
+
+COPY . $APP_HOME
+
+RUN chown -R ems:ems $APP_HOME
+
+USER ems
+
+ENTRYPOINT [ "/home/app/web/entrypoint.prod.sh" ]
+

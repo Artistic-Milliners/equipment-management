@@ -1,9 +1,16 @@
 asgiref==3.7.2
+cffi==1.17.0
+cryptography==43.0.0
 Django==5.0.1
 djangorestframework==3.14.0
+git-filter-repo==2.38.0
 pillow==10.2.0
+psycopg2-binary==2.9.9
+pycparser==2.22
+PyJWT==2.9.0
 pytz==2023.4
 setuptools==68.2.2
 sqlparse==0.4.4
 tzdata==2023.4
 wheel==0.41.2
+gunicorn==23.0.0
