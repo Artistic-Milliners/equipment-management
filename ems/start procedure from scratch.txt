@@ -1,0 +1,27 @@
+start by adding units to the db
+
+then add in order 
+
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata Department.json
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata Contractor.json
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata Designation.json
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata Manufacturer.json
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata Equipment.json
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata Machines.json
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata Spares.json
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata IssueList.json
+
+
+run management command in this order
+
+
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py setup_inventory_groups
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py setup_tiered_permissions
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py fix_spare_item_codes
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py setup_approval_groups
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py setup_inventory_access
+
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py setup_inventory_permissions
+winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py setup_management_permissions
+
+

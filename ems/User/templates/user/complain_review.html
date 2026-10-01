@@ -20,7 +20,7 @@
 
 
 <div class="form-container">
-    <form action="" method="post" enctype="multipart/form-data">
+    <form  method="post" enctype="multipart/form-data" action="{% url 'User:home' %}">
         {% csrf_token %}
         
         <div class="stacked-input">

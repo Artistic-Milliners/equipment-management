@@ -1,1 +1,16 @@
-[{"model": "core.Department", "pk": 1, "fields": {"name": "Ball Warping"}}, {"model": "core.Department", "pk": 2, "fields": {"name": "Rope Dyeing"}}, {"model": "core.Department", "pk": 3, "fields": {"name": "Rebeaming"}}, {"model": "core.Department", "pk": 4, "fields": {"name": "Sizing"}}, {"model": "core.Department", "pk": 5, "fields": {"name": "Weaving"}}, {"model": "core.Department", "pk": 6, "fields": {"name": "Finishing"}}, {"model": "core.Department", "pk": 7, "fields": {"name": "Fabric Warehouse"}}, {"model": "core.Department", "pk": 8, "fields": {"name": "Yarn Warehouse"}}, {"model": "core.Department", "pk": 9, "fields": {"name": "Chemical Warehouse"}}, {"model": "core.Department", "pk": 10, "fields": {"name": "General Store"}}, {"model": "core.Department", "pk": 11, "fields": {"name": "Greig Warehouse"}}]
+[{"model": "core.Department", "pk": 1, "fields": {"name": "Ball Warping", "unit": "AMX001", "dpt_type": "PRODUCTION"}}, 
+{"model": "core.Department", "pk": 2, "fields": {"name": "Rope Dyeing", "unit": "AMX001", "dpt_type": "PRODUCTION"}}, 
+{"model": "core.Department", "pk": 3, "fields": {"name": "Rebeaming", "unit": "AMX001", "dpt_type": "PRODUCTION"}}, 
+{"model": "core.Department", "pk": 4, "fields": {"name": "Sizing", "unit": "AMX001", "dpt_type": "PRODUCTION"}}, 
+{"model": "core.Department", "pk": 5, "fields": {"name": "Weaving", "unit": "AMX001", "dpt_type": "PRODUCTION"}}, 
+{"model": "core.Department", "pk": 6, "fields": {"name": "Finishing", "unit": "AMX001", "dpt_type": "PRODUCTION"}}, 
+{"model": "core.Department", "pk": 7, "fields": {"name": "Fabric Warehouse", "unit": "AMX001", "dpt_type": "PRODUCTION"}},
+{"model": "core.Department", "pk": 8, "fields": {"name": "Yarn Warehouse", "unit": "AMX001", "dpt_type": "PRODUCTION"}}, 
+{"model": "core.Department", "pk": 9, "fields": {"name": "Chemical Warehouse", "unit": "AMX001", "dpt_type": "PRODUCTION"}}, 
+{"model": "core.Department", "pk": 10, "fields": {"name": "General Store", "unit": "AMX001", "dpt_type": "SERVICES"}}, 
+{"model": "core.Department", "pk": 11, "fields": {"name": "Greig Warehouse", "unit": "AMX001", "dpt_type": "PRODUCTION"}},
+{"model": "core.Department", "pk": 12, "fields": {"name": "Workshop", "unit": "AMX001", "dpt_type": "MAINTENANCE"}},
+{"model": "core.Department", "pk": 13, "fields": {"name": "Electrical", "unit": "AMX001", "dpt_type": "MAINTENANCE"}},
+{"model": "core.Department", "pk": 14, "fields": {"name": "Process Automation", "unit": "AMX001", "dpt_type": "SERVICES"}},
+{"model": "core.Department", "pk": 15, "fields": {"name": "Civil", "unit": "AMX001", "dpt_type": "SERVICES"}}
+]

@@ -1,0 +1,78 @@
+# Run with: docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+# --env-file is required so the db service gets the same credentials as the web service.
+
+services:
+  # PostgreSQL Database (not published to the host; reachable only on ems_network)
+  db:
+    image: postgres:15-alpine
+    container_name: ems_postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME:?DB_NAME not set - run with --env-file .env.prod}
+      - POSTGRES_USER=${DB_USER:?DB_USER not set - run with --env-file .env.prod}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:?DB_PASSWORD not set - run with --env-file .env.prod}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ems_network
+
+  # Django Web Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ems_web
+    restart: unless-stopped
+    volumes:
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+      - log_files:/app/logs
+    # No published port: traffic reaches gunicorn only through nginx
+    expose:
+      - "8000"
+    env_file:
+      - .env.prod
+    environment:
+      - ENV_STATE=prod
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - ems_network
+
+  # Nginx Reverse Proxy
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: ems_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static_files:/app/staticfiles:ro
+      - media_files:/app/media:ro
+    depends_on:
+      - web
+    networks:
+      - ems_network
+
+volumes:
+  postgres_data:
+    driver: local
+  static_files:
+    driver: local
+  media_files:
+    driver: local
+  log_files:
+    driver: local
+
+networks:
+  ems_network:
+    driver: bridge

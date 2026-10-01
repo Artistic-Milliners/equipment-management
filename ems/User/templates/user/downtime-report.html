@@ -1,0 +1,233 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block page-title %}Downtime Report{% endblock page-title %}
+
+{% block main-body %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-chart-line"></i> Downtime Report</h2>
+            <p class="text-muted">Analysis of complaint resolution times and downtime metrics</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label">Date From</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label">Date To</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="equipment" class="form-label">Equipment</label>
+                    <select class="form-control" id="equipment" name="equipment">
+                        <option value="">All Equipment</option>
+                        {% for equip in equipment_list %}
+                        <option value="{{ equip.id }}" {% if selected_equipment == equip.id|stringformat:"s" %}selected{% endif %}>
+                            {{ equip.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Complaints</h6>
+                    <h3>{{ metrics.total_complaints|default:0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Avg Total Downtime</h6>
+                    <h3>{{ metrics.avg_total_downtime|floatformat:1|default:"0.0" }} hrs</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Avg Engineer Response</h6>
+                    <h3>{{ metrics.avg_engineer_response|floatformat:1|default:"0.0" }} hrs</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Downtime</h6>
+                    <h3>{{ metrics.total_downtime|floatformat:1|default:"0.0" }} hrs</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Breakdown -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Avg User Response Time</h6>
+                    <p class="h4">{{ metrics.avg_user_response|floatformat:1|default:"0.0" }} hrs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Avg Documentation Time</h6>
+                    <p class="h4">{{ metrics.avg_documentation|floatformat:1|default:"0.0" }} hrs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Avg Closure Time</h6>
+                    <p class="h4">{{ metrics.avg_closure|floatformat:1|default:"0.0" }} hrs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <a href="{% url 'User:home' %}" class="btn btn-secondary w-100">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Complaint List -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-list"></i> Detailed Downtime Breakdown</h5>
+        </div>
+        <div class="card-body">
+            <!-- Desktop Table View (hidden on mobile) -->
+            <div class="table-responsive d-none d-md-block">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Ticket #</th>
+                            <th>Equipment</th>
+                            <th>Machine</th>
+                            <th>Created</th>
+                            <th>Closed</th>
+                            <th>Total Downtime</th>
+                            <th>Engineer Response</th>
+                            <th>User Response</th>
+                            <th>Documentation</th>
+                            <th>Closure</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in complaints %}
+                        <tr>
+                            <td><a href="{% url 'User:complain_track' complaint.id %}">{{ complaint.ticket_num }}</a></td>
+                            <td>{{ complaint.equipment__name }}</td>
+                            <td>{{ complaint.machine_id__name }}</td>
+                            <td>{{ complaint.date_time|date:"Y-m-d H:i" }}</td>
+                            <td>{{ complaint.closure_timestamp|date:"Y-m-d H:i" }}</td>
+                            <td><strong>{{ complaint.total_downtime_hours|floatformat:1|default:"0.0" }} hrs</strong></td>
+                            <td>{{ complaint.engineer_response_hours|floatformat:1|default:"0.0" }} hrs</td>
+                            <td>{{ complaint.user_response_hours|floatformat:1|default:"0.0" }} hrs</td>
+                            <td>{{ complaint.documentation_hours|floatformat:1|default:"0.0" }} hrs</td>
+                            <td>{{ complaint.closure_hours|floatformat:1|default:"0.0" }} hrs</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center">No closed complaints found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Card View (hidden on desktop) -->
+            <div class="d-md-none">
+                {% for complaint in complaints %}
+                <div class="card mb-3" style="border: 1px solid #dee2e6;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">
+                                <a href="{% url 'User:complain_track' complaint.id %}">
+                                    {{ complaint.ticket_num }}
+                                </a>
+                            </h6>
+                            <span class="badge bg-primary">{{ complaint.total_downtime_hours|floatformat:1|default:"0.0" }} hrs</span>
+                        </div>
+
+                        <div class="mb-2">
+                            <small class="text-muted d-block">
+                                <i class="fas fa-cog"></i> {{ complaint.equipment__name }}
+                            </small>
+                            <small class="text-muted d-block">
+                                <i class="fas fa-tools"></i> {{ complaint.machine_id__name }}
+                            </small>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Created</small>
+                                <small>{{ complaint.date_time|date:"Y-m-d H:i" }}</small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Closed</small>
+                                <small>{{ complaint.closure_timestamp|date:"Y-m-d H:i" }}</small>
+                            </div>
+                        </div>
+
+                        <div class="border-top pt-2">
+                            <div class="row g-2 text-center">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Engineer</small>
+                                    <small class="fw-bold">{{ complaint.engineer_response_hours|floatformat:1|default:"0.0" }} hrs</small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">User</small>
+                                    <small class="fw-bold">{{ complaint.user_response_hours|floatformat:1|default:"0.0" }} hrs</small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Documentation</small>
+                                    <small class="fw-bold">{{ complaint.documentation_hours|floatformat:1|default:"0.0" }} hrs</small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Closure</small>
+                                    <small class="fw-bold">{{ complaint.closure_hours|floatformat:1|default:"0.0" }} hrs</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="card">
+                    <div class="card-body text-center text-muted">
+                        No closed complaints found
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

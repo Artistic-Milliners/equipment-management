@@ -1,13 +1,966 @@
-{% extends "user/home.html" %}
-{% block title %}
-  Closed Complains
-{% endblock title %}
+{% extends "index.html" %}
+{% load static %}
+
+{% block page-title %}Closed Complaints - Complete Archive{% endblock page-title %}
 
 {% block main-body %}
-  <ul>
-    <li>test</li>
-    {% for complain in closedComplains %}
-      <li>{{ complain }}</li>
-    {% endfor %}
-  </ul>
+<style>
+    :root {
+        --primary-color: #2563eb;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --dark-color: #1e293b;
+        --secondary-color: #64748b;
+        --light-color: #f8fafc;
+        --border-color: #e2e8f0;
+        --shadow: 0 4px 6px rgba(0,0,0,0.05);
+        --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    /* Page Header */
+    .archive-header {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .archive-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .archive-subtitle {
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+
+    /* Statistics Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon.primary { background: rgba(37, 99, 235, 0.1); color: var(--primary-color); }
+    .stat-icon.success { background: rgba(16, 185, 129, 0.1); color: var(--success-color); }
+    .stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); }
+    .stat-icon.info { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--secondary-color);
+        font-weight: 500;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+    }
+
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .filter-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--secondary-color);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .filter-input, .filter-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease;
+    }
+
+    .filter-input:focus, .filter-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .search-input-group {
+        position: relative;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--secondary-color);
+    }
+
+    .search-input {
+        padding-left: 2.75rem;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: end;
+    }
+
+    .btn-filter {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+        text-decoration: none;
+    }
+
+    .btn-filter.primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-filter.primary:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    .btn-filter.secondary {
+        background: var(--light-color);
+        color: var(--secondary-color);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-filter.secondary:hover {
+        background: #e2e8f0;
+    }
+
+    /* Table Styles */
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+    .table-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .complaints-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .complaints-table thead {
+        background: var(--light-color);
+    }
+
+    .complaints-table th {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--secondary-color);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .complaints-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.95rem;
+    }
+
+    .complaints-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .complaints-table tbody tr:hover {
+        background: var(--light-color);
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-badge.closed {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .status-badge.pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-color);
+    }
+
+    .status-badge.operational {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .status-badge.non-operational {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+
+    /* Priority Badge */
+    .priority-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .priority-badge.high {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+
+    .priority-badge.moderate {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-color);
+    }
+
+    .priority-badge.low {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    /* Ticket Number */
+    .ticket-number {
+        font-weight: 600;
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+
+    .ticket-number:hover {
+        text-decoration: underline;
+    }
+
+    /* Info Pills */
+    .info-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.85rem;
+        color: var(--secondary-color);
+    }
+
+    .info-pill i {
+        font-size: 0.75rem;
+        color: var(--primary-color);
+    }
+
+    /* Parts Count */
+    .parts-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.65rem;
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--primary-color);
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Pagination */
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .pagination-info {
+        font-size: 0.95rem;
+        color: var(--secondary-color);
+    }
+
+    .pagination {
+        display: flex;
+        gap: 0.5rem;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .page-item {
+        display: inline-block;
+    }
+
+    .page-link {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--dark-color);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: inline-block;
+    }
+
+    .page-link:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .page-item.active .page-link {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .page-item.disabled .page-link {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--secondary-color);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--dark-color);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-card {
+            padding: 1rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.25rem;
+        }
+
+        .filter-row {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .filter-bar {
+            padding: 1rem;
+        }
+
+        .filter-actions {
+            flex-wrap: wrap;
+        }
+
+        .btn-filter {
+            flex: 1;
+            justify-content: center;
+            min-width: 120px;
+        }
+
+        .table-responsive {
+            overflow-x: scroll;
+        }
+
+        .complaints-table {
+            min-width: 800px;
+            font-size: 0.875rem;
+        }
+
+        .complaints-table th,
+        .complaints-table td {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .pagination-container {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .archive-header {
+            padding: 1.5rem;
+        }
+
+        .archive-title {
+            font-size: 1.5rem;
+        }
+
+        .archive-subtitle {
+            font-size: 0.95rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.75rem;
+        }
+
+        .stat-card {
+            padding: 0.875rem;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+        }
+
+        .filter-bar {
+            padding: 0.875rem;
+        }
+
+        .filter-title {
+            font-size: 1rem;
+        }
+
+        .btn-filter {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .archive-header {
+            padding: 1rem;
+        }
+
+        .archive-title {
+            font-size: 1.25rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .archive-subtitle {
+            font-size: 0.875rem;
+        }
+
+        .table-header {
+            padding: 1rem;
+        }
+
+        .table-title {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<div class="container-fluid px-4 py-3">
+    <!-- Page Header -->
+    <div class="archive-header">
+        <div class="archive-title">
+            <i class="fas fa-archive"></i>
+            Closed Complaints Archive
+        </div>
+        <div class="archive-subtitle">
+            Complete documentation and history of all resolved maintenance complaints
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ total_closed }}</div>
+            <div class="stat-label">Total Closed</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-value">{{ closed_this_month }}</div>
+            <div class="stat-label">Closed This Month</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value">{{ avg_resolution_time }}h</div>
+            <div class="stat-label">Avg Resolution Time</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon info">
+                <i class="fas fa-tools"></i>
+            </div>
+            <div class="stat-value">{{ with_spares_count }}</div>
+            <div class="stat-label">With Spares Used</div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-header">
+            <div class="filter-title">
+                <i class="fas fa-filter"></i>
+                Filter & Search
+            </div>
+        </div>
+
+        <form method="get" id="filter-form">
+            <div class="filter-row">
+                <!-- Search -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-search"></i> Search
+                    </label>
+                    <div class="search-input-group">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text"
+                               name="search"
+                               class="filter-input search-input"
+                               placeholder="Ticket #, description, technician..."
+                               value="{{ request.GET.search }}">
+                    </div>
+                </div>
+
+                <!-- Equipment Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-cogs"></i> Equipment
+                    </label>
+                    <select name="equipment" class="filter-select">
+                        <option value="">All Equipment</option>
+                        {% for equipment in all_equipment %}
+                            <option value="{{ equipment.id }}" {% if request.GET.equipment == equipment.id|stringformat:"s" %}selected{% endif %}>
+                                {{ equipment.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Contractor Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-user-tie"></i> Contractor
+                    </label>
+                    <select name="contractor" class="filter-select">
+                        <option value="">All Contractors</option>
+                        {% for contractor in all_contractors %}
+                            <option value="{{ contractor.id }}" {% if request.GET.contractor == contractor.id|stringformat:"s" %}selected{% endif %}>
+                                {{ contractor.contractor }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-flag"></i> Status
+                    </label>
+                    <select name="status" class="filter-select">
+                        <option value="">All Statuses</option>
+                        {% for status_code, status_label in status_choices %}
+                            <option value="{{ status_code }}" {% if request.GET.status == status_code %}selected{% endif %}>
+                                {{ status_label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-row">
+                <!-- Date From -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-calendar"></i> Date From
+                    </label>
+                    <input type="date"
+                           name="date_from"
+                           class="filter-input"
+                           value="{{ request.GET.date_from }}">
+                </div>
+
+                <!-- Date To -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-calendar"></i> Date To
+                    </label>
+                    <input type="date"
+                           name="date_to"
+                           class="filter-input"
+                           value="{{ request.GET.date_to }}">
+                </div>
+
+                <!-- Filter Actions -->
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter primary">
+                        <i class="fas fa-search"></i>
+                        Apply Filters
+                    </button>
+                    <a href="{% url 'User:complain_closing_list' %}" class="btn-filter secondary">
+                        <i class="fas fa-redo"></i>
+                        Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+        <div class="table-header">
+            <div class="table-title">
+                <i class="fas fa-list"></i>
+                Closed Complaints ({{ page_obj.paginator.count }})
+            </div>
+        </div>
+
+        {% if closedComplains %}
+        <div class="table-responsive">
+            <table class="complaints-table">
+                <thead>
+                    <tr>
+                        <th>Ticket #</th>
+                        <th>Equipment / Machine</th>
+                        <th>Reported By</th>
+                        <th>Reviewed By</th>
+                        <th>Resolution</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Parts Used</th>
+                        <th>Closed Date</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complain in closedComplains %}
+                    <tr>
+                        <!-- Ticket Number -->
+                        <td>
+                            <a href="{% url 'maintenance:complain_detail' pk=complain.issueReview.issue.pk %}"
+                               class="ticket-number">
+                                #{{ complain.issueReview.issue.ticket_num|default:"N/A" }}
+                            </a>
+                        </td>
+
+                        <!-- Equipment / Machine -->
+                        <td>
+                            <div class="info-pill">
+                                <i class="fas fa-cogs"></i>
+                                {{ complain.issueReview.issue.equipment.name|truncatechars:20 }}
+                            </div>
+                            <div class="info-pill" style="margin-top: 0.25rem;">
+                                <i class="fas fa-wrench"></i>
+                                {{ complain.issueReview.issue.machine_id.name|truncatechars:20 }}
+                            </div>
+                        </td>
+
+                        <!-- Reported By -->
+                        <td>
+                            <div class="info-pill">
+                                <i class="fas fa-user"></i>
+                                {{ complain.issueReview.issue.user.name|default:"Unknown" }}
+                            </div>
+                        </td>
+
+                        <!-- Reviewed By -->
+                        <td>
+                            <div class="info-pill">
+                                <i class="fas fa-user-check"></i>
+                                {{ complain.issueReview.reviewer.name }}
+                            </div>
+                        </td>
+
+                        <!-- Resolution (Contractor or Department) -->
+                        <td>
+                            {% if complain.contractor %}
+                                <div class="info-pill">
+                                    <i class="fas fa-building"></i>
+                                    {{ complain.contractor.contractor|truncatechars:20 }}
+                                </div>
+                            {% else %}
+                                <div class="info-pill">
+                                    <i class="fas fa-home"></i>
+                                    In-House
+                                </div>
+                            {% endif %}
+                            {% if complain.technician %}
+                                <div class="info-pill" style="margin-top: 0.25rem;">
+                                    <i class="fas fa-hard-hat"></i>
+                                    {{ complain.technician|truncatechars:15 }}
+                                </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Priority -->
+                        <td>
+                            {% if complain.issueReview.priority %}
+                                <span class="priority-badge {{ complain.issueReview.priority|lower }}">
+                                    {{ complain.issueReview.priority }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Status -->
+                        <td>
+                            <span class="status-badge {% if complain.status == 'CLOSED' %}closed{% else %}pending{% endif %}">
+                                <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
+                                {{ complain.get_status_display }}
+                            </span>
+                            <div style="margin-top: 0.35rem;">
+                                <span class="status-badge {% if complain.equipment_status == 'on' %}operational{% else %}non-operational{% endif %}">
+                                    {% if complain.equipment_status == 'on' %}
+                                        <i class="fas fa-check"></i> Operational
+                                    {% else %}
+                                        <i class="fas fa-times"></i> Non-Operational
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </td>
+
+                        <!-- Parts Used -->
+                        <td>
+                            {% with spares_count=complain.installed_spares.count %}
+                                {% if spares_count > 0 %}
+                                    <span class="parts-count">
+                                        <i class="fas fa-tools"></i>
+                                        {{ spares_count }} part{{ spares_count|pluralize }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">No parts</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+
+                        <!-- Closed Date -->
+                        <td>
+                            <div class="info-pill">
+                                <i class="fas fa-calendar"></i>
+                                {{ complain.date_ended|date:"M d, Y" }}
+                            </div>
+                            <div class="info-pill" style="margin-top: 0.25rem;">
+                                <i class="fas fa-clock"></i>
+                                {{ complain.date_ended|date:"H:i" }}
+                            </div>
+                        </td>
+
+                        <!-- Duration -->
+                        <td>
+                            <div class="info-pill">
+                                <i class="fas fa-hourglass-half"></i>
+                                {{ complain.duration }} hours
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pagination-container">
+            <div class="pagination-info">
+                Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} complaints
+            </div>
+
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if num == page_obj.number %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h3>No Closed Complaints Found</h3>
+            <p>There are no closed complaints matching your filters.</p>
+            {% if request.GET %}
+                <a href="{% url 'User:complain_closing_list' %}" class="btn-filter primary" style="margin-top: 1rem;">
+                    <i class="fas fa-redo"></i>
+                    Clear All Filters
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock main-body %}

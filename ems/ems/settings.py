@@ -13,26 +13,42 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 import datetime
+from dotenv import load_dotenv
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+ENV_STATE = os.getenv('ENV_STATE',"dev")
+
+if ENV_STATE == 'prod':
+    load_dotenv(BASE_DIR / '.env.prod')
+else:
+    load_dotenv(BASE_DIR / '.env.dev')
+
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 STATIC_DIR = os.path.join(BASE_DIR,'static')
 FIXTURE_DIR = os.path.join(BASE_DIR,'fixtures')
+
+
+#API Configuration
+API_BASE_URL = os.getenv('API_BASE_URL', 'localhost')
+API_PORT = os.getenv('API_PORT', '')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(w#^*qpgwi)ui0j091g+ou7#5k52#zdp)89&sl_bx4&v^eb%j7'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['*']
 
-JWT_SECRET_KEY = 'your_jwt_secret_key_here'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(" ")
+
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_DELTA = datetime.timedelta(hours=1) 
 
@@ -78,6 +94,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'User.context_processors.side_bar',
+                'User.context_processors.base_api_url'
             ],
         },
     },
@@ -96,11 +113,11 @@ WSGI_APPLICATION = 'ems.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'ems',
-        'USER': 'zohaib',
-        'PASSWORD':'abcd@1234',
-        'HOST':'localhost',
-        'PORT':'5432',
+        'NAME': os.getenv('DB_NAME', 'ems'),
+        'USER': os.getenv('DB_USER', 'zohaib'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'abcd@1234'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -175,7 +192,7 @@ LOGGING = {
         'file':{
             'level':'DEBUG',
             'class':'logging.FileHandler',
-            'filename':'ems.log'
+            'filename': BASE_DIR / 'logs' / 'ems.log'
         },
     },
     'loggers':{

@@ -1,138 +1,1923 @@
-{% extends "user/home.html" %}
+{% extends "index.html" %}
 {% load static %}
+{% load tz %}
 
-{% block head %}
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <script src="https://kit.fontawesome.com/a06ab02596.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="{% static 'user/css/custom.css' %}">
-    <link rel="stylesheet" href="{% static 'maintenance/css/complain-list.css' %}">
-    <link rel="stylesheet" href="{% static 'User/home.css' %}">
-    <link rel="stylesheet" href="{% static 'User/complain-tracking.css' %}">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-{% endblock head %}
-
-{% block title %}
-  Track Complain
-{% endblock title %}
-
+{% block page-title %}Track Complaint - #{{ issue.ticket_num }}{% endblock page-title %}
 
 {% block main-body %}
-  <div class="timeline-main-heading">
-    <span style="font-size: large; font-weight: bold;">Complaint Tracking</span>
-  </div>
-  <div class="timeline">
-    <div class="timeline-event">
-      <div class="timeline-point-track-container">
-        <div class="timeline-point"></div>
-        <div class="timeline-track"></div>
-      </div>
-      <div class="timeline-content">
-        <div>
-          <span class="timeline-heading">
-            Complaint Raised
-          </span>
-          <span class="timeline-date">
-            {{ issue.date_time }}
-          </span>
-        </div>
-        <div class="timeline-description">
-          <span>
-            Description: {{ issue.description_user }}
-          </span>   
-        </div>
-      </div>
-    </div>
-    <div class="timeline-event">
-      <div class="timeline-point-track-container">
-        <div class="timeline-point"></div>
-        <div class="timeline-track"></div>
-      </div>
-      <div class="timeline-content">
-        <div>
-          <span class="timeline-heading">
-            Engineer Review
-          </span>
-          {% if issue.status == 'REVIEWED' or issue.status == 'Approved' %}
-          <span class="timeline-date">
-            {{ issue.machineissue.reviewDate }}
-          </span>
-          <div class="timeline-description">
-            <span>
-              {{ issue.machineissue.description_reviewer }}
-            </span>
-          </div>
-          {% else %}
-          <span class="timeline-date">
-            Pending review
-          </span>
-          {% endif %}
-        </div>
+<style>
+    /* ============================================
+       COMPLAINT TRACKING PAGE
+       Mobile-first industrial maintenance UI
+       ============================================ */
 
-      </div>
+    :root {
+        --ct-bg: #f8fafc;
+        --ct-card-bg: #ffffff;
+        --ct-border: #e2e8f0;
+        --ct-border-light: #f1f5f9;
+        --ct-text-primary: #0f172a;
+        --ct-text-secondary: #64748b;
+        --ct-text-muted: #94a3b8;
+        --ct-text-body: #334155;
+        --ct-blue: #2563eb;
+        --ct-blue-light: #dbeafe;
+        --ct-blue-dark: #1e40af;
+        --ct-green: #059669;
+        --ct-green-light: #d1fae5;
+        --ct-green-dark: #065f46;
+        --ct-amber: #d97706;
+        --ct-amber-light: #fef3c7;
+        --ct-amber-dark: #92400e;
+        --ct-red: #dc2626;
+        --ct-red-light: #fee2e2;
+        --ct-red-dark: #991b1b;
+        --ct-purple: #7c3aed;
+        --ct-purple-light: #ede9fe;
+        --ct-purple-dark: #5b21b6;
+        --ct-gray: #6b7280;
+        --ct-gray-light: #e5e7eb;
+        --ct-gray-dark: #374151;
+        --ct-cyan: #0891b2;
+        --ct-cyan-light: #cffafe;
+        --ct-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+        --ct-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        --ct-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+        --ct-radius: 16px;
+        --ct-radius-sm: 12px;
+        --ct-radius-xs: 8px;
+    }
+
+    .ct-page {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 0 0.75rem 6rem;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== NAVIGATION BAR ===== */
+    .ct-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .ct-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--ct-text-secondary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--ct-radius-xs);
+        transition: all 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+        min-height: 44px;
+    }
+
+    .ct-back-link:hover {
+        color: var(--ct-text-primary);
+        background: var(--ct-border-light);
+    }
+
+    .ct-back-link:active {
+        transform: scale(0.96);
+    }
+
+    .ct-elapsed-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.4rem 0.85rem;
+        border-radius: 100px;
+        background: var(--ct-border-light);
+        color: var(--ct-text-secondary);
+        letter-spacing: -0.01em;
+    }
+
+    .ct-elapsed-pill i {
+        font-size: 0.7rem;
+    }
+
+    /* ===== TICKET HEADER ===== */
+    .ct-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .ct-ticket-id {
+        font-size: 1.375rem;
+        font-weight: 700;
+        color: var(--ct-text-primary);
+        letter-spacing: -0.02em;
+    }
+
+    .ct-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.75rem;
+        border-radius: 100px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .ct-badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        animation: ctBadgePulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes ctBadgePulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    .ct-status--pending { background: var(--ct-amber-light); color: var(--ct-amber-dark); }
+    .ct-status--pending .ct-badge-dot { background: var(--ct-amber); }
+    .ct-status--in_progress { background: var(--ct-blue-light); color: var(--ct-blue-dark); }
+    .ct-status--in_progress .ct-badge-dot { background: var(--ct-blue); }
+    .ct-status--user_feedback { background: var(--ct-purple-light); color: var(--ct-purple-dark); }
+    .ct-status--user_feedback .ct-badge-dot { background: var(--ct-purple); }
+    .ct-status--resolved { background: var(--ct-green-light); color: var(--ct-green-dark); }
+    .ct-status--awaiting_documentation { background: var(--ct-blue-light); color: var(--ct-blue-dark); }
+    .ct-status--awaiting_documentation .ct-badge-dot { background: var(--ct-blue); }
+    .ct-status--under_observation { background: var(--ct-amber-light); color: var(--ct-amber-dark); }
+    .ct-status--under_observation .ct-badge-dot { background: var(--ct-amber); }
+    .ct-status--reviewed { background: var(--ct-blue-light); color: var(--ct-blue-dark); }
+    .ct-status--approved { background: var(--ct-green-light); color: var(--ct-green-dark); }
+    .ct-status--rejected { background: var(--ct-red-light); color: var(--ct-red-dark); }
+    .ct-status--closed { background: var(--ct-gray-light); color: var(--ct-gray-dark); }
+
+    /* ===== CARDS ===== */
+    .ct-card {
+        background: var(--ct-card-bg);
+        border: 1px solid var(--ct-border);
+        border-radius: var(--ct-radius);
+        overflow: hidden;
+        box-shadow: var(--ct-shadow-sm);
+        margin-bottom: 1rem;
+    }
+
+    .ct-card-body {
+        padding: 1.25rem;
+    }
+
+    .ct-section-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ct-text-muted);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .ct-section-label i {
+        font-size: 0.85rem;
+    }
+
+    .ct-section-label .ct-count-badge {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 100px;
+        background: var(--ct-blue-light);
+        color: var(--ct-blue-dark);
+        font-weight: 700;
+    }
+
+    /* ===== ISSUE DETAIL CARD ===== */
+    .ct-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--ct-border-light);
+    }
+
+    .ct-meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .ct-meta-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ct-text-muted);
+    }
+
+    .ct-meta-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ct-text-primary);
+        line-height: 1.3;
+    }
+
+    .ct-description-block {
+        margin-bottom: 0;
+    }
+
+    .ct-description-heading {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ct-text-muted);
+        margin-bottom: 0.35rem;
+    }
+
+    .ct-description-text {
+        font-size: 0.9rem;
+        color: var(--ct-text-body);
+        line-height: 1.65;
+        word-break: break-word;
+    }
+
+    .ct-images-row {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--ct-border-light);
+    }
+
+    .ct-thumb {
+        width: 56px;
+        height: 56px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 2px solid var(--ct-border);
+        cursor: pointer;
+        transition: border-color 0.2s ease, transform 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .ct-thumb:hover {
+        border-color: var(--ct-blue);
+    }
+
+    .ct-thumb:active {
+        transform: scale(0.93);
+    }
+
+    /* ===== WORK SESSIONS ===== */
+    .ct-session-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.875rem;
+        border-radius: var(--ct-radius-sm);
+        margin-bottom: 0.5rem;
+        border: 1px solid var(--ct-border);
+        background: #f8fafc;
+        transition: all 0.2s ease;
+    }
+
+    .ct-session-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .ct-session-item.is-active {
+        border-color: #93c5fd;
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    }
+
+    .ct-session-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 0.7rem;
+        color: white;
+    }
+
+    .ct-session-icon--active { background: #3b82f6; }
+    .ct-session-icon--resolved { background: #10b981; }
+    .ct-session-icon--escalated { background: #ef4444; }
+    .ct-session-icon--observation { background: #f59e0b; }
+
+    .ct-session-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ct-session-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .ct-session-engineer {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--ct-text-primary);
+    }
+
+    .ct-session-outcome {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 100px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .ct-session-outcome--active { background: var(--ct-blue-light); color: var(--ct-blue-dark); }
+    .ct-session-outcome--resolved { background: var(--ct-green-light); color: var(--ct-green-dark); }
+    .ct-session-outcome--escalated { background: var(--ct-red-light); color: var(--ct-red-dark); }
+    .ct-session-outcome--observation { background: var(--ct-amber-light); color: var(--ct-amber-dark); }
+
+    .ct-session-times {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.75rem;
+        color: var(--ct-text-secondary);
+        flex-wrap: wrap;
+        margin-top: 0.15rem;
+    }
+
+    .ct-session-times span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .ct-session-duration {
+        font-weight: 700;
+        color: var(--ct-blue-dark);
+    }
+
+    .ct-session-pulse {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #3b82f6;
+        display: inline-block;
+        animation: ctSessionPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes ctSessionPulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+
+    .ct-session-live-timer {
+        font-weight: 700;
+        color: #3b82f6;
+        font-variant-numeric: tabular-nums;
+        font-size: 0.8rem;
+    }
+
+    .ct-session-comments {
+        margin-top: 0.4rem;
+        font-size: 0.8rem;
+        color: var(--ct-text-body);
+        line-height: 1.5;
+        padding-top: 0.4rem;
+        border-top: 1px solid var(--ct-border);
+    }
+
+    /* ===== CONVERSATION TIMELINE (Chat style) ===== */
+    .ct-chat-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .ct-chat-msg {
+        display: flex;
+        flex-direction: column;
+        max-width: 88%;
+    }
+
+    .ct-chat-msg--engineer {
+        align-self: flex-start;
+    }
+
+    .ct-chat-msg--user {
+        align-self: flex-end;
+    }
+
+    .ct-chat-bubble {
+        border-radius: var(--ct-radius-sm);
+        padding: 0.75rem 1rem;
+        position: relative;
+        line-height: 1.55;
+    }
+
+    .ct-chat-msg--engineer .ct-chat-bubble {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-bottom-left-radius: 4px;
+    }
+
+    .ct-chat-msg--user .ct-chat-bubble {
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        border-bottom-right-radius: 4px;
+    }
+
+    .ct-chat-author {
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .ct-chat-msg--engineer .ct-chat-author { color: var(--ct-blue-dark); }
+    .ct-chat-msg--user .ct-chat-author { color: var(--ct-green-dark); }
+
+    .ct-chat-role {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 100px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .ct-chat-role--engineer { background: var(--ct-blue-light); color: var(--ct-blue-dark); }
+    .ct-chat-role--user { background: var(--ct-green-light); color: var(--ct-green-dark); }
+
+    .ct-chat-text {
+        font-size: 0.875rem;
+        color: var(--ct-text-body);
+    }
+
+    .ct-chat-time {
+        font-size: 0.68rem;
+        color: var(--ct-text-muted);
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .ct-chat-msg--user .ct-chat-time {
+        justify-content: flex-end;
+    }
+
+    .ct-chat-empty {
+        text-align: center;
+        padding: 1.5rem;
+        color: var(--ct-text-muted);
+        font-size: 0.85rem;
+    }
+
+    .ct-chat-empty i {
+        display: block;
+        font-size: 1.5rem;
+        margin-bottom: 0.4rem;
+    }
+
+    /* ===== STATUS TIMELINE ===== */
+    .ct-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .ct-timeline::before {
+        content: '';
+        position: absolute;
+        left: 9px;
+        top: 4px;
+        bottom: 4px;
+        width: 2px;
+        background: var(--ct-border);
+    }
+
+    .ct-tl-step {
+        position: relative;
+        padding-bottom: 1.5rem;
+        animation: ctStepIn 0.4s ease forwards;
+        opacity: 0;
+    }
+
+    .ct-tl-step:last-child {
+        padding-bottom: 0;
+    }
+
+    .ct-tl-step:nth-child(1) { animation-delay: 0.1s; }
+    .ct-tl-step:nth-child(2) { animation-delay: 0.2s; }
+    .ct-tl-step:nth-child(3) { animation-delay: 0.3s; }
+    .ct-tl-step:nth-child(4) { animation-delay: 0.4s; }
+    .ct-tl-step:nth-child(5) { animation-delay: 0.5s; }
+
+    @keyframes ctStepIn {
+        from { opacity: 0; transform: translateX(-8px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .ct-tl-dot {
+        position: absolute;
+        left: -2rem;
+        top: 2px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+
+    .ct-tl-dot--done {
+        background: var(--ct-green);
+        color: white;
+        border: 2px solid var(--ct-green);
+    }
+
+    .ct-tl-dot--active {
+        background: var(--ct-blue);
+        color: white;
+        border: 2px solid var(--ct-blue);
+        animation: ctDotPulse 2s infinite;
+    }
+
+    @keyframes ctDotPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5); }
+        50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+    }
+
+    .ct-tl-dot--pending {
+        background: white;
+        color: var(--ct-text-muted);
+        border: 2px solid var(--ct-border);
+    }
+
+    .ct-tl-dot--rejected {
+        background: var(--ct-red);
+        color: white;
+        border: 2px solid var(--ct-red);
+    }
+
+    .ct-tl-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--ct-text-primary);
+        margin-bottom: 0.1rem;
+        line-height: 1.3;
+    }
+
+    .ct-tl-date {
+        font-size: 0.75rem;
+        color: var(--ct-text-muted);
+        margin-bottom: 0.35rem;
+    }
+
+    .ct-tl-desc {
+        font-size: 0.825rem;
+        color: var(--ct-text-body);
+        line-height: 1.55;
+    }
+
+    .ct-tl-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        padding: 0.6rem;
+        background: var(--ct-border-light);
+        border-radius: var(--ct-radius-xs);
+    }
+
+    .ct-tl-detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+
+    .ct-tl-detail-label {
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ct-text-muted);
+    }
+
+    .ct-tl-detail-value {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--ct-text-primary);
+    }
+
+    .ct-tl-alert {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: var(--ct-radius-xs);
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.35rem;
+    }
+
+    .ct-tl-alert--success {
+        background: var(--ct-green-light);
+        color: var(--ct-green-dark);
+    }
+
+    .ct-tl-alert--info {
+        background: var(--ct-blue-light);
+        color: var(--ct-blue-dark);
+    }
+
+    .ct-tl-alert--warning {
+        background: var(--ct-amber-light);
+        color: var(--ct-amber-dark);
+    }
+
+    .ct-tl-alert--danger {
+        background: var(--ct-red-light);
+        color: var(--ct-red-dark);
+    }
+
+    .ct-tl-pending-note {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        color: var(--ct-text-muted);
+        font-style: italic;
+    }
+
+    /* ===== DOWNTIME METRICS ===== */
+    .ct-metrics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.625rem;
+    }
+
+    .ct-metric-tile {
+        padding: 0.875rem;
+        border-radius: var(--ct-radius-sm);
+        border-left: 3px solid;
+    }
+
+    .ct-metric-tile--total {
+        background: #f0f9ff;
+        border-left-color: #0284c7;
+    }
+
+    .ct-metric-tile--response {
+        background: var(--ct-amber-light);
+        border-left-color: #f59e0b;
+    }
+
+    .ct-metric-tile--documentation {
+        background: #f3e8ff;
+        border-left-color: #a855f7;
+    }
+
+    .ct-metric-tile--closure {
+        background: var(--ct-green-light);
+        border-left-color: #10b981;
+    }
+
+    .ct-metric-label {
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ct-text-secondary);
+        margin-bottom: 0.25rem;
+    }
+
+    .ct-metric-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .ct-metric-tile--total .ct-metric-value { color: #0c4a6e; }
+    .ct-metric-tile--response .ct-metric-value { color: var(--ct-amber-dark); }
+    .ct-metric-tile--documentation .ct-metric-value { color: #6b21a8; }
+    .ct-metric-tile--closure .ct-metric-value { color: var(--ct-green-dark); }
+
+    .ct-metric-unit {
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
+    /* ===== ACTION BUTTONS ===== */
+    .ct-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+        margin-top: 0.5rem;
+    }
+
+    .ct-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.875rem 1.25rem;
+        border: none;
+        border-radius: 14px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+        min-height: 48px;
+        text-decoration: none;
+        letter-spacing: -0.01em;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ct-btn::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
+        pointer-events: none;
+    }
+
+    .ct-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .ct-btn:active {
+        transform: scale(0.98);
+    }
+
+    .ct-btn--primary {
+        background: var(--ct-green);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+    }
+
+    .ct-btn--primary:hover {
+        background: #047857;
+        color: #fff;
+        box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+    }
+
+    .ct-btn--danger {
+        background: var(--ct-red);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+    }
+
+    .ct-btn--danger:hover {
+        background: #b91c1c;
+        color: #fff;
+    }
+
+    .ct-btn--outline {
+        background: transparent;
+        color: var(--ct-text-secondary);
+        border: 2px solid var(--ct-border);
+    }
+
+    .ct-btn--outline::after {
+        display: none;
+    }
+
+    .ct-btn--outline:hover {
+        background: var(--ct-border-light);
+        color: var(--ct-text-primary);
+    }
+
+    .ct-btn i {
+        font-size: 1rem;
+    }
+
+    /* ===== CLOSED BANNER ===== */
+    .ct-closed-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        padding: 1rem;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        font-weight: 600;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+    }
+
+    .ct-closed-banner i {
+        font-size: 1.1rem;
+    }
+
+    /* ===== AWAITING DOC BANNER ===== */
+    .ct-info-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        padding: 0.875rem 1rem;
+        border-radius: 14px;
+        background: var(--ct-blue-light);
+        color: var(--ct-blue-dark);
+        font-size: 0.85rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+
+    .ct-info-banner i {
+        font-size: 1rem;
+        margin-top: 0.15rem;
+        flex-shrink: 0;
+    }
+
+    /* ===== USER FEEDBACK FORM (Bottom sheet style) ===== */
+    .ct-feedback-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 10000;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .ct-feedback-overlay.is-open {
+        display: flex;
+    }
+
+    .ct-feedback-sheet {
+        background: #fff;
+        width: 100%;
+        max-width: 500px;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+        animation: ctSheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        max-height: 90vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    @keyframes ctSheetUp {
+        from { opacity: 0; transform: translateY(100%); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ct-sheet-handle {
+        width: 36px;
+        height: 4px;
+        border-radius: 2px;
+        background: #d1d5db;
+        margin: 0.75rem auto 0;
+    }
+
+    .ct-sheet-head {
+        padding: 1.25rem 1.5rem 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .ct-sheet-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .ct-sheet-icon--green {
+        background: #dcfce7;
+        color: var(--ct-green);
+    }
+
+    .ct-sheet-head-text h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--ct-text-primary);
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .ct-sheet-head-text p {
+        font-size: 0.8rem;
+        color: var(--ct-text-secondary);
+        margin: 0.15rem 0 0;
+        line-height: 1.4;
+    }
+
+    .ct-sheet-body {
+        padding: 0.75rem 1.5rem;
+    }
+
+    .ct-sheet-body label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--ct-text-body);
+        margin-bottom: 0.4rem;
+    }
+
+    .ct-sheet-body textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 0.85rem;
+        border: 2px solid #e5e7eb;
+        border-radius: var(--ct-radius-sm);
+        font-size: 16px;
+        font-family: inherit;
+        resize: vertical;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        background: #f9fafb;
+        color: var(--ct-text-primary);
+        line-height: 1.5;
+        box-sizing: border-box;
+    }
+
+    .ct-sheet-body textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        background: #fff;
+    }
+
+    .ct-sheet-notice {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.65rem 0.75rem;
+        border-radius: var(--ct-radius-xs);
+        background: var(--ct-amber-light);
+        color: var(--ct-amber-dark);
+        font-size: 0.75rem;
+        line-height: 1.45;
+        margin-top: 0.75rem;
+    }
+
+    .ct-sheet-notice i {
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+    }
+
+    .ct-sheet-actions {
+        display: flex;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .ct-sheet-btn {
+        flex: 1;
+        padding: 0.85rem;
+        border-radius: var(--ct-radius-sm);
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        -webkit-tap-highlight-color: transparent;
+        min-height: 48px;
+    }
+
+    .ct-sheet-btn:active {
+        transform: scale(0.97);
+    }
+
+    .ct-sheet-btn--cancel {
+        background: var(--ct-border-light);
+        color: var(--ct-text-secondary);
+    }
+
+    .ct-sheet-btn--cancel:hover {
+        background: var(--ct-border);
+    }
+
+    .ct-sheet-btn--confirm {
+        background: var(--ct-green);
+        color: #fff;
+    }
+
+    .ct-sheet-btn--confirm:hover {
+        background: #047857;
+    }
+
+    .ct-sheet-btn--danger {
+        background: var(--ct-red);
+        color: #fff;
+    }
+
+    .ct-sheet-btn--danger:hover {
+        background: #b91c1c;
+    }
+
+    /* ===== IMAGE LIGHTBOX ===== */
+    .ct-lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.92);
+        z-index: 99999;
+        align-items: center;
+        justify-content: center;
+        cursor: zoom-out;
+        padding: 1rem;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .ct-lightbox.is-open {
+        display: flex;
+        animation: ctLightboxIn 0.25s ease-out;
+    }
+
+    @keyframes ctLightboxIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .ct-lightbox img {
+        max-width: 100%;
+        max-height: 90vh;
+        object-fit: contain;
+        border-radius: 8px;
+        pointer-events: none;
+    }
+
+    .ct-lightbox-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease;
+    }
+
+    .ct-lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* ===== PRIORITY BADGES ===== */
+    .ct-priority-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .ct-priority-badge--high { background: var(--ct-red-light); color: var(--ct-red-dark); }
+    .ct-priority-badge--moderate { background: var(--ct-amber-light); color: var(--ct-amber-dark); }
+    .ct-priority-badge--low { background: var(--ct-blue-light); color: var(--ct-blue-dark); }
+
+    /* ===== DESKTOP ENHANCEMENTS ===== */
+    @media (min-width: 769px) {
+        .ct-page {
+            padding: 1rem 1.5rem 4rem;
+        }
+
+        .ct-card {
+            border-radius: 18px;
+        }
+
+        .ct-card-body {
+            padding: 1.5rem;
+        }
+
+        .ct-meta-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .ct-metrics-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .ct-actions {
+            flex-direction: row;
+        }
+
+        .ct-btn {
+            flex: 1;
+        }
+
+        .ct-chat-msg {
+            max-width: 72%;
+        }
+
+        .ct-tl-detail-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .ct-thumb {
+            width: 68px;
+            height: 68px;
+        }
+
+        .ct-feedback-overlay {
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .ct-feedback-sheet {
+            border-radius: 20px;
+            animation-name: ctSheetCenter;
+        }
+
+        @keyframes ctSheetCenter {
+            from { opacity: 0; transform: translateY(24px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .ct-sheet-handle {
+            display: none;
+        }
+
+        .ct-sheet-actions {
+            padding-bottom: 1.5rem;
+        }
+    }
+
+    /* ===== SMALL PHONES ===== */
+    @media (max-width: 374px) {
+        .ct-ticket-id {
+            font-size: 1.15rem;
+        }
+
+        .ct-meta-grid {
+            gap: 0.6rem;
+        }
+
+        .ct-metric-value {
+            font-size: 1.1rem;
+        }
+
+        .ct-tl-detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="ct-page">
+
+    <!-- ===== 1. NAVIGATION ===== -->
+    <nav class="ct-nav">
+        <a href="{% url 'maintenance:complain_list' %}" class="ct-back-link">
+            <i class="fas fa-arrow-left"></i>
+            <span>Tickets</span>
+        </a>
+        <span class="ct-elapsed-pill" id="ctElapsed">
+            <i class="fas fa-clock"></i>
+            <span id="ctElapsedText">--</span>
+        </span>
+    </nav>
+
+    <!-- ===== 2. TICKET HEADER ===== -->
+    <div class="ct-header">
+        <span class="ct-ticket-id">#{{ issue.ticket_num|default:"--" }}</span>
+        <span class="ct-status-badge
+            {% if issue.status == 'PENDING' %}ct-status--pending
+            {% elif issue.status == 'IN_PROGRESS' %}ct-status--in_progress
+            {% elif issue.status == 'User Feedback' %}ct-status--user_feedback
+            {% elif issue.status == 'RESOLVED' %}ct-status--resolved
+            {% elif issue.status == 'AWAITING_DOCUMENTATION' %}ct-status--awaiting_documentation
+            {% elif issue.status == 'UNDER_OBSERVATION' %}ct-status--under_observation
+            {% elif issue.status == 'REVIEWED' %}ct-status--reviewed
+            {% elif issue.status == 'APPROVED' %}ct-status--approved
+            {% elif issue.status == 'REJECTED' %}ct-status--rejected
+            {% elif issue.status == 'CLOSED' %}ct-status--closed
+            {% endif %}">
+            {% if issue.status == 'PENDING' or issue.status == 'IN_PROGRESS' or issue.status == 'User Feedback' or issue.status == 'UNDER_OBSERVATION' %}
+                <span class="ct-badge-dot"></span>
+            {% endif %}
+            {% if issue.status == 'PENDING' %}Pending
+            {% elif issue.status == 'IN_PROGRESS' %}In Progress
+            {% elif issue.status == 'User Feedback' %}User Feedback
+            {% elif issue.status == 'RESOLVED' %}Resolved
+            {% elif issue.status == 'AWAITING_DOCUMENTATION' %}Awaiting Docs
+            {% elif issue.status == 'UNDER_OBSERVATION' %}Under Observation
+            {% elif issue.status == 'REVIEWED' %}Reviewed
+            {% elif issue.status == 'APPROVED' %}Approved
+            {% elif issue.status == 'REJECTED' %}Rejected
+            {% elif issue.status == 'CLOSED' %}Closed
+            {% endif %}
+        </span>
     </div>
-    <div class="timeline-event">
-      <div class="timeline-point-track-container">
-        <div class="timeline-point"></div>
-        <div class="timeline-track"></div>
-      </div>
-      <div class="timeline-content">
-        <div>
-          <span class="timeline-heading">
-            HOD Approval
-          </span>
-          {% if issue.status == "Approved" %}
-            <span class="timeline-date">
-                {{ issue.issue_remarks.date_time }}
-            </span>
-        <div class="timeline-description approved">
-            <span>
-                Complain has been approved
-            </span>
+
+    <!-- ===== 3. ISSUE DETAIL CARD ===== -->
+    <div class="ct-card">
+        <div class="ct-card-body">
+            <div class="ct-meta-grid">
+                <div class="ct-meta-item">
+                    <span class="ct-meta-label">Equipment</span>
+                    <span class="ct-meta-value">{{ issue.equipment.name }}</span>
+                </div>
+                <div class="ct-meta-item">
+                    <span class="ct-meta-label">Machine</span>
+                    <span class="ct-meta-value">{{ issue.machine_id.name }}</span>
+                </div>
+                <div class="ct-meta-item">
+                    <span class="ct-meta-label">Reported By</span>
+                    <span class="ct-meta-value">{{ issue.user.name }}</span>
+                </div>
+                <div class="ct-meta-item">
+                    <span class="ct-meta-label">Date Reported</span>
+                    <span class="ct-meta-value">{{ issue.date_time|timezone:"Asia/Karachi"|date:"M d, Y" }}</span>
+                </div>
+                <div class="ct-meta-item">
+                    <span class="ct-meta-label">Department</span>
+                    <span class="ct-meta-value">{{ issue.error_department.name }}</span>
+                </div>
+            </div>
+
+            <div class="ct-description-block">
+                <div class="ct-description-heading">Problem Description</div>
+                <div class="ct-description-text">{{ issue.description_user }}</div>
+            </div>
+
+            {% if issue.image.all %}
+            <div class="ct-images-row">
+                {% for img in issue.image.all %}
+                <img
+                    class="ct-thumb"
+                    src="{{ img.image.url }}"
+                    alt="Issue photo {{ forloop.counter }}"
+                    onclick="CT.openLightbox('{{ img.image.url }}')"
+                    loading="lazy"
+                >
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
-        <div class="timeline-description">
-          <span>
-              Description: {{ issue.issue_remarks.comment}}
-          </span>
-      </div>
-          {% else %}
-          <span class="timeline-date">
-            Pending HOD approval
-          </span>
-          {% endif %}
-        </div>
-      </div>
     </div>
-    <div class="timeline-event">
-      <div class="timeline-point-track-container">
-        <div class="timeline-point"></div>
-        <div class="timeline-track" style="flex-grow: 0;"></div>
-      </div>
-      <div class="timeline-content">
-        <div>
-          <span class="timeline-heading">
-            Complain Closing
-          </span>
-          {% if issue.status == 'CLOSED' %}
-          <span class="timeline-date">
-            {{ issue.machineissue.issueclosing.date_ended }}
-          </span>
-          <div class="timeline-description">
-            <span>
-              {{ issue.machineissue.issueclosing.remarks }}
-            </span>
-          </div>
-          {% else %}
-          <span class="timeline-date">
-            Pending
-          </span>
-          {% endif %}   
+
+    <!-- ===== 4. WORK SESSIONS ===== -->
+    {% if work_sessions %}
+    <div class="ct-card">
+        <div class="ct-card-body">
+            <div class="ct-section-label">
+                <i class="fas fa-hard-hat" style="color: #3b82f6;"></i>
+                Work Activity
+                <span class="ct-count-badge">{{ work_sessions|length }}</span>
+            </div>
+
+            {% for session in work_sessions %}
+            <div class="ct-session-item {% if session.outcome == 'IN_PROGRESS' %}is-active{% endif %}">
+                <div class="ct-session-icon {% if session.outcome == 'IN_PROGRESS' %}ct-session-icon--active{% elif session.outcome == 'RESOLVED' %}ct-session-icon--resolved{% elif session.outcome == 'ESCALATED' %}ct-session-icon--escalated{% else %}ct-session-icon--observation{% endif %}">
+                    {% if session.outcome == 'IN_PROGRESS' %}
+                        <i class="fas fa-wrench"></i>
+                    {% elif session.outcome == 'RESOLVED' %}
+                        <i class="fas fa-check"></i>
+                    {% elif session.outcome == 'ESCALATED' %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% else %}
+                        <i class="fas fa-eye"></i>
+                    {% endif %}
+                </div>
+                <div class="ct-session-body">
+                    <div class="ct-session-top">
+                        <span class="ct-session-engineer">{{ session.engineer.name }}</span>
+                        <span class="ct-session-outcome {% if session.outcome == 'IN_PROGRESS' %}ct-session-outcome--active{% elif session.outcome == 'RESOLVED' %}ct-session-outcome--resolved{% elif session.outcome == 'ESCALATED' %}ct-session-outcome--escalated{% else %}ct-session-outcome--observation{% endif %}">
+                            {{ session.get_outcome_display }}
+                        </span>
+                    </div>
+                    <div class="ct-session-times">
+                        <span>
+                            <i class="fas fa-play" style="font-size: 0.6rem;"></i>
+                            {{ session.started_at|timezone:"Asia/Karachi"|date:"M d, h:i A" }}
+                        </span>
+                        {% if session.completed_at %}
+                        <span>
+                            <i class="fas fa-stop" style="font-size: 0.6rem;"></i>
+                            {{ session.completed_at|timezone:"Asia/Karachi"|date:"M d, h:i A" }}
+                        </span>
+                        <span class="ct-session-duration">
+                            <i class="fas fa-clock" style="font-size: 0.6rem;"></i>
+                            {% if session.duration_hours >= 1 %}
+                                {{ session.duration_hours|floatformat:1 }}h
+                            {% else %}
+                                {{ session.duration_hours|floatformat:2 }}h
+                            {% endif %}
+                        </span>
+                        {% else %}
+                        <span>
+                            <span class="ct-session-pulse"></span>
+                            <span class="ct-session-live-timer" data-started="{{ session.started_at|date:'c' }}">--:--:--</span>
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if session.comments %}
+                    <div class="ct-session-comments">
+                        <i class="fas fa-comment-dots" style="color: var(--ct-text-muted); margin-right: 0.2rem; font-size: 0.7rem;"></i>
+                        {{ session.comments }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
         </div>
-      </div>
     </div>
-  </div>
+    {% endif %}
+
+    <!-- ===== 5. CONVERSATION TIMELINE ===== -->
+    {% if quick_review_comments %}
+    <div class="ct-card">
+        <div class="ct-card-body">
+            <div class="ct-section-label">
+                <i class="fas fa-comments" style="color: var(--ct-blue);"></i>
+                Conversation
+                <span class="ct-count-badge">{{ quick_review_comments|length }}</span>
+            </div>
+
+            <div class="ct-chat-list">
+                {% for comment in quick_review_comments %}
+                <div class="ct-chat-msg {% if comment.commenter == issue.user %}ct-chat-msg--user{% else %}ct-chat-msg--engineer{% endif %}">
+                    <div class="ct-chat-bubble">
+                        <div class="ct-chat-author">
+                            {{ comment.commenter.name }}
+                            {% if comment.commenter == issue.user %}
+                                <span class="ct-chat-role ct-chat-role--user">You</span>
+                            {% else %}
+                                <span class="ct-chat-role ct-chat-role--engineer">Engineer</span>
+                            {% endif %}
+                        </div>
+                        <div class="ct-chat-text">{{ comment.comment }}</div>
+                    </div>
+                    <div class="ct-chat-time">
+                        <i class="fas fa-clock" style="font-size: 0.6rem;"></i>
+                        {{ comment.created_at|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===== 6. STATUS TIMELINE ===== -->
+    <div class="ct-card">
+        <div class="ct-card-body">
+            <div class="ct-section-label">
+                <i class="fas fa-route" style="color: var(--ct-cyan);"></i>
+                Complaint Lifecycle
+            </div>
+
+            <div class="ct-timeline">
+
+                <!-- Stage 1: Complaint Raised (always completed) -->
+                <div class="ct-tl-step">
+                    <div class="ct-tl-dot ct-tl-dot--done">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="ct-tl-title">Complaint Raised</div>
+                    <div class="ct-tl-date">
+                        {{ issue.date_time|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}
+                    </div>
+                </div>
+
+                <!-- Stage 2: Engineer Review -->
+                <div class="ct-tl-step">
+                    {% if issue.status == 'RESOLVED' or issue.status == 'User Feedback' or issue.status == 'AWAITING_DOCUMENTATION' or issue.status == 'UNDER_OBSERVATION' or issue.status == 'REVIEWED' or issue.status == 'APPROVED' or issue.status == 'REJECTED' or issue.status == 'CLOSED' %}
+                        <div class="ct-tl-dot ct-tl-dot--done">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    {% elif issue.status == 'PENDING' or issue.status == 'IN_PROGRESS' %}
+                        <div class="ct-tl-dot ct-tl-dot--active">
+                            <i class="fas fa-wrench" style="font-size: 7px;"></i>
+                        </div>
+                    {% else %}
+                        <div class="ct-tl-dot ct-tl-dot--pending">
+                            <i class="fas fa-minus" style="font-size: 7px;"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="ct-tl-title">Engineer Review</div>
+                    {% if issue.quick_review_timestamp %}
+                    <div class="ct-tl-date">
+                        {{ issue.quick_review_timestamp|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}
+                    </div>
+                    {% endif %}
+
+                    {% if issue.machineissue %}
+                        {% if issue.machineissue.description_reviewer %}
+                        <div class="ct-tl-desc">{{ issue.machineissue.description_reviewer }}</div>
+                        {% endif %}
+
+                        {% if issue.machineissue.priority or issue.machineissue.type or issue.machineissue.assignPerson %}
+                        <div class="ct-tl-detail-grid">
+                            {% if issue.machineissue.priority %}
+                            <div class="ct-tl-detail-item">
+                                <span class="ct-tl-detail-label">Priority</span>
+                                <span class="ct-tl-detail-value">
+                                    <span class="ct-priority-badge {% if issue.machineissue.priority == 'HIGH' %}ct-priority-badge--high{% elif issue.machineissue.priority == 'MODERATE' %}ct-priority-badge--moderate{% else %}ct-priority-badge--low{% endif %}">
+                                        {{ issue.machineissue.priority }}
+                                    </span>
+                                </span>
+                            </div>
+                            {% endif %}
+                            {% if issue.machineissue.type %}
+                            <div class="ct-tl-detail-item">
+                                <span class="ct-tl-detail-label">Type</span>
+                                <span class="ct-tl-detail-value">{{ issue.machineissue.get_type_display }}</span>
+                            </div>
+                            {% endif %}
+                            {% if issue.machineissue.problemNature %}
+                            <div class="ct-tl-detail-item">
+                                <span class="ct-tl-detail-label">Nature</span>
+                                <span class="ct-tl-detail-value">{{ issue.machineissue.get_problemNature_display }}</span>
+                            </div>
+                            {% endif %}
+                            {% if issue.machineissue.assignPerson %}
+                            <div class="ct-tl-detail-item">
+                                <span class="ct-tl-detail-label">Assigned To</span>
+                                <span class="ct-tl-detail-value">{{ issue.machineissue.assignPerson.name }}</span>
+                            </div>
+                            {% endif %}
+                            {% if issue.machineissue.assignDepartment %}
+                            <div class="ct-tl-detail-item">
+                                <span class="ct-tl-detail-label">Department</span>
+                                <span class="ct-tl-detail-value">{{ issue.machineissue.assignDepartment.name }}</span>
+                            </div>
+                            {% endif %}
+                            {% if issue.machineissue.malfunction_part.all %}
+                            <div class="ct-tl-detail-item">
+                                <span class="ct-tl-detail-label">Parts</span>
+                                <span class="ct-tl-detail-value">
+                                    {% for part in issue.machineissue.malfunction_part.all %}{{ part.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% elif issue.status == 'PENDING' or issue.status == 'IN_PROGRESS' %}
+                        <div class="ct-tl-pending-note">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 0.7rem;"></i>
+                            Waiting for engineer review...
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Stage 3: Resolution / Observation / Awaiting Documentation -->
+                {% if issue.status == 'RESOLVED' or issue.status == 'User Feedback' %}
+                <div class="ct-tl-step">
+                    <div class="ct-tl-dot ct-tl-dot--done">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="ct-tl-title">Issue Resolved</div>
+                    {% if issue.quick_review_timestamp %}
+                    <div class="ct-tl-date">
+                        {{ issue.quick_review_timestamp|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}
+                    </div>
+                    {% endif %}
+                    <div class="ct-tl-alert ct-tl-alert--success">
+                        <i class="fas fa-check-circle"></i>
+                        Engineer has marked this issue as resolved
+                    </div>
+                    {% if issue.status == 'User Feedback' %}
+                    <div class="ct-tl-alert ct-tl-alert--info" style="margin-top: 0.35rem;">
+                        <i class="fas fa-user-check"></i>
+                        Waiting for your confirmation
+                    </div>
+                    {% endif %}
+                </div>
+                {% elif issue.status == 'AWAITING_DOCUMENTATION' %}
+                <div class="ct-tl-step">
+                    <div class="ct-tl-dot ct-tl-dot--done">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="ct-tl-title">Awaiting Documentation</div>
+                    {% if issue.user_confirmation_timestamp %}
+                    <div class="ct-tl-date">
+                        Confirmed: {{ issue.user_confirmation_timestamp|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}
+                    </div>
+                    {% endif %}
+                    <div class="ct-tl-alert ct-tl-alert--info">
+                        <i class="fas fa-clipboard-list"></i>
+                        Engineer is completing documentation
+                    </div>
+                </div>
+                {% elif issue.status == 'UNDER_OBSERVATION' %}
+                <div class="ct-tl-step">
+                    <div class="ct-tl-dot ct-tl-dot--active">
+                        <i class="fas fa-eye" style="font-size: 7px;"></i>
+                    </div>
+                    <div class="ct-tl-title">Under Observation</div>
+                    {% if issue.machineissue %}
+                    <div class="ct-tl-date">
+                        {{ issue.machineissue.reviewDate|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}
+                    </div>
+                    {% endif %}
+                    <div class="ct-tl-alert ct-tl-alert--warning">
+                        <i class="fas fa-binoculars"></i>
+                        Machine is being monitored for recurrence
+                    </div>
+                    {% if issue.machineissue and issue.machineissue.description_reviewer %}
+                    <div class="ct-tl-desc" style="margin-top: 0.35rem;">
+                        {{ issue.machineissue.description_reviewer }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Stage 4: Approval (REVIEWED / APPROVED / REJECTED / CLOSED) -->
+                {% if issue.status == 'REVIEWED' or issue.status == 'APPROVED' or issue.status == 'REJECTED' or issue.status == 'CLOSED' %}
+                <div class="ct-tl-step">
+                    {% if issue.status == 'APPROVED' or issue.status == 'CLOSED' %}
+                        <div class="ct-tl-dot ct-tl-dot--done">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    {% elif issue.status == 'REJECTED' %}
+                        <div class="ct-tl-dot ct-tl-dot--rejected">
+                            <i class="fas fa-times" style="font-size: 8px;"></i>
+                        </div>
+                    {% else %}
+                        <div class="ct-tl-dot ct-tl-dot--active">
+                            <i class="fas fa-user-shield" style="font-size: 7px;"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="ct-tl-title">HOD Approval</div>
+                    {% if issue.issue_remarks %}
+                    <div class="ct-tl-date">
+                        {{ issue.issue_remarks.date_time|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}
+                    </div>
+
+                        {% if issue.status == 'APPROVED' or issue.status == 'CLOSED' %}
+                        <div class="ct-tl-alert ct-tl-alert--success">
+                            <i class="fas fa-check-circle"></i>
+                            Approved by {{ issue.issue_remarks.user_id.username }}
+                        </div>
+                        {% elif issue.status == 'REJECTED' %}
+                        <div class="ct-tl-alert ct-tl-alert--danger">
+                            <i class="fas fa-times-circle"></i>
+                            Rejected by {{ issue.issue_remarks.user_id.username }}
+                        </div>
+                        {% endif %}
+
+                        {% if issue.issue_remarks.comment %}
+                        <div class="ct-tl-desc" style="margin-top: 0.35rem;">
+                            <strong>Comment:</strong> {{ issue.issue_remarks.comment }}
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="ct-tl-pending-note">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 0.7rem;"></i>
+                            Awaiting HOD approval...
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Stage 5: Closure (APPROVED / CLOSED) -->
+                {% if issue.status == 'APPROVED' or issue.status == 'CLOSED' %}
+                <div class="ct-tl-step">
+                    {% if issue.status == 'CLOSED' %}
+                        <div class="ct-tl-dot ct-tl-dot--done">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    {% else %}
+                        <div class="ct-tl-dot ct-tl-dot--active">
+                            <i class="fas fa-flag-checkered" style="font-size: 7px;"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="ct-tl-title">Complaint Closure</div>
+                    {% if issue.closure_timestamp %}
+                    <div class="ct-tl-date">
+                        {{ issue.closure_timestamp|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}
+                    </div>
+                    <div class="ct-tl-alert ct-tl-alert--success">
+                        <i class="fas fa-check-double"></i>
+                        Complaint successfully closed
+                    </div>
+                    {% else %}
+                        <div class="ct-tl-pending-note">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 0.7rem;"></i>
+                            Pending final closure...
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 7. DOWNTIME METRICS ===== -->
+    {% if issue.status == 'CLOSED' and issue.closure_timestamp %}
+    <div class="ct-card">
+        <div class="ct-card-body">
+            <div class="ct-section-label">
+                <i class="fas fa-chart-bar" style="color: var(--ct-cyan);"></i>
+                Downtime Metrics
+            </div>
+
+            <div class="ct-metrics-grid">
+                <div class="ct-metric-tile ct-metric-tile--total">
+                    <div class="ct-metric-label">Total Downtime</div>
+                    <div class="ct-metric-value">
+                        {{ issue.total_downtime_hours|floatformat:1|default:"0.0" }}
+                        <span class="ct-metric-unit">hrs</span>
+                    </div>
+                </div>
+                <div class="ct-metric-tile ct-metric-tile--response">
+                    <div class="ct-metric-label">Response Time</div>
+                    <div class="ct-metric-value">
+                        {{ issue.engineer_response_hours|floatformat:1|default:"0.0" }}
+                        <span class="ct-metric-unit">hrs</span>
+                    </div>
+                </div>
+                <div class="ct-metric-tile ct-metric-tile--documentation">
+                    <div class="ct-metric-label">Documentation</div>
+                    <div class="ct-metric-value">
+                        {{ issue.documentation_hours|floatformat:1|default:"0.0" }}
+                        <span class="ct-metric-unit">hrs</span>
+                    </div>
+                </div>
+                <div class="ct-metric-tile ct-metric-tile--closure">
+                    <div class="ct-metric-label">Closure Time</div>
+                    <div class="ct-metric-value">
+                        {{ issue.closure_hours|floatformat:1|default:"0.0" }}
+                        <span class="ct-metric-unit">hrs</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===== 8. ACTION BUTTONS ===== -->
+    <div class="ct-actions">
+        {% if issue.status == 'User Feedback' and issue.user.user == user %}
+            <button class="ct-btn ct-btn--primary" type="button" id="ctConfirmBtn">
+                <i class="fas fa-check-circle"></i>
+                Confirm Resolution
+            </button>
+            <button class="ct-btn ct-btn--danger" type="button" id="ctRejectBtn">
+                <i class="fas fa-times-circle"></i>
+                Report Still Broken
+            </button>
+        {% elif issue.status == 'AWAITING_DOCUMENTATION' and issue.user.user == user %}
+            <div class="ct-info-banner">
+                <i class="fas fa-clipboard-check"></i>
+                <span>You have confirmed this issue is resolved. The engineer is completing the final documentation.</span>
+            </div>
+        {% elif issue.status == 'CLOSED' %}
+            <div class="ct-closed-banner">
+                <i class="fas fa-check-double"></i>
+                Complaint Resolved &amp; Closed
+            </div>
+        {% endif %}
+
+        <a href="{% url 'maintenance:complain_list' %}" class="ct-btn ct-btn--outline">
+            <i class="fas fa-list"></i>
+            All Tickets
+        </a>
+    </div>
+</div>
+
+<!-- ===== 9. USER FEEDBACK FORM (Bottom Sheet) ===== -->
+{% if issue.status == 'User Feedback' and issue.user.user == user %}
+<div class="ct-feedback-overlay" id="ctFeedbackOverlay">
+    <div class="ct-feedback-sheet">
+        <div class="ct-sheet-handle"></div>
+        <div class="ct-sheet-head">
+            <div class="ct-sheet-icon ct-sheet-icon--green" id="ctSheetIcon">
+                <i class="fas fa-check-circle" id="ctSheetIconEl"></i>
+            </div>
+            <div class="ct-sheet-head-text">
+                <h3 id="ctSheetTitle">Confirm Resolution</h3>
+                <p id="ctSheetDesc">Is the equipment working properly now?</p>
+            </div>
+        </div>
+        <form method="POST" action="{% url 'User:user_close_complaint' pk=issue.pk %}" id="ctFeedbackForm">
+            {% csrf_token %}
+            <input type="hidden" name="status" id="ctActionInput" value="RESOLVED">
+            <div class="ct-sheet-body">
+                <label for="ctUserComments">
+                    <i class="fas fa-comment-alt"></i> Your Feedback <span style="color: var(--ct-text-muted); font-weight: 400;">(optional)</span>
+                </label>
+                <textarea
+                    name="user-feedback"
+                    id="ctUserComments"
+                    placeholder="Any observations about the repair..."
+                    rows="3"
+                ></textarea>
+                <div class="ct-sheet-notice">
+                    <i class="fas fa-info-circle"></i>
+                    <span>By confirming, you acknowledge the machine is operational. The engineer will complete the documentation.</span>
+                </div>
+            </div>
+            <div class="ct-sheet-actions">
+                <button type="button" class="ct-sheet-btn ct-sheet-btn--cancel" id="ctSheetCancel">Cancel</button>
+                <button type="submit" class="ct-sheet-btn" id="ctSheetSubmit">
+                    <i class="fas fa-paper-plane"></i> Confirm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- ===== IMAGE LIGHTBOX ===== -->
+<div class="ct-lightbox" id="ctLightbox">
+    <button class="ct-lightbox-close" aria-label="Close image"><i class="fas fa-times"></i></button>
+    <img id="ctLightboxImg" src="" alt="Full size image">
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    var CT = window.CT = {};
+
+    var $ = function(id) { return document.getElementById(id); };
+    var $$ = function(sel) { return document.querySelectorAll(sel); };
+
+    // ===== Elapsed Time =====
+    (function() {
+        var createdAt = new Date("{{ issue.date_time|date:'c' }}");
+        var elapsedEl = $('ctElapsedText');
+
+        function updateElapsed() {
+            var diff = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 1000));
+            var days = Math.floor(diff / 86400);
+            var hours = Math.floor((diff % 86400) / 3600);
+            var minutes = Math.floor((diff % 3600) / 60);
+
+            var text = '';
+            if (days > 0) {
+                text = days + 'd ' + hours + 'h ago';
+            } else if (hours > 0) {
+                text = hours + 'h ' + minutes + 'm ago';
+            } else {
+                text = minutes + 'm ago';
+            }
+            elapsedEl.textContent = text;
+        }
+
+        updateElapsed();
+        setInterval(updateElapsed, 60000);
+    })();
+
+    // ===== Live Timers for Work Sessions =====
+    $$('.ct-session-live-timer').forEach(function(el) {
+        var startedAt = new Date(el.dataset.started);
+
+        function tick() {
+            var diff = Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 1000));
+            var hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
+            var mins = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+            var secs = String(diff % 60).padStart(2, '0');
+            el.textContent = hrs + ':' + mins + ':' + secs;
+        }
+
+        tick();
+        setInterval(tick, 1000);
+    });
+
+    // ===== Image Lightbox =====
+    CT.openLightbox = function(src) {
+        $('ctLightboxImg').src = src;
+        $('ctLightbox').classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    };
+
+    CT.closeLightbox = function() {
+        $('ctLightbox').classList.remove('is-open');
+        document.body.style.overflow = '';
+    };
+
+    $('ctLightbox').addEventListener('click', function(e) {
+        if (e.target.tagName !== 'IMG') {
+            CT.closeLightbox();
+        }
+    });
+
+    document.querySelector('.ct-lightbox-close').addEventListener('click', function(e) {
+        e.stopPropagation();
+        CT.closeLightbox();
+    });
+
+    // ===== User Feedback Sheet =====
+    {% if issue.status == 'User Feedback' and issue.user.user == user %}
+    (function() {
+        var overlay = $('ctFeedbackOverlay');
+        var confirmBtn = $('ctConfirmBtn');
+        var rejectBtn = $('ctRejectBtn');
+        var cancelBtn = $('ctSheetCancel');
+        var actionInput = $('ctActionInput');
+        var submitBtn = $('ctSheetSubmit');
+        var sheetIcon = $('ctSheetIcon');
+        var sheetIconEl = $('ctSheetIconEl');
+        var sheetTitle = $('ctSheetTitle');
+        var sheetDesc = $('ctSheetDesc');
+
+        function openSheet(mode) {
+            if (mode === 'confirm') {
+                actionInput.value = 'RESOLVED';
+                sheetIcon.className = 'ct-sheet-icon ct-sheet-icon--green';
+                sheetIconEl.className = 'fas fa-check-circle';
+                sheetTitle.textContent = 'Confirm Resolution';
+                sheetDesc.textContent = 'Is the equipment working properly now?';
+                submitBtn.className = 'ct-sheet-btn ct-sheet-btn--confirm';
+                submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Yes, It\'s Working';
+            } else {
+                actionInput.value = 'not_fixed';
+                sheetIcon.className = 'ct-sheet-icon';
+                sheetIcon.style.background = '#fee2e2';
+                sheetIcon.style.color = '#dc2626';
+                sheetIconEl.className = 'fas fa-times-circle';
+                sheetTitle.textContent = 'Report Still Broken';
+                sheetDesc.textContent = 'Describe the remaining issue so the engineer can follow up.';
+                submitBtn.className = 'ct-sheet-btn ct-sheet-btn--danger';
+                submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Still Not Fixed';
+            }
+
+            overlay.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(function() {
+                $('ctUserComments').focus();
+            }, 350);
+        }
+
+        function closeSheet() {
+            overlay.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+
+        if (confirmBtn) confirmBtn.addEventListener('click', function() { openSheet('confirm'); });
+        if (rejectBtn) rejectBtn.addEventListener('click', function() { openSheet('reject'); });
+        if (cancelBtn) cancelBtn.addEventListener('click', closeSheet);
+
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closeSheet();
+        });
+
+        $('ctFeedbackForm').addEventListener('submit', function() {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';
+        });
+    })();
+    {% endif %}
+
+    // ===== Keyboard Shortcuts =====
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            CT.closeLightbox();
+            {% if issue.status == 'User Feedback' and issue.user.user == user %}
+            var overlay = $('ctFeedbackOverlay');
+            if (overlay) {
+                overlay.classList.remove('is-open');
+                document.body.style.overflow = '';
+            }
+            {% endif %}
+        }
+    });
+
+})();
+</script>
 {% endblock main-body %}

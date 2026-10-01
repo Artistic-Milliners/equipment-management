@@ -10,3 +10,5 @@ ems.log
 venv/
 env/
 .env/
+.env
+.env.*

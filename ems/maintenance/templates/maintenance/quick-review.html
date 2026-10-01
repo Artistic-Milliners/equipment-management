@@ -1,0 +1,1333 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block page-title %}Quick Review - #{{ issue.ticket_num }}{% endblock page-title %}
+
+{% block main-body %}
+<style>
+    /* ============================================
+       QUICK REVIEW PAGE
+       Mobile-first industrial maintenance UI
+       ============================================ */
+
+    .qr-page {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 0 1rem 6rem;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== NAVIGATION BAR ===== */
+    .qr-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .qr-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #64748b;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .qr-back-link:hover {
+        color: #1e293b;
+        background: #f1f5f9;
+    }
+
+    .qr-back-link:active {
+        transform: scale(0.96);
+    }
+
+    .qr-elapsed-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.4rem 0.85rem;
+        border-radius: 100px;
+        background: #f1f5f9;
+        color: #64748b;
+        letter-spacing: -0.01em;
+    }
+
+    .qr-elapsed-pill.urgent {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .qr-elapsed-pill i {
+        font-size: 0.7rem;
+    }
+
+    /* ===== TICKET HEADER ===== */
+    .qr-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .qr-ticket-id {
+        font-size: 1.375rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+    }
+
+    .qr-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.75rem;
+        border-radius: 100px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .qr-badge--pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .qr-badge--active {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .qr-badge--active .qr-badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #3b82f6;
+        animation: qrBadgePulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes qrBadgePulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    /* ===== ISSUE DETAIL CARD ===== */
+    .qr-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+        margin-bottom: 1rem;
+    }
+
+    .qr-card-body {
+        padding: 1.25rem;
+    }
+
+    .qr-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .qr-meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .qr-meta-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+    }
+
+    .qr-meta-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.3;
+    }
+
+    .qr-description-block {
+        margin-bottom: 0;
+    }
+
+    .qr-description-heading {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        margin-bottom: 0.35rem;
+    }
+
+    .qr-description-text {
+        font-size: 0.9rem;
+        color: #334155;
+        line-height: 1.65;
+        word-break: break-word;
+    }
+
+    /* ===== ISSUE IMAGES ===== */
+    .qr-images-row {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .qr-thumb {
+        width: 60px;
+        height: 60px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 2px solid #e2e8f0;
+        cursor: pointer;
+        transition: border-color 0.2s ease, transform 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .qr-thumb:hover {
+        border-color: #3b82f6;
+    }
+
+    .qr-thumb:active {
+        transform: scale(0.93);
+    }
+
+    /* ===== START WORKING SECTION ===== */
+    .qr-action-area {
+        margin-bottom: 1rem;
+    }
+
+    .qr-start-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 1rem 1.5rem;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 14px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        -webkit-tap-highlight-color: transparent;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: -0.01em;
+    }
+
+    .qr-start-btn::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+        pointer-events: none;
+    }
+
+    .qr-start-btn:hover {
+        background: #1d4ed8;
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .qr-start-btn:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+
+    .qr-start-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .qr-start-btn i {
+        font-size: 1.1rem;
+    }
+
+    /* ===== LIVE WORK TIMER ===== */
+    .qr-timer-card {
+        background: #fff;
+        border: 1.5px solid #93c5fd;
+        border-radius: 16px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+        animation: qrTimerEntry 0.4s ease-out;
+    }
+
+    @keyframes qrTimerEntry {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .qr-timer-indicator {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: #eff6ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .qr-timer-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #3b82f6;
+        animation: qrDotPulse 1.5s ease-in-out infinite;
+    }
+
+    .qr-timer-dot::after {
+        content: '';
+        position: absolute;
+        inset: 6px;
+        border-radius: 50%;
+        border: 2px solid rgba(59, 130, 246, 0.2);
+        animation: qrRingPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes qrDotPulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(0.8); opacity: 0.6; }
+    }
+
+    @keyframes qrRingPulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.3); opacity: 0; }
+    }
+
+    .qr-timer-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .qr-timer-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #3b82f6;
+        line-height: 1;
+        margin-bottom: 0.2rem;
+    }
+
+    .qr-timer-engineer {
+        font-size: 0.825rem;
+        font-weight: 500;
+        color: #475569;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .qr-timer-clock {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e40af;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+        flex-shrink: 0;
+    }
+
+    /* ===== DECISION SECTION ===== */
+    .qr-decisions-area {
+        animation: qrDecisionEntry 0.5s ease-out;
+    }
+
+    .qr-decisions-area.is-hidden {
+        display: none;
+    }
+
+    @keyframes qrDecisionEntry {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .qr-decisions-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        margin-bottom: 0.75rem;
+    }
+
+    .qr-decision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.625rem;
+    }
+
+    .qr-decision-card {
+        background: #fff;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1.25rem 0.75rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    .qr-decision-card:active {
+        transform: scale(0.96);
+    }
+
+    .qr-decision-card .qr-dc-check {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .qr-decision-card .qr-dc-check i {
+        font-size: 9px;
+        color: #fff;
+    }
+
+    .qr-decision-card.is-selected .qr-dc-check {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .qr-dc-icon {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+
+    .qr-dc-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+        line-height: 1.2;
+    }
+
+    .qr-dc-subtitle {
+        font-size: 0.68rem;
+        color: #94a3b8;
+        line-height: 1.3;
+    }
+
+    /* -- Resolved -- */
+    .qr-decision-card--resolved .qr-dc-icon,
+    .qr-decision-card--resolved .qr-dc-title {
+        color: #059669;
+    }
+
+    .qr-decision-card--resolved .qr-dc-check {
+        background: #059669;
+    }
+
+    .qr-decision-card--resolved.is-selected {
+        border-color: #10b981;
+        background: #f0fdf4;
+    }
+
+    /* -- Observation -- */
+    /* .qr-decision-card--observation .qr-dc-icon,
+    .qr-decision-card--observation .qr-dc-title {
+        color: #d97706;
+    }
+
+    .qr-decision-card--observation .qr-dc-check {
+        background: #d97706;
+    }
+
+    .qr-decision-card--observation.is-selected {
+        border-color: #f59e0b;
+        background: #fffbeb;
+    } */
+
+    /* -- Escalate -- */
+    .qr-decision-card--escalate .qr-dc-icon,
+    .qr-decision-card--escalate .qr-dc-title {
+        color: #dc2626;
+    }
+
+    .qr-decision-card--escalate .qr-dc-check {
+        background: #dc2626;
+    }
+
+    .qr-decision-card--escalate.is-selected {
+        border-color: #ef4444;
+        background: #fef2f2;
+    }
+
+    /* ===== MODAL OVERLAY ===== */
+    .qr-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 10000;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .qr-overlay.is-open {
+        display: flex;
+    }
+
+    .qr-modal {
+        background: #fff;
+        width: 100%;
+        max-width: 500px;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+        animation: qrModalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        max-height: 90vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    @keyframes qrModalSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .qr-modal-handle {
+        width: 36px;
+        height: 4px;
+        border-radius: 2px;
+        background: #d1d5db;
+        margin: 0.75rem auto 0;
+    }
+
+    .qr-modal-head {
+        padding: 1.25rem 1.5rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .qr-modal-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .qr-modal-icon--resolved {
+        background: #dcfce7;
+        color: #059669;
+    }
+
+    .qr-modal-icon--escalate {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .qr-modal-head-text h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .qr-modal-head-text p {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin: 0.15rem 0 0;
+        line-height: 1.4;
+    }
+
+    .qr-modal-content {
+        padding: 0 1.5rem;
+    }
+
+    .qr-modal-content label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.4rem;
+    }
+
+    .qr-modal-content textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 0.85rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 16px; /* prevents iOS zoom */
+        font-family: inherit;
+        resize: vertical;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        background: #f9fafb;
+        color: #1e293b;
+        line-height: 1.5;
+    }
+
+    .qr-modal-content textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        background: #fff;
+    }
+
+    .qr-modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        padding: 1.25rem 1.5rem 1.5rem;
+    }
+
+    .qr-modal-btn {
+        flex: 1;
+        padding: 0.85rem;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        -webkit-tap-highlight-color: transparent;
+        min-height: 48px;
+    }
+
+    .qr-modal-btn:active {
+        transform: scale(0.97);
+    }
+
+    .qr-btn-cancel {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .qr-btn-cancel:hover {
+        background: #e2e8f0;
+    }
+
+    .qr-btn-confirm {
+        color: #fff;
+    }
+
+    .qr-btn-confirm--resolved {
+        background: #059669;
+    }
+
+    .qr-btn-confirm--resolved:hover {
+        background: #047857;
+    }
+
+    .qr-btn-confirm--escalate {
+        background: #dc2626;
+    }
+
+    .qr-btn-confirm--escalate:hover {
+        background: #b91c1c;
+    }
+
+    .qr-btn-confirm:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* ===== IMAGE LIGHTBOX ===== */
+    .qr-lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.92);
+        z-index: 99999;
+        align-items: center;
+        justify-content: center;
+        cursor: zoom-out;
+        padding: 1rem;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .qr-lightbox.is-open {
+        display: flex;
+        animation: qrLightboxIn 0.25s ease-out;
+    }
+
+    @keyframes qrLightboxIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .qr-lightbox img {
+        max-width: 100%;
+        max-height: 90vh;
+        object-fit: contain;
+        border-radius: 8px;
+        pointer-events: none;
+    }
+
+    .qr-lightbox-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease;
+    }
+
+    .qr-lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* ===== TOAST / SNACKBAR ===== */
+    .qr-toast {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(120%);
+        background: #1e293b;
+        color: #fff;
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        z-index: 100000;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .qr-toast.is-visible {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== DESKTOP ENHANCEMENTS ===== */
+    @media (min-width: 769px) {
+        .qr-page {
+            padding: 1rem 1.5rem 4rem;
+        }
+
+        .qr-card {
+            border-radius: 18px;
+        }
+
+        .qr-card-body {
+            padding: 1.5rem;
+        }
+
+        .qr-meta-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .qr-decision-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .qr-decision-card:active {
+            transform: scale(0.98);
+        }
+
+        .qr-dc-subtitle {
+            display: block;
+        }
+
+        .qr-overlay {
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .qr-modal {
+            border-radius: 20px;
+            animation-name: qrModalCenterIn;
+        }
+
+        @keyframes qrModalCenterIn {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .qr-modal-handle {
+            display: none;
+        }
+
+        .qr-thumb {
+            width: 72px;
+            height: 72px;
+        }
+    }
+
+    /* ===== MOBILE REFINEMENTS ===== */
+    @media (max-width: 768px) {
+        .qr-page {
+            padding: 0 0.75rem 6rem;
+        }
+
+        .qr-ticket-id {
+            font-size: 1.2rem;
+        }
+
+        .qr-card-body {
+            padding: 1rem;
+        }
+
+        .qr-meta-grid {
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+
+        .qr-timer-card {
+            padding: 0.875rem 1rem;
+        }
+
+        .qr-timer-clock {
+            font-size: 1.35rem;
+        }
+
+        .qr-decision-grid {
+            gap: 0.5rem;
+        }
+
+        .qr-decision-card {
+            padding: 1rem 0.5rem;
+            border-radius: 12px;
+        }
+
+        .qr-dc-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .qr-dc-title {
+            font-size: 0.72rem;
+        }
+
+        .qr-dc-subtitle {
+            display: none;
+        }
+
+        .qr-thumb {
+            width: 52px;
+            height: 52px;
+        }
+
+        .qr-modal-actions {
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+        }
+    }
+
+    /* ===== SMALL PHONES ===== */
+    @media (max-width: 374px) {
+        .qr-ticket-id {
+            font-size: 1.1rem;
+        }
+
+        .qr-timer-card {
+            flex-wrap: wrap;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .qr-timer-details {
+            text-align: center;
+        }
+
+        .qr-decision-card {
+            padding: 0.875rem 0.35rem;
+        }
+
+        .qr-dc-icon {
+            font-size: 1.3rem;
+        }
+
+        .qr-dc-title {
+            font-size: 0.68rem;
+        }
+    }
+</style>
+
+<div class="qr-page">
+    <!-- Navigation -->
+    <nav class="qr-nav">
+        <a href="{% url 'maintenance:complain_list' %}" class="qr-back-link">
+            <i class="fas fa-arrow-left"></i>
+            <span>Tickets</span>
+        </a>
+        <span class="qr-elapsed-pill {% if elapsed_hours >= 4 %}urgent{% endif %}">
+            <i class="fas fa-clock"></i>
+            {% if elapsed_hours > 0 %}{{ elapsed_hours }}h {{ elapsed_minutes }}m{% else %}{{ elapsed_minutes }}m{% endif %} ago
+        </span>
+    </nav>
+
+    <!-- Ticket Header -->
+    <div class="qr-header">
+        <span class="qr-ticket-id">#{{ issue.ticket_num|default:"--" }}</span>
+        {% if active_session %}
+        <span class="qr-badge qr-badge--active">
+            <span class="qr-badge-dot"></span> In Progress
+        </span>
+        {% else %}
+        <span class="qr-badge qr-badge--pending">Pending Review</span>
+        {% endif %}
+    </div>
+
+    <!-- Issue Details -->
+    <div class="qr-card">
+        <div class="qr-card-body">
+            <div class="qr-meta-grid">
+                <div class="qr-meta-item">
+                    <span class="qr-meta-label">Equipment</span>
+                    <span class="qr-meta-value">{{ issue.equipment.name }}</span>
+                </div>
+                <div class="qr-meta-item">
+                    <span class="qr-meta-label">Machine</span>
+                    <span class="qr-meta-value">{{ issue.machine_id.name }}</span>
+                </div>
+                <div class="qr-meta-item">
+                    <span class="qr-meta-label">Reported By</span>
+                    <span class="qr-meta-value">{{ issue.user.name }}</span>
+                </div>
+                <div class="qr-meta-item">
+                    <span class="qr-meta-label">Date</span>
+                    <span class="qr-meta-value">{{ issue.date_time|date:"M d, Y" }}</span>
+                </div>
+            </div>
+
+            <div class="qr-description-block">
+                <div class="qr-description-heading">Problem Description</div>
+                <div class="qr-description-text">{{ issue.description_user }}</div>
+            </div>
+
+            {% if issue.image.all %}
+            <div class="qr-images-row">
+                {% for img in issue.image.all %}
+                <img
+                    class="qr-thumb"
+                    src="{{ img.image.url }}"
+                    alt="Issue photo {{ forloop.counter }}"
+                    onclick="QR.openLightbox('{{ img.image.url }}')"
+                    loading="lazy"
+                >
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Action Area -->
+    <div class="qr-action-area">
+        {% if active_session %}
+        <!-- Live Timer -->
+        <div class="qr-timer-card" id="qrTimerCard">
+            <div class="qr-timer-indicator">
+                <div class="qr-timer-dot"></div>
+            </div>
+            <div class="qr-timer-details">
+                <div class="qr-timer-label">Working</div>
+                <div class="qr-timer-engineer">{{ active_session.engineer.name }}</div>
+            </div>
+            <div class="qr-timer-clock" id="qrTimerClock">00:00:00</div>
+        </div>
+        {% else %}
+        <!-- Start Working -->
+        <button class="qr-start-btn" id="qrStartBtn" type="button">
+            <i class="fas fa-play"></i>
+            Start Working
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Decision Cards -->
+    <div class="qr-decisions-area {% if not active_session %}is-hidden{% endif %}" id="qrDecisionsArea">
+        <div class="qr-decisions-title">Select your decision</div>
+        <div class="qr-decision-grid">
+            <div
+                class="qr-decision-card qr-decision-card--resolved"
+                data-decision="User_Feedback"
+                role="button"
+                tabindex="0"
+            >
+                <span class="qr-dc-check"><i class="fas fa-check"></i></span>
+                <div class="qr-dc-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="qr-dc-title">Resolved</div>
+                <div class="qr-dc-subtitle">Send for user confirmation</div>
+            </div>
+
+            <!-- <div
+                class="qr-decision-card qr-decision-card--observation"
+                data-decision="UNDER_OBSERVATION"
+                role="button"
+                tabindex="0"
+            >
+                <span class="qr-dc-check"><i class="fas fa-check"></i></span>
+                <div class="qr-dc-icon"><i class="fas fa-eye"></i></div>
+                <div class="qr-dc-title">Observation</div>
+                <div class="qr-dc-subtitle">Monitor and review later</div>
+            </div> -->
+
+            <div
+                class="qr-decision-card qr-decision-card--escalate"
+                data-decision="ESCALATE"
+                role="button"
+                tabindex="0"
+            >
+                <span class="qr-dc-check"><i class="fas fa-check"></i></span>
+                <div class="qr-dc-icon"><i class="fas fa-arrow-up"></i></div>
+                <div class="qr-dc-title">Escalate</div>
+                <div class="qr-dc-subtitle">Needs higher-level attention</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Decision Modal (for Resolved / Escalate) -->
+<div class="qr-overlay" id="qrModal">
+    <div class="qr-modal">
+        <div class="qr-modal-handle"></div>
+        <div class="qr-modal-head">
+            <div class="qr-modal-icon" id="qrModalIcon">
+                <i id="qrModalIconEl"></i>
+            </div>
+            <div class="qr-modal-head-text">
+                <h3 id="qrModalTitle"></h3>
+                <p id="qrModalDesc"></p>
+            </div>
+        </div>
+        <form method="POST" action="{% url 'maintenance:quick_review' pk=issue.pk %}" id="qrReviewForm">
+            {% csrf_token %}
+            <input type="hidden" name="decision" id="qrDecisionInput">
+            <div class="qr-modal-content">
+                <label for="qrComments">
+                    <i class="fas fa-comment-alt"></i> Comments <span style="color:#94a3b8;font-weight:400;">(optional)</span>
+                </label>
+                <textarea
+                    name="engineer-comments"
+                    id="qrComments"
+                    placeholder="Brief notes about your action..."
+                    rows="3"
+                ></textarea>
+            </div>
+            <div class="qr-modal-actions">
+                <button type="button" class="qr-modal-btn qr-btn-cancel" id="qrModalCancel">Cancel</button>
+                <button type="submit" class="qr-modal-btn qr-btn-confirm" id="qrModalSubmit">
+                    <i class="fas fa-paper-plane"></i> Confirm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Hidden form for Under Observation (submits directly) -->
+<!-- <form method="POST" action="{% url 'maintenance:quick_review' pk=issue.pk %}" id="qrObservationForm" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="decision" value="UNDER_OBSERVATION">
+    <input type="hidden" name="engineer-comments" value="">
+</form> -->
+
+<!-- Image Lightbox -->
+<div class="qr-lightbox" id="qrLightbox">
+    <button class="qr-lightbox-close" aria-label="Close image"><i class="fas fa-times"></i></button>
+    <img id="qrLightboxImg" src="" alt="Full size image">
+</div>
+
+<!-- Toast -->
+<div class="qr-toast" id="qrToast"></div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ===== Namespace =====
+    const QR = window.QR = {};
+
+    // ===== DOM Cache =====
+    const $ = (id) => document.getElementById(id);
+    const $$ = (sel) => document.querySelectorAll(sel);
+
+    // ===== Toast Notification =====
+    let toastTimeout = null;
+    QR.toast = function(message, duration) {
+        duration = duration || 2500;
+        const el = $('qrToast');
+        el.textContent = message;
+        el.classList.add('is-visible');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(function() {
+            el.classList.remove('is-visible');
+        }, duration);
+    };
+
+    // ===== Live Timer =====
+    {% if active_session %}
+    (function() {
+        const startedAt = new Date("{{ active_session.started_at|date:'c' }}");
+        const clockEl = $('qrTimerClock');
+
+        function tick() {
+            const diff = Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 1000));
+            const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+            const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+            const s = String(diff % 60).padStart(2, '0');
+            clockEl.textContent = h + ':' + m + ':' + s;
+        }
+
+        tick();
+        setInterval(tick, 1000);
+    })();
+    {% endif %}
+
+    // ===== Start Working =====
+    {% if not active_session %}
+    (function() {
+        const btn = $('qrStartBtn');
+        if (!btn) return;
+
+        btn.addEventListener('click', function() {
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Starting...';
+
+            fetch("{% url 'maintenance:start_working' pk=issue.pk %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.status === 'started') {
+                    window.location.reload();
+                } else if (data.status === 'already_started') {
+                    btn.innerHTML = '<i class="fas fa-info-circle"></i> ' + (data.engineer || 'Someone') + ' is working';
+                    btn.style.background = '#d97706';
+                    btn.style.boxShadow = '0 4px 14px rgba(217, 119, 6, 0.3)';
+                    setTimeout(function() { window.location.reload(); }, 1500);
+                }
+            })
+            .catch(function() {
+                btn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error - tap to retry';
+                btn.style.background = '#dc2626';
+                btn.style.boxShadow = '0 4px 14px rgba(220, 38, 38, 0.3)';
+                btn.disabled = false;
+                setTimeout(function() {
+                    btn.innerHTML = '<i class="fas fa-play"></i> Start Working';
+                    btn.style.background = '';
+                    btn.style.boxShadow = '';
+                }, 2500);
+            });
+        });
+    })();
+    {% endif %}
+
+    // ===== Decision Cards =====
+    const MODAL_CONFIG = {
+        'User_Feedback': {
+            title: 'Mark as Resolved',
+            desc: 'The operator will be asked to verify the fix. If unresolved, the ticket returns to you.',
+            icon: 'fas fa-check-circle',
+            iconClass: 'qr-modal-icon--resolved',
+            btnClass: 'qr-btn-confirm--resolved'
+        },
+        'ESCALATE': {
+            title: 'Escalate Issue',
+            desc: 'This escalates to senior management or a specialized team for further action.',
+            icon: 'fas fa-arrow-up',
+            iconClass: 'qr-modal-icon--escalate',
+            btnClass: 'qr-btn-confirm--escalate'
+        }
+    };
+
+    $$('.qr-decision-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            var decision = card.getAttribute('data-decision');
+
+            // Visual feedback
+            $$('.qr-decision-card').forEach(function(c) { c.classList.remove('is-selected'); });
+            card.classList.add('is-selected');
+
+            // if (decision === 'UNDER_OBSERVATION') {
+            //     QR.toast('Submitting...');
+            //     setTimeout(function() {
+            //         $('qrObservationForm').submit();
+            //     }, 300);
+            //     return;
+            // }
+
+            // Open modal for Resolved / Escalate
+            setTimeout(function() {
+                QR.openModal(decision);
+            }, 250);
+        });
+
+        // Keyboard accessibility
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                card.click();
+            }
+        });
+    });
+
+    // ===== Modal =====
+    QR.openModal = function(decision) {
+        var cfg = MODAL_CONFIG[decision];
+        if (!cfg) return;
+
+        $('qrDecisionInput').value = decision;
+        $('qrModalIconEl').className = cfg.icon;
+        $('qrModalIcon').className = 'qr-modal-icon ' + cfg.iconClass;
+        $('qrModalTitle').textContent = cfg.title;
+        $('qrModalDesc').textContent = cfg.desc;
+        $('qrModalSubmit').className = 'qr-modal-btn qr-btn-confirm ' + cfg.btnClass;
+        $('qrComments').value = '';
+
+        var overlay = $('qrModal');
+        overlay.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(function() {
+            $('qrComments').focus();
+        }, 350);
+    };
+
+    QR.closeModal = function() {
+        $('qrModal').classList.remove('is-open');
+        document.body.style.overflow = '';
+        $$('.qr-decision-card').forEach(function(c) { c.classList.remove('is-selected'); });
+    };
+
+    // Cancel button
+    $('qrModalCancel').addEventListener('click', QR.closeModal);
+
+    // Click outside modal
+    $('qrModal').addEventListener('click', function(e) {
+        if (e.target === this) QR.closeModal();
+    });
+
+    // Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            QR.closeModal();
+            QR.closeLightbox();
+        }
+    });
+
+    // Form submit
+    $('qrReviewForm').addEventListener('submit', function() {
+        var btn = $('qrModalSubmit');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';
+    });
+
+    // ===== Image Lightbox =====
+    QR.openLightbox = function(src) {
+        $('qrLightboxImg').src = src;
+        $('qrLightbox').classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    };
+
+    QR.closeLightbox = function() {
+        $('qrLightbox').classList.remove('is-open');
+        document.body.style.overflow = '';
+    };
+
+    $('qrLightbox').addEventListener('click', function(e) {
+        if (e.target.tagName !== 'IMG') {
+            QR.closeLightbox();
+        }
+    });
+
+    document.querySelector('.qr-lightbox-close').addEventListener('click', function(e) {
+        e.stopPropagation();
+        QR.closeLightbox();
+    });
+
+})();
+</script>
+{% endblock main-body %}

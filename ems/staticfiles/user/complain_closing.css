@@ -1,0 +1,133 @@
+body{
+    font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
+}
+
+.form-container{
+    margin: 0 auto;
+    width: 80%;
+}
+
+
+form{
+    display: flex;
+    flex-direction: column;
+    margin: 10px;
+    align-items: center;
+    color: #ffd43a;
+}
+
+
+form label{
+    font-weight: bold;
+    margin-bottom: 0.5em;
+    width: 100%;
+    /* text-align: center; */
+}
+
+
+#search-div{
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+#search-div>#search{
+    width: 50%;
+    background-color: #ffd43a;
+    color: #183153;
+}
+
+form input, select, textarea{
+    background-color: #183153;
+    color: #ffd43a;
+    padding: 0.5em;
+    margin-bottom: 0.5em;
+    width: 100%;
+    border: 1px solid #ffd43a;
+
+}
+
+#spares-box{
+    background-color: gray;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: 100%;
+    max-height: auto;
+    overflow-y: auto;
+    border: 1px solid #ffd43a;
+    border-radius: 4px;
+    margin-bottom: 1em ;
+}
+
+#spares>select {
+    background-color: #183153;
+    width: 100%;
+    min-height: 1em; 
+    padding: 2px;
+    margin: 5px 5px;
+    font-size: 12px; 
+    color: #ffd43a;
+  }
+
+  :disabled{
+    background-color: grey;
+  }
+
+
+
+/* Styling the dropdown options container */
+/* .my-dropdown-class .select2-results__options {
+    background-color: #f0f8ff;
+    color: #333; */
+/* } */
+
+/* Styling the selection box */
+/* .my-selection-class .select2-selection {
+    background-color: #add8e6;
+    border-color: #4caf50;
+} */
+
+
+.submission{
+    display: flex;
+    justify-content: space-between;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+
+}
+
+.btn-primary{
+    font-size: small;
+    color: #183153;
+    background-color: #ffd43a;
+    opacity: 70%;
+    border: 0cap;
+    border-radius: 5px;
+    width: 35vw;
+    padding: 0;
+}
+
+.btn-danger{
+    color: white;
+    background-color: green;
+    opacity: 70%;
+    border: 0cap;
+    border-radius: 5px;
+    width: 35vw;
+}
+
+.button{
+    font-size: 1.2rem;
+    padding: 10px;
+}
+
+
+  .complain-number{
+    border: 1px solid #ffd43a;
+  }

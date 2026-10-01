@@ -1,0 +1,111 @@
+.main-title h1{
+  color: #FFD43A;
+}
+
+/* Form Container (Optional, for better organization): */
+.form-container {
+    width: 100%;
+    margin: 0 auto; /* Center the form horizontally */
+    position: relative;
+    display: flex;
+    flex-direction: column; /* Enable relative positioning */
+    align-items: center;
+
+  }
+
+  form{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+  }
+
+
+
+  .form-item > label{
+    color: #FFD43A;
+    text-align: center;
+    font-weight: bold;
+    width: 100%;
+    height: 20px;
+    padding: 0.5em;
+  }
+
+  .form-item > input,
+  .form-item > select,
+  .form-item > textarea{
+    
+    background-color: #2D3E5C;
+    color: #FFD43A;
+    border: 0.5px solid #FFD43A;
+    width: 80vw;
+    padding: 0.5em;
+    margin-top: 0.5em;
+  }
+
+  .form div > input[type=file]{
+    background-color: #2D3E5C;
+  }
+
+  form button{
+    background-color: #2D3E5C;
+    color: #FFD43A;
+    width: 20vw;
+    padding: 0.2em;
+    margin-top: 2.5em;
+    margin-bottom: 10px;
+    align-self: center;
+    border:1px solid #FFD43A;
+  }
+
+  form button:hover{
+    background-color: #406097;
+  }
+
+  .upload-wrapper{
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    margin-top: 1em 1.5em;
+  }
+
+  .upload-wrapper input[type="file"]{
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin:1em auto;
+    opacity: 0;
+    cursor: pointer;
+
+  }
+
+  .upload-visible{
+    text-align: left;
+    background-color: #2D3E5C;
+    color: #FFD43A;
+    border:0.5px solid #FFD43A;
+    padding: 0.5em;
+    margin-bottom: 1em;
+    border-radius: 5%;
+    cursor: pointer;
+    display: inline-block;
+  }
+
+
+@media (min-width:1024px){
+  .form-item > input,
+  .form-item > select,
+  .form-item > textarea{
+    
+    background-color: #2D3E5C;
+    color: #FFD43A;
+    border: 0.5px solid #FFD43A;
+    width: 30vw;
+    padding: 0.5em;
+    margin-top: 0.5em;
+  }    
+}
+
+
+
+  

@@ -1,218 +1,2283 @@
-{% extends "user/home.html" %}
+{% extends "index.html" %}
 {% load static %}
 
+{% block page-title %}Inventory Management{% endblock page-title %}
 
-{% block title %}
-  Spares
-{% endblock title %}Spares
 {% block main-body %}
-<!-- Top Buttons Start -->
-<section id="add-issue-section">
-  <div class="add-spare" style="margin:10px">
-    <button type="submit" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
-      <i class="fa fa-plus" aria-hidden="true"> Add Spare</i>
-    </button>
-  </div>
-  <div>
-    <form action="{% url  'User:spares'  %}" method="get">
-      <label for="search-bar">Search</label>
-      <input type="text" name="search-bar" id="search-bar">
-      <button class="btn btn-primary m-0"><i class="fa fa-search"></i></button>
-    </form>
-  </div>
-</section>
+<style>
+    /* Mobile Optimizations for Inventory Page */
+    @media (max-width: 768px) {
+        /* Header adjustments */
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 1rem;
+        }
 
+        .d-flex.gap-2 {
+            width: 100%;
+            flex-direction: column;
+        }
 
-<!-- Top Buttons End -->
+        .btn-modern {
+            width: 100%;
+        }
 
-        <!-- Modal -->
-        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-          <div class="modal-dialog" role="document">
-          <div class="modal-content">
-              <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">Add New Spare</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-              </button>
-              </div>
-              <form id="add-form" data-url="{% url 'User:spares_add' %}" method="post">
-                  {% csrf_token %}
+        /* Filter section */
+        .row.align-items-center.g-3 .col-md-3,
+        .row.align-items-center.g-3 .col-md-2 {
+            margin-bottom: 0.75rem;
+        }
 
-                  <div class="modal-body">
-                          <div class="mb-3">
-                          <label for="item-code" class="form-label">Item Code</label>
-                          <input name="item-code" value="" type="text" class="form-control" id="item-code" required>
-                          </div>
-                          
-                          <div class="mb-3">
-                          <label for="name" class="form-label">Name</label>
-                          <input name="name" value="" type="text" class="form-control" id="name" aria-describedby="Spare Name" required>
-                          </div>
-                      
-                          <div class="mb-3">
-                          <label for="quantity" class="form-label">quantity</label>
-                          <input name="quantity" value="" type="text" class="form-control" id="quantity" required>
-                          </div>
-                      
-                          <div class="mb-3">
-                              <label for="unit" class="form-label">Unit</label>
-                              <input name="unit" value="" type="text" class="form-control" id="unit" required>
-                          </div>
+        /* Ensure filters stack properly */
+        .form-label.small {
+            font-size: 0.875rem !important;
+            font-weight: 600;
+        }
+
+        .input-group-text,
+        .form-control,
+        .form-select {
+            font-size: 0.95rem;
+        }
+
+        /* Inventory grid - 2 columns on tablets */
+        .inventory-item {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+
+        .modern-card .card-body {
+            padding: 1rem;
+        }
+
+        .card-img-top,
+        .card-img-top + div {
+            height: 160px !important;
+        }
+
+        .btn-group-vertical .btn-sm {
+            padding: 0.35rem 0.5rem;
+            font-size: 0.8rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        /* Full width on mobile phones */
+        .col-sm-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        .card-img-top,
+        .card-img-top + div {
+            height: 140px !important;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+        }
+
+        .btn-modern.btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        /* Ensure all action buttons are full width */
+        .d-grid {
+            width: 100%;
+        }
+
+        /* Reduce modal padding on mobile */
+        .modal-dialog {
+            margin: 0.5rem;
+        }
+
+        .modal-body {
+            padding: 1rem;
+        }
+
+        .modal-header,
+        .modal-footer {
+            padding: 0.75rem 1rem;
+        }
+
+        /* Filter adjustments for very small screens */
+        .row.align-items-center.g-3 {
+            margin-left: -0.5rem;
+            margin-right: -0.5rem;
+        }
+
+        .row.align-items-center.g-3 > div {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-warehouse me-2"></i>
+                        Inventory Management
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Manage spare parts and equipment inventory
+                        {% if not perms.core.change_spares %}
+                        <span class="badge bg-info ms-2">
+                            <i class="fas fa-eye"></i> View Only
+                        </span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if perms.core.add_spares %}
+                    <button type="button" class="btn-modern btn-primary-modern" data-bs-toggle="modal" data-bs-target="#addSpareModal">
+                        <i class="fas fa-plus"></i>
+                        Add Item
+                    </button>
+                    {% endif %}
+                    <button type="button" class="btn-modern btn-success-modern" onclick="exportInventory()">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-body">
+                    <div class="row align-items-center g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1">Search Items</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search by name, code..." onkeyup="filterItems()">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small mb-1">Category</label>
+                            <select class="form-select" id="categoryFilter" onchange="filterItems()">
+                                <option value="">All Categories</option>
+                                <option value="electrical">⚡ Electrical</option>
+                                <option value="mechanical">⚙️ Mechanical</option>
+                                <option value="hydraulic">💧 Hydraulic</option>
+                                <option value="pneumatic">🌪️ Pneumatic</option>
+                                <option value="safety">🦺 Safety</option>
+                                <option value="general">📦 General</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small mb-1">Stock Status</label>
+                            <select class="form-select" id="statusFilter" onchange="filterItems()">
+                                <option value="">All Status</option>
+                                <option value="in-stock">🟢 In Stock</option>
+                                <option value="low-stock">🟡 Low Stock</option>
+                                <option value="out-of-stock">🔴 Out of Stock</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1">Filter by Machine</label>
+                            <select class="form-select" id="machineFilter" onchange="filterItems()">
+                                <option value="">All Spares</option>
+                                <option value="general" style="font-weight: bold;">📦 General Purpose Only</option>
+                                <optgroup label="Specific Machines">
+                                    {% for machine in machines %}
+                                    <option value="{{ machine.id }}">{{ machine.name }} - {{ machine.type_of_machine.name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small mb-1">&nbsp;</label>
+                            <button class="btn-modern btn-secondary w-100" onclick="clearFilters()">
+                                <i class="fas fa-times"></i>
+                                Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Filter Summary -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div id="filter-summary" class="text-muted small d-none">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <span id="filter-summary-text"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Grid -->
+    <div class="row" id="inventoryGrid">
+        {% for spare in spares %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4 inventory-item" 
+             data-name="{{ spare.name|lower }}" 
+             data-code="{{ spare.item_code|lower }}"
+             data-category="{{ spare.category|default:'general'|lower }}"
+             data-quantity="{{ spare.quantity }}"
+             data-machines="{% for machine in spare.machines.all %}{{ machine.id }},{% endfor %}"
+             data-machine-count="{{ spare.machines.count }}">
+            <div class="modern-card h-100">
+                <!-- Item Image -->
+                <div class="position-relative">
+                    {% if spare.image %}
+                        <img src="{{ spare.image.url }}" class="card-img-top" alt="{{ spare.name }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
+                            <i class="fas fa-box fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Stock Status Badge -->
+                    <div class="position-absolute top-0 end-0 m-2">
+                        {% if spare.quantity > 10 %}
+                            <span class="badge bg-success">In Stock</span>
+                        {% elif spare.quantity > 0 %}
+                            <span class="badge bg-warning">Low Stock</span>
+                        {% else %}
+                            <span class="badge bg-danger">Out of Stock</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <div class="btn-group-vertical" role="group">
+                            <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#viewModal" onclick="viewItem({{ spare.pk }})" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            {% if perms.core.change_spares %}
+                            <button type="button" class="btn btn-sm btn-light" onclick="editItem({{ spare.pk }})" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Item Details -->
+                <div class="card-body">
+                    <h6 class="card-title text-truncate" title="{{ spare.name }}">{{ spare.name }}</h6>
+                    <div class="row text-muted small mb-2">
+                        <div class="col-12 mb-1">
+                            <i class="fas fa-barcode me-1"></i>
+                            <strong>{{ spare.item_code|default:"N/A" }}</strong>
+                        </div>
+                        {% if spare.manufacturer %}
+                        <div class="col-12 mb-1">
+                            <i class="fas fa-industry me-1"></i>
+                            {{ spare.manufacturer.name }}
+                        </div>
+                        {% endif %}
+                        {% if spare.manufacturer_part_number %}
+                        <div class="col-12 mb-1">
+                            <i class="fas fa-tag me-1"></i>
+                            {{ spare.manufacturer_part_number }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Quantity Info -->
+                    <div class="mb-2 p-2 bg-light rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small text-muted">
+                                <i class="fas fa-cube me-1"></i>Quantity
+                            </span>
+                            <span class="fw-bold">{{ spare.quantity }} {{ spare.unit|default:"pcs" }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Machines Using This Spare -->
+                    {% with machine_count=spare.machines.count %}
+                    {% if machine_count > 0 %}
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-cogs me-1"></i>
+                            <strong>Used by:</strong> {{ machine_count }} machine{{ machine_count|pluralize }}
+                        </small>
+                        <div class="mt-1">
+                            {% for machine in spare.machines.all|slice:":2" %}
+                            <span class="badge bg-secondary me-1" style="font-size: 0.7rem;">
+                                {{ machine.name }}
+                            </span>
+                            {% endfor %}
+                            {% if machine_count > 2 %}
+                            <span class="badge bg-secondary" style="font-size: 0.7rem;">
+                                +{{ machine_count|add:"-2" }} more
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-cogs me-1"></i>
+                            General purpose spare
+                        </small>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Stock Progress Bar -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>Stock Level</span>
+                            <span>Min: {{ spare.min_stock_level }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            {% if spare.stock_status == 'in-stock' %}
+                                <div class="progress-bar bg-success" style="width: {{ spare.stock_percentage|default:100 }}%"></div>
+                            {% elif spare.stock_status == 'low-stock' %}
+                                <div class="progress-bar bg-warning" style="width: {{ spare.stock_percentage|default:30 }}%"></div>
+                            {% else %}
+                                <div class="progress-bar bg-danger" style="width: 5%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        {% if perms.core.change_spares %}
+                        <!-- Inventory Controller only - can modify stock -->
+                        <button type="button" class="btn-modern btn-success-modern btn-sm" onclick="receiveStock({{ spare.pk }})">
+                            <i class="fas fa-plus"></i>
+                            Receive Stock
+                        </button>
+                        {% if spare.quantity > 0 %}
+                            <button type="button" class="btn-modern btn-warning-modern btn-sm" onclick="issueItem({{ spare.pk }})">
+                                <i class="fas fa-minus"></i>
+                                Issue Item
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn-modern btn-secondary btn-sm" disabled>
+                                <i class="fas fa-times"></i>
+                                Out of Stock
+                            </button>
+                        {% endif %}
+                        {% else %}
+                        <!-- Engineering/Management - View only -->
+                        <div class="alert alert-info p-2 mb-2 small">
+                            <i class="fas fa-info-circle"></i>
+                            View-only access
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Everyone can view history -->
+                        <button type="button" class="btn-modern btn-info-modern btn-sm" onclick="viewLedger({{ spare.pk }})">
+                            <i class="fas fa-history"></i>
+                            History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No inventory items found</h5>
+                    <p class="text-muted">Start by adding your first inventory item.</p>
+                    <button type="button" class="btn-modern btn-primary-modern" data-bs-toggle="modal" data-bs-target="#addSpareModal">
+                        <i class="fas fa-plus"></i>
+                        Add First Item
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addSpareModal" tabindex="-1" aria-labelledby="addSpareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSpareModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Add New Inventory Item
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addSpareForm" action="{% url 'User:spares_add' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Auto-Generated Code Notice -->
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Item Code:</strong> Will be automatically generated based on category (e.g., MEC-0001, ELE-0001)
+                    </div>
+                    
+                    <!-- Basic Information -->
+                    <h6 class="mb-3"><i class="fas fa-tag me-2"></i>Basic Information</h6>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="name" class="form-label">Item Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   placeholder="e.g., Ball Bearing, Relay Switch, Hydraulic Oil">
+                            <div class="form-text">Enter a clear, standard name for the item</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="electrical">⚡ Electrical (ELE-####)</option>
+                                <option value="mechanical">⚙️ Mechanical (MEC-####)</option>
+                                <option value="hydraulic">💧 Hydraulic (HYD-####)</option>
+                                <option value="pneumatic">🌪️ Pneumatic (PNE-####)</option>
+                                <option value="safety">🦺 Safety (SAF-####)</option>
+                                <option value="general">📦 General (GEN-####)</option>
+                            </select>
+                            <div class="form-text">This determines the auto-generated item code prefix</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="2" 
+                                      placeholder="Enter detailed specifications..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Manufacturer Information -->
+                    <h6 class="mb-3 mt-3"><i class="fas fa-industry me-2"></i>Manufacturer Information</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="manufacturer" class="form-label">Manufacturer</label>
+                            <select class="form-select" id="manufacturer" name="manufacturer">
+                                <option value="">Select Manufacturer</option>
+                                {% for mfr in manufacturers %}
+                                <option value="{{ mfr.id }}">{{ mfr.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select the manufacturer (optional but recommended)</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="manufacturer-part-number" class="form-label">Manufacturer Part Number</label>
+                            <input type="text" class="form-control" id="manufacturer-part-number" 
+                                   name="manufacturer-part-number" placeholder="e.g., 6205-2RS, SKF-123">
+                            <div class="form-text">Official part number from manufacturer</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Machine Association -->
+                    <h6 class="mb-3 mt-3"><i class="fas fa-cog me-2"></i>Machine Association</h6>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="machine-search" class="form-label">Search Machines</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="machine-search" 
+                                       placeholder="Type to search machines by name or type...">
+                                <button class="btn btn-outline-secondary" type="button" id="clear-machine-search">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="form-text mb-2">
+                                <span id="machine-filter-info" class="text-muted">
+                                    Showing all {{ machines|length }} machines
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="machines" class="form-label">Select Machines <span class="badge bg-secondary" id="selected-count">0 selected</span></label>
+                            <select class="form-select" id="machines" name="machines" multiple size="8">
+                                <option value="" disabled style="font-style: italic; color: #6c757d;">-- Select machines below (Hold Ctrl/Cmd for multiple) --</option>
+                                {% for machine in machines %}
+                                <option value="{{ machine.id }}" data-name="{{ machine.name|lower }}" data-type="{{ machine.type_of_machine.name|lower }}">
+                                    {{ machine.name }} - {{ machine.type_of_machine.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Tip:</strong> Use the search box above to filter machines. 
+                                Hold Ctrl (Windows) or Cmd (Mac) to select multiple machines. 
+                                Leave empty if this spare is general-purpose.
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="select-all-machines">
+                                    <i class="fas fa-check-double"></i> Select All Visible
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselect-all-machines">
+                                    <i class="fas fa-times"></i> Clear Selection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stock Information -->
+                    <h6 class="mb-3 mt-3"><i class="fas fa-boxes me-2"></i>Stock Information</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="quantity" class="form-label">Initial Quantity <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" min="0" value="0" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="unit" class="form-label">Unit <span class="text-danger">*</span></label>
+                            <select class="form-select" id="unit" name="unit" required>
+                                <option value="">Select Unit</option>
+                                <option value="pcs" selected>Pieces (pcs)</option>
+                                <option value="kg">Kilograms (kg)</option>
+                                <option value="m">Meters (m)</option>
+                                <option value="l">Liters (l)</option>
+                                <option value="box">Box</option>
+                                <option value="set">Set</option>
+                                <option value="roll">Roll</option>
+                                <option value="pack">Pack</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="min-stock-level" class="form-label">Min Stock Level</label>
+                            <input type="number" class="form-control" id="min-stock-level" 
+                                   name="min-stock-level" min="0" value="5" placeholder="5">
+                            <div class="form-text">Low stock alert trigger</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="max-stock-level" class="form-label">Max Stock Level</label>
+                            <input type="number" class="form-control" id="max-stock-level" 
+                                   name="max-stock-level" min="0" value="100" placeholder="100">
+                            <div class="form-text">Target stock level</div>
+                    </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="unit-price" class="form-label">Unit Price (Rs.)</label>
+                            <input type="number" class="form-control" id="unit-price" name="unit-price" 
+                                   min="0" step="0.01" value="0.00" placeholder="0.00">
+                            <div class="form-text">Price per unit (optional)</div>
+                    </div>
+                        <div class="col-md-6 mb-3">
+                        <label for="image" class="form-label">Item Image</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <div class="form-text">Upload an image of the item (optional)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Duplicate Warning Area -->
+                    <div id="duplicate-warning" class="alert alert-warning d-none" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Similar items found:</strong>
+                        <ul id="similar-items-list" class="mb-0 mt-2"></ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modern btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-modern btn-primary-modern">
+                        <i class="fas fa-save"></i>
+                        Add Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Issue Item Modal -->
+<div class="modal fade" id="issueModal" tabindex="-1" aria-labelledby="issueModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning bg-opacity-10">
+                <h5 class="modal-title" id="issueModalLabel">
+                    <i class="fas fa-minus-circle me-2 text-warning"></i>
+                    Issue Inventory Item
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="issueForm" method="post" action="#">
+                {% csrf_token %}
+                <input type="hidden" id="issue-spare-id" name="issue-spare-id">
+                
+                <div class="modal-body">
+                    <!-- Item Information (Read-only) -->
+                    <div class="alert alert-info" role="alert">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-barcode me-2"></i>Item Code:</strong>
+                                <span id="issue-item-code">-</span>
+                    </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-box me-2"></i>Item Name:</strong>
+                                <span id="issue-name">-</span>
+                    </div>
+                    </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-cubes me-2"></i>Available:</strong>
+                                <span id="available-quantity" class="text-success fw-bold">0</span>
+                                <span id="available-unit">pcs</span>
+                    </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-exclamation-triangle me-2"></i>Min Stock:</strong>
+                                <span id="issue-min-stock" class="text-warning fw-bold">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Issue Quantity -->
+                    <h6 class="mb-3"><i class="fas fa-edit me-2"></i>Issue Details</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="issue-quantity" class="form-label">
+                                Quantity to Issue <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="issue-quantity" 
+                                   name="issue-quantity" min="1" required 
+                                   placeholder="Enter quantity">
+                            <div class="form-text">
+                                <span id="quantity-warning" class="text-danger d-none">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    Will drop below minimum stock level!
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="issue-reason" class="form-label">
+                                Reason for Issue <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="issue-reason-type" name="issue-reason-type">
+                                <option value="">Select reason type</option>
+                                <option value="maintenance">Maintenance Work</option>
+                                <option value="repair">Machine Repair</option>
+                                <option value="replacement">Part Replacement</option>
+                                <option value="installation">New Installation</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="issue-reason" class="form-label">
+                            Detailed Reason <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="issue-reason" name="issue-reason" 
+                                  rows="2" required 
+                                  placeholder="Describe why this item is being issued (e.g., Replacing faulty bearing on Machine XYZ-100)"></textarea>
+                        <div class="form-text">This will be recorded in the transaction history</div>
+                    </div>
+                    
+                    <!-- Link to Machine/Work Order -->
+                    <h6 class="mb-3 mt-4"><i class="fas fa-link me-2"></i>Link to Machine/Work Order (Optional)</h6>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="issue-machine-search-input" class="form-label">Search Machines</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="issue-machine-search-input" 
+                                       placeholder="Type to search machines by name or type...">
+                                <button class="btn btn-outline-secondary" type="button" id="issue-clear-machine-search">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                </div>
+                            <div class="form-text mb-2">
+                                <span id="issue-machine-filter-info" class="text-muted">
+                                    Showing all {{ machines|length }} machines
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="issue-machine-id" class="form-label">Select Machine</label>
+                            <select class="form-select" id="issue-machine-id" name="machine-id" size="4">
+                                <option value="">-- No machine selected --</option>
+                                {% for machine in machines %}
+                                <option value="{{ machine.id }}" data-name="{{ machine.name|lower }}" data-type="{{ machine.type_of_machine.name|lower }}">
+                                    {{ machine.name }} - {{ machine.type_of_machine.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select machine receiving this spare</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="issue-work-order-id" class="form-label">Work Order / Ticket Number</label>
+                            <input type="text" class="form-control" id="issue-work-order-id" 
+                                   name="work-order-id"
+                                   placeholder="e.g., EQ-12-345">
+                            <div class="form-text">Enter ticket number if applicable</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Impact Warning -->
+                    <div id="stock-impact-warning" class="alert alert-warning d-none" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Stock Impact:</strong>
+                        <div id="impact-message"></div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-modern btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-modern btn-warning-modern" id="issue-submit-btn">
+                        <i class="fas fa-minus"></i>
+                        Issue Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Receive Stock Modal -->
+<div class="modal fade" id="receiveModal" tabindex="-1" aria-labelledby="receiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success bg-opacity-10">
+                <h5 class="modal-title" id="receiveModalLabel">
+                    <i class="fas fa-plus-circle me-2 text-success"></i>
+                    Receive Stock - Add to Inventory
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="receiveForm" method="post" action="#">
+                {% csrf_token %}
+                <input type="hidden" id="receive-spare-id" name="receive-spare-id">
+                
+                <div class="modal-body">
+                    <!-- Item Information -->
+                    <div class="alert alert-info" role="alert">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-barcode me-2"></i>Item Code:</strong>
+                                <span id="receive-item-code">-</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-box me-2"></i>Item Name:</strong>
+                                <span id="receive-name">-</span>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-cubes me-2"></i>Current Stock:</strong>
+                                <span id="current-quantity" class="fw-bold">0</span>
+                                <span id="current-unit">pcs</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-arrow-up me-2 text-success"></i>New Stock Will Be:</strong>
+                                <span id="new-quantity" class="text-success fw-bold">0</span>
+                                <span id="new-unit">pcs</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Receipt Details -->
+                    <h6 class="mb-3"><i class="fas fa-clipboard-list me-2"></i>Receipt Details</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="receive-quantity" class="form-label">
+                                Quantity Received <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="receive-quantity" 
+                                   name="receive-quantity" min="1" required 
+                                   placeholder="Enter quantity received">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="receive-type" class="form-label">Receipt Type</label>
+                            <select class="form-select" id="receive-type" name="receive-type">
+                                <option value="purchase">New Purchase</option>
+                                <option value="return">Returned from Job</option>
+                                <option value="transfer">Transfer from Another Location</option>
+                                <option value="donation">Donation</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="receive-reason" class="form-label">
+                            Receipt Details <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="receive-reason" name="receive-reason" 
+                                  rows="2" required 
+                                  placeholder="e.g., PO #12345 from SKF, Received 50 units on 2025-10-31"></textarea>
+                        <div class="form-text">
+                            Include: PO number, supplier, invoice number, or other relevant details
+                        </div>
+                    </div>
+                    
+                    <!-- Optional: Link to Purchase Order or Supplier Info -->
+                    <h6 class="mb-3 mt-4"><i class="fas fa-file-invoice me-2"></i>Additional Information (Optional)</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="receive-po-number" class="form-label">PO Number</label>
+                            <input type="text" class="form-control" id="receive-po-number" 
+                                   name="receive-po-number" placeholder="e.g., PO-2025-001">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="receive-invoice-number" class="form-label">Invoice Number</label>
+                            <input type="text" class="form-control" id="receive-invoice-number" 
+                                   name="receive-invoice-number" placeholder="e.g., INV-12345">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="receive-date" class="form-label">Receipt Date</label>
+                            <input type="date" class="form-control" id="receive-date" 
+                                   name="receive-date" value="{{ today|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Stock Level Info -->
+                    <div id="receive-stock-info" class="alert alert-success d-none" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Stock Impact:</strong>
+                        <div id="receive-impact-message"></div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-modern btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-modern btn-success-modern" id="receive-submit-btn">
+                        <i class="fas fa-check"></i>
+                        Receive Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Item Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary bg-opacity-10">
+                <h5 class="modal-title" id="editModalLabel">
+                    <i class="fas fa-edit me-2 text-primary"></i>
+                    Edit Inventory Item
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="edit-spare-id" name="edit-spare-id">
+                
+                <div class="modal-body">
+                    <!-- Item Code (Read-only) -->
+                    <div class="alert alert-secondary" role="alert">
+                        <strong><i class="fas fa-barcode me-2"></i>Item Code:</strong>
+                        <span id="edit-item-code" class="fw-bold">-</span>
+                        <span class="text-muted ms-2">(Auto-generated, cannot be changed)</span>
+                    </div>
+                    
+                    <!-- Basic Information -->
+                    <h6 class="mb-3"><i class="fas fa-tag me-2"></i>Basic Information</h6>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="edit-name" class="form-label">Item Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit-name" name="update-name" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="edit-category" class="form-label">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit-category" name="update-category" required disabled>
+                                <option value="electrical">⚡ Electrical</option>
+                                <option value="mechanical">⚙️ Mechanical</option>
+                                <option value="hydraulic">💧 Hydraulic</option>
+                                <option value="pneumatic">🌪️ Pneumatic</option>
+                                <option value="safety">🦺 Safety</option>
+                                <option value="general">📦 General</option>
+                            </select>
+                            <div class="form-text">Cannot change (affects item code)</div>
+                    </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="edit-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="edit-description" name="update-description" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Manufacturer Information -->
+                    <h6 class="mb-3 mt-3"><i class="fas fa-industry me-2"></i>Manufacturer Information</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-manufacturer" class="form-label">Manufacturer</label>
+                            <select class="form-select" id="edit-manufacturer" name="update-manufacturer">
+                                <option value="">Select Manufacturer</option>
+                                {% for mfr in manufacturers %}
+                                <option value="{{ mfr.id }}">{{ mfr.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-manufacturer-part-number" class="form-label">Manufacturer Part Number</label>
+                            <input type="text" class="form-control" id="edit-manufacturer-part-number" 
+                                   name="update-manufacturer-part-number">
+                        </div>
+                    </div>
+                    
+                    <!-- Machine Association -->
+                    <h6 class="mb-3 mt-3"><i class="fas fa-cog me-2"></i>Machine Association</h6>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="edit-machine-search" class="form-label">Search Machines</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="edit-machine-search" 
+                                       placeholder="Type to search machines...">
+                                <button class="btn btn-outline-secondary" type="button" id="edit-clear-machine-search">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="form-text mb-2">
+                                <span id="edit-machine-filter-info" class="text-muted">
+                                    Showing all {{ machines|length }} machines
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="edit-machines" class="form-label">
+                                Select Machines <span class="badge bg-secondary" id="edit-selected-count">0 selected</span>
+                            </label>
+                            <select class="form-select" id="edit-machines" name="update-machines" multiple size="6">
+                                {% for machine in machines %}
+                                <option value="{{ machine.id }}" data-name="{{ machine.name|lower }}" data-type="{{ machine.type_of_machine.name|lower }}">
+                                    {{ machine.name }} - {{ machine.type_of_machine.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                Hold Ctrl/Cmd to select multiple. Leave empty for general-purpose spare.
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="edit-select-all-machines">
+                                    <i class="fas fa-check-double"></i> Select All Visible
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="edit-deselect-all-machines">
+                                    <i class="fas fa-times"></i> Clear Selection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stock Information -->
+                    <h6 class="mb-3 mt-4"><i class="fas fa-boxes me-2"></i>Stock Information</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="edit-quantity" class="form-label">Current Quantity <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="edit-quantity" name="update-quantity" min="0" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="edit-unit" class="form-label">Unit <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit-unit" name="update-unit" required>
+                                <option value="pcs">Pieces (pcs)</option>
+                                <option value="kg">Kilograms (kg)</option>
+                                <option value="m">Meters (m)</option>
+                                <option value="l">Liters (l)</option>
+                                <option value="box">Box</option>
+                                <option value="set">Set</option>
+                                <option value="roll">Roll</option>
+                                <option value="pack">Pack</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="edit-min-stock-level" class="form-label">Min Stock Level</label>
+                            <input type="number" class="form-control" id="edit-min-stock-level" 
+                                   name="update-min-stock-level" min="0">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="edit-max-stock-level" class="form-label">Max Stock Level</label>
+                            <input type="number" class="form-control" id="edit-max-stock-level" 
+                                   name="update-max-stock-level" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-unit-price" class="form-label">Unit Price (Rs.)</label>
+                            <input type="number" class="form-control" id="edit-unit-price" name="update-unit-price" 
+                                   min="0" step="0.01">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-image" class="form-label">Update Image</label>
+                            <input type="file" class="form-control" id="edit-image" name="update-image" accept="image/*">
+                            <div class="form-text">Leave empty to keep current image</div>
+                    </div>
+                </div>
+                    
+                    <!-- Current Image Preview -->
+                    <div id="edit-current-image-container" class="mb-3 d-none">
+                        <label class="form-label">Current Image</label>
+                        <div class="border rounded p-2 text-center" style="max-width: 200px;">
+                            <img id="edit-current-image" src="" alt="Current" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-modern btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-modern btn-primary-modern" id="edit-submit-btn">
+                        <i class="fas fa-save"></i>
+                        Update Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Item Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewModalLabel">
+                    <i class="fas fa-eye me-2"></i>
+                    Item Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div id="view-image" class="text-center">
+                            <!-- Image will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <h5 id="view-name"></h5>
+                        <p class="text-muted" id="view-description"></p>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Item Code:</strong><br>
+                                <span id="view-item-code"></span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Quantity:</strong><br>
+                                <span id="view-quantity"></span> <span id="view-unit"></span>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <strong>Category:</strong><br>
+                                <span id="view-category"></span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Status:</strong><br>
+                                <span id="view-status"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modern btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Ledger Modal -->
+<div class="modal fade" id="ledgerModal" tabindex="-1" aria-labelledby="ledgerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info bg-opacity-10">
+                <h5 class="modal-title" id="ledgerModalLabel">
+                    <i class="fas fa-history me-2 text-info"></i>
+                    Transaction History - <span id="ledger-item-name">-</span> (<span id="ledger-item-code">-</span>)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Current Stock Summary -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <div class="small text-muted mb-1">Current Stock</div>
+                                <div class="h4 mb-0"><span id="ledger-current-stock">0</span> <small id="ledger-unit">pcs</small></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <div class="small text-muted mb-1">Min Stock</div>
+                                <div class="h4 mb-0" id="ledger-min-stock">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <div class="small text-muted mb-1">Total Transactions</div>
+                                <div class="h4 mb-0" id="ledger-transaction-count">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-secondary">
+                            <div class="card-body text-center">
+                                <div class="small text-muted mb-1">Stock Status</div>
+                                <div class="h4 mb-0"><span id="ledger-stock-status" class="badge">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transaction Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="10%">Date</th>
+                                <th width="12%">Type</th>
+                                <th width="10%">Quantity</th>
+                                <th width="10%">Before</th>
+                                <th width="10%">After</th>
+                                <th width="13%">User</th>
+                                <th width="35%">Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-transactions">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                    <div>Loading transactions...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modern btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                    Close
+                </button>
+                <button type="button" class="btn-modern btn-success-modern" onclick="exportLedger()">
+                    <i class="fas fa-download"></i>
+                    Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Get CSRF token helper function
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+
+// Format datetime to Pakistan/Karachi time (PKT = UTC+5)
+function formatDateTimePKT(dateString) {
+    // The backend now returns time already converted to Karachi timezone
+    // We just need to parse and format it nicely
+    
+    // Parse as "YYYY-MM-DD HH:MM:SS" format (already in PKT from backend)
+    const parts = dateString.split(' ');
+    const dateParts = parts[0].split('-');
+    const timeParts = parts[1].split(':');
+    
+    const year = parseInt(dateParts[0]);
+    const month = parseInt(dateParts[1]) - 1; // JS months are 0-indexed
+    const day = parseInt(dateParts[2]);
+    const hour = parseInt(timeParts[0]);
+    const minute = parseInt(timeParts[1]);
+    
+    // Create date object (local interpretation)
+    const date = new Date(year, month, day, hour, minute);
+    
+    // Format date
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const formattedDate = `${months[month]} ${day}, ${year}`;
+    
+    // Format time (12-hour with AM/PM)
+    let hours12 = hour % 12;
+    hours12 = hours12 ? hours12 : 12; // 0 should be 12
+    const minutes = minute.toString().padStart(2, '0');
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const formattedTime = `${hours12}:${minutes} ${ampm}`;
+    
+    return {
+        date: formattedDate,
+        time: formattedTime,
+        full: `${formattedDate} ${formattedTime}`
+    };
+}
+
+// Filter functionality
+function filterItems() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const machineFilter = document.getElementById('machineFilter').value;
+    const items = document.querySelectorAll('.inventory-item');
+    
+    let visibleCount = 0;
+    let filterMessages = [];
+    
+    items.forEach(item => {
+        const name = item.dataset.name || '';
+        const code = item.dataset.code || '';
+        const category = item.dataset.category;
+        const quantity = parseInt(item.dataset.quantity);
+        const machines = item.dataset.machines || ''; // "1,2,3,"
+        const machineCount = parseInt(item.dataset.machineCount) || 0;
+        
+        let showItem = true;
+        
+        // Search filter - search in both name and item code
+        if (searchTerm && !name.includes(searchTerm) && !code.includes(searchTerm)) {
+            showItem = false;
+        }
+        
+        // Category filter
+        if (categoryFilter && category !== categoryFilter) {
+            showItem = false;
+        }
+        
+        // Status filter - using actual stock status logic from backend
+        if (statusFilter) {
+            const minStock = 10; // You could make this dynamic if needed
+            if (statusFilter === 'in-stock' && quantity <= minStock) showItem = false;
+            if (statusFilter === 'low-stock' && (quantity <= 0 || quantity > minStock)) showItem = false;
+            if (statusFilter === 'out-of-stock' && quantity > 0) showItem = false;
+        }
+        
+        // Machine filter
+        if (machineFilter) {
+            if (machineFilter === 'general') {
+                // Show only general purpose spares (no machines)
+                if (machineCount > 0) showItem = false;
+            } else {
+                // Show spares used by specific machine
+                const machineIds = machines.split(',').filter(id => id);
+                if (!machineIds.includes(machineFilter)) showItem = false;
+            }
+        }
+        
+        if (showItem) {
+            item.style.display = 'block';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Update filter summary
+    updateFilterSummary(visibleCount, searchTerm, categoryFilter, statusFilter, machineFilter);
+}
+
+function updateFilterSummary(visibleCount, search, category, status, machine) {
+    const summary = document.getElementById('filter-summary');
+    const summaryText = document.getElementById('filter-summary-text');
+    const totalItems = document.querySelectorAll('.inventory-item').length;
+    
+    let messages = [];
+    
+    if (search) messages.push(`search: "${search}"`);
+    if (category) messages.push(`category: ${category}`);
+    if (status) messages.push(`status: ${status}`);
+    if (machine) {
+        if (machine === 'general') {
+            messages.push('machine: general purpose only');
+        } else {
+            const machineName = document.querySelector(`#machineFilter option[value="${machine}"]`)?.textContent || 'Unknown';
+            messages.push(`machine: ${machineName}`);
+        }
+    }
+    
+    if (messages.length > 0) {
+        summaryText.innerHTML = `Showing <strong>${visibleCount}</strong> of <strong>${totalItems}</strong> items | Filters: ${messages.join(', ')}`;
+        summary.classList.remove('d-none');
+    } else {
+        summaryText.textContent = '';
+        summary.classList.add('d-none');
+    }
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('categoryFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('machineFilter').value = '';
+    filterItems();
+}
+
+// Issue item functionality
+function issueItem(itemId) {
+    console.log('Loading item data for issue modal, ID:', itemId);
+    
+    // Fetch spare details
+    fetch(`/api/spares/detail/${itemId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const spare = data.data;
+                console.log('Spare data loaded:', spare);
+                
+                // Populate modal with spare details
+                document.getElementById('issue-spare-id').value = spare.id;
+                document.getElementById('issue-item-code').textContent = spare.item_code;
+                document.getElementById('issue-name').textContent = spare.name;
+                document.getElementById('available-quantity').textContent = spare.quantity;
+                document.getElementById('available-unit').textContent = spare.unit;
+                document.getElementById('issue-min-stock').textContent = spare.min_stock_level;
+                
+                // Store data for validation
+                const form = document.getElementById('issueForm');
+                form.dataset.availableQty = spare.quantity;
+                form.dataset.minStock = spare.min_stock_level;
+                form.dataset.unit = spare.unit;
+                
+                // Reset form
+                document.getElementById('issue-quantity').value = '';
+                document.getElementById('issue-reason').value = '';
+                document.getElementById('issue-reason-type').value = '';
+                document.getElementById('issue-machine-search-input').value = '';
+                document.getElementById('issue-machine-id').value = '';
+                document.getElementById('issue-work-order-id').value = '';
+                document.getElementById('quantity-warning').classList.add('d-none');
+                document.getElementById('stock-impact-warning').classList.add('d-none');
+                
+                // Set form action - THIS IS CRITICAL
+                const actionUrl = `/home/spares/issueSpare/${itemId}`;
+                form.action = actionUrl;
+                console.log('✓ Form action set to:', actionUrl);
+                
+                // NOW open the modal after everything is set up
+                const issueModal = new bootstrap.Modal(document.getElementById('issueModal'));
+                issueModal.show();
+                console.log('✓ Modal opened');
+            } else {
+                alert('Error loading item details: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading spare details:', error);
+            alert('Failed to load item details. Please try again.');
+        });
+}
+
+function editItem(itemId) {
+    console.log('Loading item data for edit modal, ID:', itemId);
+    
+    // Fetch spare details
+    fetch(`/api/spares/detail/${itemId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const spare = data.data;
+                console.log('Spare data loaded:', spare);
+                
+                // Populate basic info
+                document.getElementById('edit-spare-id').value = spare.id;
+                document.getElementById('edit-item-code').textContent = spare.item_code;
+                document.getElementById('edit-name').value = spare.name;
+                document.getElementById('edit-description').value = spare.description || '';
+                document.getElementById('edit-category').value = spare.category.toLowerCase();
+                
+                // Manufacturer info
+                document.getElementById('edit-manufacturer').value = spare.manufacturer_id || '';
+                document.getElementById('edit-manufacturer-part-number').value = spare.manufacturer_part_number || '';
+                
+                // Stock info
+                document.getElementById('edit-quantity').value = spare.quantity;
+                document.getElementById('edit-unit').value = spare.unit;
+                document.getElementById('edit-min-stock-level').value = spare.min_stock_level;
+                document.getElementById('edit-max-stock-level').value = spare.max_stock_level;
+                document.getElementById('edit-unit-price').value = spare.unit_price;
+                
+                // Image preview
+                const imageContainer = document.getElementById('edit-current-image-container');
+                const currentImage = document.getElementById('edit-current-image');
+                if (spare.image_url) {
+                    currentImage.src = spare.image_url;
+                    imageContainer.classList.remove('d-none');
+                } else {
+                    imageContainer.classList.add('d-none');
+                }
+                
+                // Pre-select machines
+                const machineSelect = document.getElementById('edit-machines');
+                Array.from(machineSelect.options).forEach(option => {
+                    option.selected = false;
+                });
+                if (spare.machines_using && spare.machines_using.length > 0) {
+                    spare.machines_using.forEach(machine => {
+                        const option = machineSelect.querySelector(`option[value="${machine.id}"]`);
+                        if (option) option.selected = true;
+                    });
+                }
+                if (typeof updateEditSelectedCount === 'function') {
+                    updateEditSelectedCount();
+                }
+                
+                // Reset search
+                document.getElementById('edit-machine-search').value = '';
+                if (typeof filterEditMachines === 'function') {
+                    filterEditMachines();
+                }
+                
+                // Set form action
+                const actionUrl = `/home/spares/updateSpare/${itemId}`;
+                document.getElementById('editForm').action = actionUrl;
+                console.log('✓ Form action set to:', actionUrl);
+                
+                // NOW open the modal after everything is set up
+                const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+                editModal.show();
+                console.log('✓ Modal opened');
+            } else {
+                alert('Error loading item details: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading item details:', error);
+            alert('Failed to load item details. Please try again.');
+        });
+}
+
+function viewItem(itemId) {
+    // This would be implemented to populate the view modal with item data
+    console.log('Viewing item:', itemId);
+}
+
+// Receive stock functionality
+function receiveStock(itemId) {
+    console.log('Loading item data for receive modal, ID:', itemId);
+    
+    // Fetch spare details
+    fetch(`/api/spares/detail/${itemId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const spare = data.data;
+                console.log('Spare data loaded:', spare);
+                
+                // Populate modal
+                document.getElementById('receive-spare-id').value = spare.id;
+                document.getElementById('receive-item-code').textContent = spare.item_code;
+                document.getElementById('receive-name').textContent = spare.name;
+                document.getElementById('current-quantity').textContent = spare.quantity;
+                document.getElementById('current-unit').textContent = spare.unit;
+                document.getElementById('new-quantity').textContent = spare.quantity;
+                document.getElementById('new-unit').textContent = spare.unit;
+                
+                // Store data for calculation
+                const form = document.getElementById('receiveForm');
+                form.dataset.currentQty = spare.quantity;
+                form.dataset.unit = spare.unit;
+                
+                // Reset form
+                document.getElementById('receive-quantity').value = '';
+                document.getElementById('receive-type').value = 'purchase';
+                document.getElementById('receive-reason').value = '';
+                document.getElementById('receive-po-number').value = '';
+                document.getElementById('receive-invoice-number').value = '';
+                document.getElementById('receive-stock-info').classList.add('d-none');
+                
+                // Set form action
+                const actionUrl = `/home/spares/receiveStock/${itemId}`;
+                form.action = actionUrl;
+                console.log('✓ Form action set to:', actionUrl);
+                
+                // Open modal
+                const receiveModal = new bootstrap.Modal(document.getElementById('receiveModal'));
+                receiveModal.show();
+                console.log('✓ Modal opened');
+            } else {
+                alert('Error loading item details: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading spare details:', error);
+            alert('Failed to load item details. Please try again.');
+        });
+}
+
+// View transaction ledger
+function viewLedger(itemId) {
+    console.log('Loading transaction ledger for item ID:', itemId);
+    
+    // Store spare ID for export functionality
+    currentLedgerSpareId = itemId;
+    
+    // Fetch complete transaction history
+    fetch(`/api/spares/transactions/${itemId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const spare = data.spare;
+                const transactions = data.transactions;
+                console.log('Ledger data loaded:', transactions.length, 'transactions');
+                
+                // Populate header
+                document.getElementById('ledger-item-name').textContent = spare.name;
+                document.getElementById('ledger-item-code').textContent = spare.item_code;
+                
+                // Populate summary cards
+                document.getElementById('ledger-current-stock').textContent = spare.quantity;
+                document.getElementById('ledger-unit').textContent = spare.unit;
+                document.getElementById('ledger-min-stock').textContent = spare.min_stock_level;
+                document.getElementById('ledger-transaction-count').textContent = data.transaction_count;
+                
+                // Stock status badge
+                const statusBadge = document.getElementById('ledger-stock-status');
+                if (spare.stock_status === 'in-stock') {
+                    statusBadge.className = 'badge bg-success';
+                    statusBadge.textContent = 'In Stock';
+                } else if (spare.stock_status === 'low-stock') {
+                    statusBadge.className = 'badge bg-warning';
+                    statusBadge.textContent = 'Low Stock';
+                } else {
+                    statusBadge.className = 'badge bg-danger';
+                    statusBadge.textContent = 'Out of Stock';
+                }
+                
+                // Populate transactions table
+                const tbody = document.getElementById('ledger-transactions');
+                if (transactions && transactions.length > 0) {
+                    tbody.innerHTML = transactions.map(trans => {
+                        const typeColor = {
+                            'RECEIPT': 'success',
+                            'ISSUE': 'warning',
+                            'ADJUSTMENT': 'info',
+                            'RETURN': 'primary',
+                            'DAMAGE': 'danger'
+                        }[trans.transaction_type] || 'secondary';
+                        
+                        const qtyColor = trans.quantity > 0 ? 'text-success' : 'text-danger';
+                        const qtySign = trans.quantity > 0 ? '+' : '';
+                        
+                        // Format date/time in PKT
+                        const dateTime = formatDateTimePKT(trans.created_at);
+                        
+                        return `
+                            <tr>
+                                <td class="small">${dateTime.date}<br>
+                                    <span class="text-muted">${dateTime.time}</span>
+                                </td>
+                                <td><span class="badge bg-${typeColor}">${trans.transaction_type}</span></td>
+                                <td class="${qtyColor} fw-bold">${qtySign}${trans.quantity}</td>
+                                <td>${trans.quantity_before}</td>
+                                <td>${trans.quantity_after}</td>
+                                <td class="small">${trans.user}</td>
+                                <td class="small">${trans.reason}
+                                    ${trans.machine ? `<br><span class="badge bg-secondary"><i class="fas fa-cog"></i> ${trans.machine}</span>` : ''}
+                                    ${trans.work_order ? `<br><span class="badge bg-info"><i class="fas fa-ticket-alt"></i> ${trans.work_order}</span>` : ''}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                <div>No transactions yet</div>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                // Open modal
+                const ledgerModal = new bootstrap.Modal(document.getElementById('ledgerModal'));
+                ledgerModal.show();
+                console.log('✓ Ledger modal opened with', transactions.length, 'transactions');
+            } else {
+                alert('Error loading transaction history: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading ledger:', error);
+            alert('Failed to load transaction history. Please try again.');
+        });
+}
+
+function exportInventory() {
+    // Export all inventory items to CSV
+    window.location.href = "{% url 'User:export_inventory_csv' %}";
+}
+
+// Global variable to store current spare ID for ledger export
+let currentLedgerSpareId = null;
+
+function exportLedger() {
+    // Export transaction ledger for current spare
+    if (currentLedgerSpareId) {
+        window.location.href = `/home/spares/export/transactions/${currentLedgerSpareId}`;
+    } else {
+        alert('No item selected. Please open a transaction history first.');
+    }
+}
+
+// Handle form submissions and duplicate checking
+document.addEventListener('DOMContentLoaded', function() {
+    const addForm = document.getElementById('addSpareForm');
+    const nameInput = document.getElementById('name');
+    const mfgPartInput = document.getElementById('manufacturer-part-number');
+    const duplicateWarning = document.getElementById('duplicate-warning');
+    const similarItemsList = document.getElementById('similar-items-list');
+    
+    // Machine search and filter functionality
+    const machineSearch = document.getElementById('machine-search');
+    const machineSelect = document.getElementById('machines');
+    const clearSearchBtn = document.getElementById('clear-machine-search');
+    const selectAllBtn = document.getElementById('select-all-machines');
+    const deselectAllBtn = document.getElementById('deselect-all-machines');
+    const machineFilterInfo = document.getElementById('machine-filter-info');
+    const selectedCount = document.getElementById('selected-count');
+    
+    if (machineSearch && machineSelect) {
+        // Update selected count
+        function updateSelectedCount() {
+            const selected = Array.from(machineSelect.selectedOptions).filter(opt => opt.value !== '');
+            selectedCount.textContent = `${selected.length} selected`;
+        }
+        
+        // Filter machines based on search
+        function filterMachines() {
+            const searchTerm = machineSearch.value.toLowerCase().trim();
+            const options = machineSelect.options;
+            let visibleCount = 0;
+            let hiddenCount = 0;
             
-                  </div>
-                  <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                  <input type="submit" onclick="modalData('add-form')" class="btn btn-primary" value="Save">
-                  </div>
-              </form>
-              
-          </div>
-          </div>
-      </div>
-    <!-- Modal Ends -->
-
-
-
-    <!-- Modal update starts -->
-    <div class="modal fade" id="UpdateModal" tabindex="-1" role="dialog" aria-labelledby="UpdateModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-      <div class="modal-content">
-          <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Update Spare</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-          </button>
-          </div>
-          <form id="update-form"  method="post">
-              {% csrf_token %}
-
-              <div class="modal-body">
-                      <div class="mb-3">
-                      <label for="update-item-code" class="form-label">Item Code</label>
-                      <input name="update-item-code" type="text" class="form-control" id="update-item-code" required>
-                      </div>
-                      
-                      <div class="mb-3">
-                      <label for="update-name" class="form-label">Name</label>
-                      <input name="update-name" type="text" class="form-control" id="update-name" aria-describedby="Spare Name" required>
-                      </div>
-                  
-                      <div class="mb-3">
-                      <label for="update-quantity" class="form-label">quantity</label>
-                      <input name="update-quantity" type="text" class="form-control" id="update-quantity" required>
-                      </div>
-                  
-                      <div class="mb-3">
-                          <label for="update-unit" class="form-label">Unit</label>
-                          <input name="update-unit" type="text" class="form-control" id="update-unit" required>
-                      </div>
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                if (option.value === '') continue; // Skip placeholder
+                
+                const name = option.dataset.name || '';
+                const type = option.dataset.type || '';
+                
+                if (searchTerm === '' || name.includes(searchTerm) || type.includes(searchTerm)) {
+                    option.style.display = '';
+                    visibleCount++;
+                } else {
+                    option.style.display = 'none';
+                    hiddenCount++;
+                }
+            }
+            
+            // Update filter info
+            if (searchTerm === '') {
+                machineFilterInfo.innerHTML = `<i class="fas fa-info-circle"></i> Showing all ${visibleCount} machines`;
+                machineFilterInfo.className = 'text-muted';
+            } else {
+                if (visibleCount > 0) {
+                    machineFilterInfo.innerHTML = `<i class="fas fa-filter"></i> Showing ${visibleCount} machine(s) matching "${searchTerm}"`;
+                    machineFilterInfo.className = 'text-success';
+                } else {
+                    machineFilterInfo.innerHTML = `<i class="fas fa-exclamation-circle"></i> No machines found matching "${searchTerm}"`;
+                    machineFilterInfo.className = 'text-warning';
+                }
+            }
+        }
         
-              </div>
-              <div class="modal-footer">
-              <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> -->
-              <input type="submit" onclick="modalData('update-form')" class="btn btn-primary" value="Update">
-              </div>
-          </form>
-          
-      </div>
-      </div>
-  </div>
-<!-- Modal update Ends -->
-
-
-<!-- Modal Issue starts -->
-    <div class="modal fade" id="issueModal" tabindex="-1" role="dialog" aria-labelledby="UpdateModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-      <div class="modal-content">
-          <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Spare Issuance</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-          </button>
-          </div>
-          <form id="issuance-form" method="get">
-              {% csrf_token %}
-
-              <div class="modal-body">
-                      <div class="mb-3">
-                      <label for="issue-item-code" class="form-label">Item Code</label>
-                      <input name="issue-item-code" type="text" class="form-control" id="issue-item-code" readonly>
-                      </div>
-                      
-                      <div class="mb-3">
-                      <label for="issue-name" class="form-label">Name</label>
-                      <input name="issue-name" type="text" class="form-control" id="issue-name" aria-describedby="Spare Name" readonly>
-                      </div>
-                  
-                      <div class="mb-3">
-                      <label for="issue-quantity" class="form-label">Quantity</label>
-                      <input name="issue-quantity" type="number" class="form-control" id="issue-quantity" min=1 required>
-                      </div>
-                  
-                      <div class="mb-3">
-                          <label for="issue-unit" class="form-label">Unit</label>
-                          <input name="issue-unit" type="text" class="form-control" id="issue-unit" readonly>
-                      </div>
+        // Search as user types
+        machineSearch.addEventListener('input', filterMachines);
         
-              </div>
-              <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <input type="submit" onclick="modalData('issuance-form')" class="btn btn-primary" value="Issue">
-              </div>
-          </form>
-          
-      </div>
-      </div>
-  </div>
-<!-- Modal Issue Ends -->
-
-
-
-
-    <!-- Spares Table starts -->
-<table class="table table-bordered spare-table">
-  <thead>
-    <tr>
-      <th scope="col">S.No</th>
-      <th scope="col">Item Code</th>
-      <th scope="col">Name</th>
-      <th scope="col">Quantity</th>
-      <th scope="col">Unit</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for spare in spares %}
-    <tr>
-      <th scope="row">{{spare.pk}}</th>
-      <td>{{spare.item_code}}</td>
-      <td>{{spare.name}}</td>
-      <td>{{spare.quantity}}</td>
-      <td>{{spare.unit}}</td>
-      <td><button class="btn btn-primary p-1 m-0" data-bs-toggle="modal" data-bs-target="#issueModal" onclick="issueModal(this)"
-        data-quantity="{{spare.quantity}}"
-        data-item-code="{{spare.item_code}}"
-        data-name="{{spare.name}}"
-        data-unit="{{spare.unit}}"
-        data-url = "{% url 'User:spares_issue' pk=spare.pk %}">
-        <i class="fa fa-minus"></i></button>
-      </td>
-      <td>  <button class="btn btn-warning p-1 m-0" data-bs-toggle="modal" data-bs-target="#UpdateModal" onclick="updateModal(this)" 
-        data-item-code="{{spare.item_code}}" 
-        data-name="{{spare.name}}" 
-        data-quantity="{{spare.quantity}}" 
-        data-unit="{{spare.unit}}"
-        data-url = "{% url 'User:spares_update' pk=spare.pk %}">
+        // Clear search
+        clearSearchBtn.addEventListener('click', function() {
+            machineSearch.value = '';
+            filterMachines();
+            machineSearch.focus();
+        });
         
-        <i class="fa fa-edit"></i>
-      </button></td>
-      <td><a href="{% url 'User:spares_delete' pk=spare.pk %}"><button class="btn btn-danger p-1 m-0"><i class="fa fa-trash"></i></button></a></td>
-    </tr> 
-    {% endfor %}
-    `
-  </tbody>
-</table>
-
-<script src="{% static 'user/js/machine_detail.js' %}"></script>
-
-<!-- spares table ends -->
+        // Select all visible machines
+        selectAllBtn.addEventListener('click', function() {
+            const options = machineSelect.options;
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                if (option.value !== '' && option.style.display !== 'none') {
+                    option.selected = true;
+                }
+            }
+            updateSelectedCount();
+        });
+        
+        // Deselect all machines
+        deselectAllBtn.addEventListener('click', function() {
+            const options = machineSelect.options;
+            for (let i = 0; i < options.length; i++) {
+                options[i].selected = false;
+            }
+            updateSelectedCount();
+        });
+        
+        // Update count when selection changes
+        machineSelect.addEventListener('change', updateSelectedCount);
+        
+        // Initialize count
+        updateSelectedCount();
+    }
+    
+    // Edit modal machine search functionality
+    const editMachineSearch = document.getElementById('edit-machine-search');
+    const editMachineSelect = document.getElementById('edit-machines');
+    const editClearSearchBtn = document.getElementById('edit-clear-machine-search');
+    const editSelectAllBtn = document.getElementById('edit-select-all-machines');
+    const editDeselectAllBtn = document.getElementById('edit-deselect-all-machines');
+    const editMachineFilterInfo = document.getElementById('edit-machine-filter-info');
+    const editSelectedCount = document.getElementById('edit-selected-count');
+    
+    function updateEditSelectedCount() {
+        if (editMachineSelect && editSelectedCount) {
+            const selected = Array.from(editMachineSelect.selectedOptions);
+            editSelectedCount.textContent = `${selected.length} selected`;
+        }
+    }
+    
+    function filterEditMachines() {
+        if (!editMachineSearch || !editMachineSelect) return;
+        
+        const searchTerm = editMachineSearch.value.toLowerCase().trim();
+        const options = editMachineSelect.options;
+        let visibleCount = 0;
+        
+        for (let i = 0; i < options.length; i++) {
+            const option = options[i];
+            const name = option.dataset.name || '';
+            const type = option.dataset.type || '';
+            
+            if (searchTerm === '' || name.includes(searchTerm) || type.includes(searchTerm)) {
+                option.style.display = '';
+                visibleCount++;
+            } else {
+                option.style.display = 'none';
+            }
+        }
+        
+        // Update filter info
+        if (searchTerm === '') {
+            editMachineFilterInfo.innerHTML = `<i class="fas fa-info-circle"></i> Showing all ${visibleCount} machines`;
+            editMachineFilterInfo.className = 'text-muted';
+        } else {
+            if (visibleCount > 0) {
+                editMachineFilterInfo.innerHTML = `<i class="fas fa-filter"></i> Showing ${visibleCount} machine(s) matching "${searchTerm}"`;
+                editMachineFilterInfo.className = 'text-success';
+            } else {
+                editMachineFilterInfo.innerHTML = `<i class="fas fa-exclamation-circle"></i> No machines found matching "${searchTerm}"`;
+                editMachineFilterInfo.className = 'text-warning';
+            }
+        }
+    }
+    
+    if (editMachineSearch) {
+        editMachineSearch.addEventListener('input', filterEditMachines);
+        
+        if (editClearSearchBtn) {
+            editClearSearchBtn.addEventListener('click', function() {
+                editMachineSearch.value = '';
+                filterEditMachines();
+                editMachineSearch.focus();
+            });
+        }
+        
+        if (editSelectAllBtn) {
+            editSelectAllBtn.addEventListener('click', function() {
+                const options = editMachineSelect.options;
+                for (let i = 0; i < options.length; i++) {
+                    const option = options[i];
+                    if (option.style.display !== 'none') {
+                        option.selected = true;
+                    }
+                }
+                updateEditSelectedCount();
+            });
+        }
+        
+        if (editDeselectAllBtn) {
+            editDeselectAllBtn.addEventListener('click', function() {
+                const options = editMachineSelect.options;
+                for (let i = 0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                updateEditSelectedCount();
+            });
+        }
+        
+        if (editMachineSelect) {
+            editMachineSelect.addEventListener('change', updateEditSelectedCount);
+        }
+    }
+    
+    // Issue modal machine search event listeners
+    const issueMachineSearchInput = document.getElementById('issue-machine-search-input');
+    const issueMachineSelect = document.getElementById('issue-machine-id');
+    const issueClearSearchBtn = document.getElementById('issue-clear-machine-search');
+    const issueMachineFilterInfo = document.getElementById('issue-machine-filter-info');
+    
+    if (issueMachineSearchInput && issueMachineSelect) {
+        // Filter function for issue modal
+        function filterIssueMachinesHandler() {
+            const searchTerm = issueMachineSearchInput.value.toLowerCase().trim();
+            const options = issueMachineSelect.options;
+            let visibleCount = 0;
+            
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                if (option.value === '') continue; // Skip placeholder
+                
+                const name = option.dataset.name || '';
+                const type = option.dataset.type || '';
+                
+                if (searchTerm === '' || name.includes(searchTerm) || type.includes(searchTerm)) {
+                    option.style.display = '';
+                    visibleCount++;
+                } else {
+                    option.style.display = 'none';
+                }
+            }
+            
+            // Update filter info
+            if (issueMachineFilterInfo) {
+                if (searchTerm === '') {
+                    issueMachineFilterInfo.innerHTML = `<i class="fas fa-info-circle"></i> Showing all ${visibleCount} machines`;
+                    issueMachineFilterInfo.className = 'text-muted';
+                } else {
+                    if (visibleCount > 0) {
+                        issueMachineFilterInfo.innerHTML = `<i class="fas fa-filter"></i> Showing ${visibleCount} machine(s) matching "${searchTerm}"`;
+                        issueMachineFilterInfo.className = 'text-success';
+                    } else {
+                        issueMachineFilterInfo.innerHTML = `<i class="fas fa-exclamation-circle"></i> No machines found matching "${searchTerm}"`;
+                        issueMachineFilterInfo.className = 'text-warning';
+                    }
+                }
+            }
+        }
+        
+        issueMachineSearchInput.addEventListener('input', filterIssueMachinesHandler);
+        
+        if (issueClearSearchBtn) {
+            issueClearSearchBtn.addEventListener('click', function() {
+                issueMachineSearchInput.value = '';
+                filterIssueMachinesHandler();
+                issueMachineSearchInput.focus();
+            });
+        }
+    }
+    
+    // Debounce function for search
+    let debounceTimer;
+    function debounce(func, delay) {
+        return function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(func, delay);
+        };
+    }
+    
+    // Check for duplicates as user types
+    const checkDuplicates = debounce(function() {
+        const searchTerm = nameInput.value.trim();
+        const partNumber = mfgPartInput.value.trim();
+        
+        if (searchTerm.length < 3 && partNumber.length < 3) {
+            duplicateWarning.classList.add('d-none');
+            return;
+        }
+        
+        // Search for similar items
+        fetch(`/api/spares/search?q=${encodeURIComponent(searchTerm || partNumber)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.results && data.results.length > 0) {
+                    // Show warning with similar items
+                    similarItemsList.innerHTML = data.results.map(item => 
+                        `<li>${item.item_code} - ${item.name} 
+                         ${item.manufacturer_part_number ? '(' + item.manufacturer_part_number + ')' : ''}</li>`
+                    ).join('');
+                    duplicateWarning.classList.remove('d-none');
+                } else {
+                    duplicateWarning.classList.add('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error checking duplicates:', error);
+            });
+    }, 500);
+    
+    // Attach duplicate check to inputs
+    if (nameInput) {
+        nameInput.addEventListener('input', checkDuplicates);
+    }
+    if (mfgPartInput) {
+        mfgPartInput.addEventListener('input', checkDuplicates);
+    }
+    
+    // Handle add form submission
+    if (addForm) {
+        addForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(addForm);
+            const submitBtn = addForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            
+            fetch(addForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    alert(`✓ ${data.message}\nItem Code: ${data.item_code}`);
+                    
+                    // Close modal and reload page
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addSpareModal'));
+                    modal.hide();
+                    location.reload();
+                } else {
+                    // Show error or similar items warning
+                    if (data.similar_items) {
+                        alert(`⚠️ ${data.message}\n\nPlease verify this is not a duplicate before proceeding.`);
+                    } else {
+                        alert(`✗ Error: ${data.message}`);
+                    }
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('✗ An error occurred while adding the item. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+        });
+    });
+    }
+    
+    // Handle issue form
+    const issueForm = document.getElementById('issueForm');
+    const issueQuantityInput = document.getElementById('issue-quantity');
+    
+    if (issueQuantityInput) {
+        // Real-time stock validation
+        issueQuantityInput.addEventListener('input', function() {
+            const qty = parseInt(this.value) || 0;
+            const available = parseInt(issueForm.dataset.availableQty) || 0;
+            const minStock = parseInt(issueForm.dataset.minStock) || 0;
+            const unit = issueForm.dataset.unit || 'pcs';
+            
+            const quantityWarning = document.getElementById('quantity-warning');
+            const impactWarning = document.getElementById('stock-impact-warning');
+            const impactMessage = document.getElementById('impact-message');
+            
+            // Check if exceeds available
+            if (qty > available) {
+                this.setCustomValidity('Quantity exceeds available stock');
+                impactMessage.innerHTML = `<strong>Error:</strong> Quantity ${qty} exceeds available stock ${available} ${unit}`;
+                impactWarning.classList.remove('d-none');
+                impactWarning.classList.remove('alert-warning');
+                impactWarning.classList.add('alert-danger');
+                return;
+            } else {
+                this.setCustomValidity('');
+            }
+            
+            const remainingStock = available - qty;
+            
+            // Check if will drop below min stock
+            if (remainingStock < minStock) {
+                quantityWarning.classList.remove('d-none');
+                
+                if (remainingStock === 0) {
+                    impactMessage.innerHTML = `
+                        <ul class="mb-0">
+                            <li>Remaining stock will be: <strong class="text-danger">0 ${unit}</strong> (OUT OF STOCK)</li>
+                            <li>This is <strong>${minStock} ${unit}</strong> below minimum level</li>
+                            <li>⚠️ Reorder immediately!</li>
+                        </ul>
+                    `;
+                } else {
+                    impactMessage.innerHTML = `
+                        <ul class="mb-0">
+                            <li>Remaining stock will be: <strong class="text-warning">${remainingStock} ${unit}</strong></li>
+                            <li>This is <strong>${minStock - remainingStock} ${unit}</strong> below minimum level (${minStock} ${unit})</li>
+                            <li>⚠️ Low stock alert will be triggered</li>
+                        </ul>
+                    `;
+                }
+                impactWarning.classList.remove('d-none');
+                impactWarning.classList.remove('alert-danger');
+                impactWarning.classList.add('alert-warning');
+            } else {
+                quantityWarning.classList.add('d-none');
+                impactWarning.classList.add('d-none');
+            }
+        });
+    }
+    
+    // Handle issue form submission
+    if (issueForm) {
+        issueForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            console.log('Issue form submitted');
+            console.log('Form action:', issueForm.action);
+            console.log('Form action attribute:', issueForm.getAttribute('action'));
+            
+            const formData = new FormData(issueForm);
+            const submitBtn = document.getElementById('issue-submit-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Validate reason
+            const reason = document.getElementById('issue-reason').value.trim();
+            if (!reason) {
+                alert('⚠️ Please provide a reason for issuing this item.');
+                return;
+            }
+            
+            // Check form action is set
+            if (!issueForm.action || issueForm.action.endsWith('#') || issueForm.action.endsWith('/home/spares')) {
+                alert('⚠️ Error: Form action not set correctly. Please close and reopen the modal.');
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            console.log('Posting to:', issueForm.action);
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            fetch(issueForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => {
+                // Check if response is OK
+                if (!response.ok) {
+                    console.error('Server error:', response.status, response.statusText);
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Build success message
+                    let message = `✓ ${data.message}\n\nRemaining: ${data.remaining_quantity} units`;
+                    
+                    // Add stock alert if present
+                    if (data.stock_alert) {
+                        message += `\n\n⚠️ ${data.stock_alert}`;
+                    }
+                    
+                    alert(message);
+                    
+                    // Close modal and reload
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('issueModal'));
+                    modal.hide();
+                    location.reload();
+                } else {
+                    alert(`✗ Error: ${data.message}`);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error details:', error);
+                alert(`✗ Error: ${error.message}\n\nCheck browser console (F12) for details.`);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+    
+    // Handle receive stock form
+    const receiveForm = document.getElementById('receiveForm');
+    const receiveQuantityInput = document.getElementById('receive-quantity');
+    
+    if (receiveQuantityInput) {
+        // Real-time new stock calculation
+        receiveQuantityInput.addEventListener('input', function() {
+            const receiveQty = parseInt(this.value) || 0;
+            const currentQty = parseInt(receiveForm.dataset.currentQty) || 0;
+            const newQty = currentQty + receiveQty;
+            
+            document.getElementById('new-quantity').textContent = newQty;
+            
+            // Show impact message
+            if (receiveQty > 0) {
+                const impactInfo = document.getElementById('receive-stock-info');
+                const impactMessage = document.getElementById('receive-impact-message');
+                
+                impactMessage.innerHTML = `
+                    <div>Adding <strong class="text-success">+${receiveQty}</strong> units</div>
+                    <div>Stock will increase from <strong>${currentQty}</strong> to <strong class="text-success">${newQty}</strong></div>
+                `;
+                impactInfo.classList.remove('d-none');
+            } else {
+                document.getElementById('receive-stock-info').classList.add('d-none');
+            }
+        });
+    }
+    
+    // Handle receive form submission
+    if (receiveForm) {
+        receiveForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            console.log('Receive form submitted');
+            console.log('Form action:', receiveForm.action);
+            
+            const formData = new FormData(receiveForm);
+            const submitBtn = document.getElementById('receive-submit-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Validate reason
+            const reason = document.getElementById('receive-reason').value.trim();
+            if (!reason) {
+                alert('⚠️ Please provide receipt details.');
+                return;
+            }
+            
+            // Check form action
+            if (!receiveForm.action || receiveForm.action.endsWith('#')) {
+                alert('⚠️ Error: Form not properly initialized. Please close and reopen.');
+                return;
+            }
+            
+            console.log('Posting to:', receiveForm.action);
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            fetch(receiveForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert(`✓ ${data.message}`);
+                    
+                    // Close modal and reload
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('receiveModal'));
+                    modal.hide();
+                    location.reload();
+                } else {
+                    alert(`✗ Error: ${data.message}`);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`✗ Error: ${error.message}\n\nCheck console for details.`);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+    
+    // Handle edit form submission
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(editForm);
+            const submitBtn = document.getElementById('edit-submit-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+            
+            fetch(editForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`✓ ${data.message}`);
+                    
+                    // Close modal and reload
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+                    modal.hide();
+                    location.reload();
+                } else {
+                    alert(`✗ Error: ${data.message}`);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('✗ An error occurred while updating the item. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+});
+</script>
 {% endblock main-body %}

@@ -1,0 +1,304 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block page-title %}Temporary Issues - Engineer Review{% endblock page-title %}
+
+{% block main-body %}
+<style>
+    .temp-issue-container {
+        padding: 2rem;
+    }
+
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .stat-card.pending {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .stat-card.reviewed {
+        border-left: 4px solid #3b82f6;
+    }
+
+    .stat-card.promoted {
+        border-left: 4px solid #10b981;
+    }
+
+    .stat-card.total {
+        border-left: 4px solid #6366f1;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .issues-table-container {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .table-header {
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .issue-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .issue-table thead {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .issue-table th {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .issue-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        color: #334155;
+    }
+
+    .issue-table tbody tr {
+        transition: background 0.2s ease;
+    }
+
+    .issue-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-reviewed {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-promoted {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .btn-review {
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-review:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+        color: #64748b;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        opacity: 0.3;
+        margin-bottom: 1rem;
+    }
+
+    .user-description {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+        .temp-issue-container {
+            padding: 1rem;
+        }
+
+        .issue-table {
+            font-size: 0.875rem;
+        }
+
+        .issue-table th,
+        .issue-table td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+</style>
+
+<div class="temp-issue-container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-clipboard-list me-2"></i>
+                        Temporary Issues Review
+                    </h2>
+                    <p class="text-muted mb-0">Review user-submitted issues and promote them to the master list</p>
+                </div>
+                <a href="{% url 'maintenance:complain_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Back to Tickets
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-cards">
+        <div class="stat-card total">
+            <div class="stat-number">{{ total_issues }}</div>
+            <div class="stat-label">Total Issues</div>
+        </div>
+        <div class="stat-card pending">
+            <div class="stat-number">{{ pending_review }}</div>
+            <div class="stat-label">Pending Review</div>
+        </div>
+        <div class="stat-card reviewed">
+            <div class="stat-number">{{ reviewed }}</div>
+            <div class="stat-label">Reviewed Only</div>
+        </div>
+        <div class="stat-card promoted">
+            <div class="stat-number">{{ promoted }}</div>
+            <div class="stat-label">Promoted</div>
+        </div>
+    </div>
+
+    <!-- Issues Table -->
+    <div class="issues-table-container">
+        <div class="table-header">
+            <h3 class="table-title">All Temporary Issues</h3>
+        </div>
+
+        {% if temp_issues %}
+        <div class="table-responsive">
+            <table class="issue-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Submitted By</th>
+                        <th>Equipment</th>
+                        <th>Machine</th>
+                        <th>User Description</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in temp_issues %}
+                    <tr>
+                        <td><strong>#{{ issue.id }}</strong></td>
+                        <td>{{ issue.user.username }}</td>
+                        <td>{{ issue.equipment.name }}</td>
+                        <td>{{ issue.machine.name|default:"N/A" }}</td>
+                        <td>
+                            <div class="user-description" title="{{ issue.user_description }}">
+                                {{ issue.user_description }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if issue.promoted_to_issuelist %}
+                                <span class="status-badge status-promoted">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Promoted
+                                </span>
+                            {% elif issue.reviewed %}
+                                <span class="status-badge status-reviewed">
+                                    <i class="fas fa-eye me-1"></i>
+                                    Reviewed
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-pending">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Pending
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ issue.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'maintenance:temp_issue_review' pk=issue.pk %}" class="btn-review">
+                                <i class="fas fa-clipboard-check"></i>
+                                Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h5>No Temporary Issues</h5>
+            <p>No user-submitted issues are waiting for review.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock main-body %}
