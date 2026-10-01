@@ -1,0 +1,86 @@
+.timeline-main-heading {
+    text-align: center;
+    color: #ffd43b; 
+    margin-left: 1em;
+    margin-top: 1em;
+    margin-bottom: 2.5em;
+}
+
+.timeline {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    padding: 1rem;
+    font-family: century gothic, centurygothic, applegothic, sans-serif;
+}
+
+.timeline-event {
+    display: flex;
+    position: relative;
+    min-height: 80px;
+}
+
+.timeline-event:last-child {
+    min-height: 0;
+}
+
+.timeline-content {
+    flex: 1;
+    padding: 0 1rem;
+    color: #ffd43b;
+    width: auto;
+}
+
+.timeline-point-track-container {
+    flex: 0;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.timeline-point {
+    margin-top: 0.7rem;
+    display: flex;
+    align-self: baseline;
+    border: 2px solid #ffd43b;
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    background-color: #ffd43b;
+}
+
+.timeline-track {
+    margin-bottom: -0.7rem;
+    flex-grow: 1;
+    background-color: #ffd43b;
+    width: 2px;
+}
+
+.timeline-heading {
+    font-weight: bold;
+}
+
+.timeline-date {
+    font-size: 14px;
+    font-style: normal;
+    padding-left: 5px;
+    color: lightgrey;
+}
+
+.timeline-description {
+    font-size: small;
+    color: lightgrey;
+}
+
+.heighlight {
+    background-color: #ffd43b;
+    box-shadow: 0 4px 8px #8db8e4;
+}
+
+.approved{
+    background-color: green;
+}
+
+.rejected{
+    background-color: red;
+}

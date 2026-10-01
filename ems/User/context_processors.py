@@ -1,4 +1,6 @@
 from core.models import Equipment
+from django.conf import settings
+
 
 def side_bar(request):
     eq_map = {}
@@ -9,3 +11,8 @@ def side_bar(request):
         'equipments':eq_map
     }
     
+def base_api_url(request):
+    return {
+        'API_BASE_URL': settings.API_BASE_URL,
+        'API_PORT': settings.API_PORT
+    }

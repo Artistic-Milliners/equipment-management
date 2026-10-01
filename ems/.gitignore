@@ -10,4 +10,9 @@ ems.log
 venv/
 env/
 .env/
+<<<<<<< HEAD
 .env.*
+=======
+.env
+.env.*
+>>>>>>> fe16867 (added multiple items)

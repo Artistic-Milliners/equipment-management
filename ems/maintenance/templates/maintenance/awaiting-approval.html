@@ -1,0 +1,325 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block page-title %}Awaiting Approval - #{{ issue.ticket_num }}{% endblock page-title %}
+
+{% block main-body %}
+<style>
+    .awaiting-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .status-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .status-icon {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.7;
+            transform: scale(1.1);
+        }
+    }
+    
+    .status-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .status-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .info-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .info-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #1e293b;
+    }
+    
+    .review-summary {
+        background: #f8fafc;
+        border-left: 4px solid #667eea;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 1.5rem;
+    }
+    
+    .review-summary h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.75rem;
+    }
+    
+    .review-summary p {
+        color: #475569;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    .timeline-info {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-info h4 {
+        color: #92400e;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .timeline-info ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .timeline-info li {
+        color: #78350f;
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .timeline-info li i {
+        color: #f59e0b;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .btn-modern {
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #f8fafc;
+        color: #64748b;
+        border: 2px solid #e2e8f0;
+    }
+    
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        color: #374151;
+        transform: translateY(-1px);
+    }
+    
+    @media (max-width: 768px) {
+        .awaiting-container {
+            padding: 1rem;
+        }
+        
+        .status-title {
+            font-size: 1.5rem;
+        }
+        
+        .status-icon {
+            font-size: 4rem;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="awaiting-container">
+    <!-- Status Card -->
+    <div class="status-card">
+        <div class="status-icon">
+            <i class="fas fa-hourglass-half"></i>
+        </div>
+        <h1 class="status-title">Awaiting Management Approval</h1>
+        <p class="status-subtitle">This complaint has been reviewed and is pending approval from management</p>
+    </div>
+    
+    <!-- Timeline Information -->
+    <div class="timeline-info">
+        <h4>
+            <i class="fas fa-info-circle"></i>
+            What Happens Next?
+        </h4>
+        <ul>
+            <li><i class="fas fa-check-circle"></i> Your review has been completed successfully</li>
+            <li><i class="fas fa-clock"></i> Management will review and approve/reject the complaint</li>
+            <li><i class="fas fa-arrow-right"></i> Once approved, you can proceed to close the complaint</li>
+            <li><i class="fas fa-bell"></i> You will be notified when a decision is made</li>
+        </ul>
+    </div>
+    
+    <!-- Complaint Information -->
+    <div class="info-card">
+        <h3 class="info-title">
+            <i class="fas fa-ticket-alt"></i>
+            Complaint Information
+        </h3>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Ticket Number</span>
+                <span class="info-value">#{{ issue.ticket_num|default:"N/A" }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Equipment</span>
+                <span class="info-value">{{ issue.equipment.name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Machine Code</span>
+                <span class="info-value">{{ issue.machine_id.name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Date Submitted</span>
+                <span class="info-value">{{ issue.date_time|date:"M d, Y" }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Status</span>
+                <span class="info-value">
+                    <span class="badge bg-info">{{ issue.status }}</span>
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Priority</span>
+                <span class="info-value">
+                    <span class="badge bg-{{ issue.machineissue.priority|lower }}">
+                        {{ issue.machineissue.get_priority_display|default:"N/A" }}
+                    </span>
+                </span>
+            </div>
+        </div>
+        
+        {% if issue.machineissue %}
+        <div class="review-summary">
+            <h4>Your Review Summary</h4>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Type</span>
+                    <span class="info-value">{{ issue.machineissue.get_type_display|default:"N/A" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Problem Nature</span>
+                    <span class="info-value">{{ issue.machineissue.get_problemNature_display|default:"N/A" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Assigned To</span>
+                    <span class="info-value">{{ issue.machineissue.assignPerson.name|default:issue.machineissue.assignDepartment.name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Review Date</span>
+                    <span class="info-value">{{ issue.machineissue.reviewDate|date:"M d, Y H:i" }}</span>
+                </div>
+            </div>
+            {% if issue.machineissue.description_reviewer %}
+            <div style="margin-top: 1rem;">
+                <span class="info-label">Review Notes</span>
+                <p style="margin-top: 0.5rem; color: #475569;">{{ issue.machineissue.description_reviewer }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="{% url 'maintenance:complain_list' %}" class="btn-modern btn-secondary">
+            <i class="fas fa-list"></i>
+            Back to Ticket List
+        </a>
+        <a href="{% url 'User:complain_track' pk=issue.pk %}" class="btn-modern btn-primary">
+            <i class="fas fa-eye"></i>
+            View Full Timeline
+        </a>
+    </div>
+</div>
+{% endblock main-body %}
+
+

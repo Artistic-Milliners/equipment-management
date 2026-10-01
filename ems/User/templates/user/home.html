@@ -1,154 +1,870 @@
+{% extends "index.html" %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block page-title %}Dashboard{% endblock page-title %}
 
-<head>
-    {% block head %}
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
-        integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <script src="https://kit.fontawesome.com/a06ab02596.js" crossorigin="anonymous"></script>
-    <!-- <link rel="stylesheet" href="{% static 'user/css/custom.css' %}"> -->
-    <link rel="stylesheet" href="{% static 'maintenance/css/complain-list.css' %}">
-    <link rel="stylesheet" href="{% static 'User/home.css' %}">
-    {% endblock head %}
+{% block main-body %}
+<style>
+    /* Enhanced Dashboard Styles */
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+    
+    .stats-card.blue {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .stats-card.green {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .stats-card.orange {
+        background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+    }
+    
+    .stats-card.red {
+        background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
+    }
+    
+    .stats-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .action-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-color);
+        box-shadow: 0 15px 35px rgba(37, 99, 235, 0.1);
+    }
+    
+    .action-card .card-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .welcome-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .welcome-banner h2 {
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .welcome-banner p {
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--dark-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 30px;
+        background: linear-gradient(to bottom, var(--primary-color), var(--primary-dark));
+        border-radius: 4px;
+    }
+    
+    .activity-item {
+        padding: 1rem;
+        border-left: 3px solid var(--primary-color);
+        margin-bottom: 1rem;
+        background: var(--light-color);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .activity-item:hover {
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transform: translateX(5px);
+    }
+    
+    .activity-time {
+        font-size: 0.8rem;
+        color: var(--secondary-color);
+    }
+    
+    .equipment-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+    }
+    
+    .equipment-card:hover {
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        transform: translateY(-3px);
+    }
+    
+    .badge-status {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .badge-operational {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-critical {
+        background: #fee2e2;
+        color: #991b1b;
+    }
 
-    <title>{% block title %}
-        Home
-        {% endblock title %}</title>
-</head>
+    /* ========== MODERN FUTURISTIC MOBILE ENHANCEMENTS ========== */
+    @media (max-width: 768px) {
+        /* Modern Stats Cards with Enhanced Effects */
+        .stats-card {
+            border-radius: 24px !important;
+            padding: 2rem !important;
+            margin-bottom: 1.25rem !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+            position: relative;
+            overflow: hidden;
+        }
 
-<body>
-    <div class="">
-        <!-- NAVBAR STARTS -->
-        <nav class="navbar-top">
-            <div class="navbar-brand">
-                <a href="{% url 'User:home' %}">
-                    <img class="maximo-icon" src="{% static 'index/images/icononly_transparent.png' %}" alt="Logo">
-                    <img class="maximo-text" src="{% static 'index/images/textonly_nobuffer.png' %}" alt="Logo">
-                </a>
-            </div>
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            animation: floatStats 8s ease-in-out infinite;
+        }
 
-            <div class="nav-icon-left">
-                <a href="{% url 'User:logout' %}">
-                    {% if user.is_authenticated %}
-                    <i class="fa fa-sign-out" aria-hidden="true"></i>
-                    {% endif %}
-                </a>
+        @keyframes floatStats {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-20px, 20px) rotate(180deg); }
+        }
 
-                <div type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWithBothOptions"
-                    aria-controls="offcanvasWithBothOptions">
-                    <i class="fa fa-bars"></i>
-                </div>
+        .stats-card:active {
+            transform: scale(0.97);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+        }
 
-            </div>
+        .stats-icon {
+            font-size: 3rem !important;
+            opacity: 0.9 !important;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
 
+        .stats-number {
+            font-size: 3rem !important;
+            font-weight: 800 !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-        </nav>
+        .stats-label {
+            font-size: 1rem !important;
+            opacity: 0.95 !important;
+            font-weight: 600;
+        }
 
-        <!-- NAVBAR ENDS -->
+        /* Modern Welcome Banner */
+        .welcome-banner {
+            border-radius: 24px !important;
+            padding: 2.5rem 2rem !important;
+            box-shadow: 0 12px 48px rgba(102, 126, 234, 0.4) !important;
+            position: relative;
+            overflow: hidden;
+        }
 
-        <!-- SIDEBAR STARTS -->
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+            animation: welcomeShine 6s ease-in-out infinite;
+        }
 
-        <div class="offcanvas offcanvas-start" data-bs-scroll="true" tabindex="-1" id="offcanvasWithBothOptions"
-            aria-labelledby="offcanvasWithBothOptionsLabel">
-            <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="offcanvasWithBothOptionsLabel">MENU</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body">
-                {% block sidebar %}
-                <div class="sidebar">
-                    <ul class="list-unstyled">
+        @keyframes welcomeShine {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(15%, 15%); }
+        }
 
+        .welcome-banner h2 {
+            font-size: 1.75rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.75rem !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-                        <li><a href="{% url 'User:add_machine' %}"> Add Machine</a></li>
-                        <li><a href="{% url 'User:create_complain' %}">Complain</a></li>
-                        <li><a href="{% url 'maintenance:complain_list' %}">Ticket List</a></li>
-                        <li><a href="{% url 'User:spares' %}">Spares</a></li>
-                        <li><a href="{% url 'User:list_unit' %}">Unit Detail</a></li>
-                        <li><a href="{% url 'User:list_users' %}">User List</a></li>
+        .welcome-banner p {
+            font-size: 1rem !important;
+            font-weight: 500;
+            opacity: 1 !important;
+        }
 
+        /* Modern Action/Quick Access Cards */
+        .action-card {
+            background: white !important;
+            border-radius: 20px !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            border: none !important;
+            position: relative;
+            overflow: hidden;
+        }
 
-                    </ul>
-                </div>
-                {% endblock sidebar %}
-            </div>
-        </div>
-        <!-- SIDEBAR ENDS -->
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb, #8b5cf6, #ec4899);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
 
-        <!-- MAIN BODY STARTS -->
+        .action-card:active {
+            transform: scale(0.96) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        }
 
+        .action-card:active::before {
+            transform: scaleX(1);
+        }
 
-        {% block main-body %}
-        <div class="container">
+        .action-card .card-icon {
+            font-size: 3.5rem !important;
+            margin-bottom: 1.25rem !important;
+            filter: drop-shadow(0 4px 8px rgba(37, 99, 235, 0.3));
+        }
 
+        .action-card .card-body {
+            padding: 2rem !important;
+        }
 
-            
-            <div class="card">
-                <a href="{% url 'User:create_complain' %}"><i class=" fa fa-file fa-2x"></i></a>
-                <p>Complain</p>
-            </div>
-            <div class="card">
-                <a href="{% url 'maintenance:complain_list' %}"><i class="fa fa-ticket fa-2x"></i></a>
-                <p>Tickets</p>
-            </div>
-            <div class="card">
-                <a href="{% url 'User:spares' %}"><i class="fa fa-cog fa-2x" aria-hidden="true"></i></a>
-                <p>Inventory</p>
-            </div>
+        .action-card .card-title {
+            font-size: 1.1rem !important;
+            font-weight: 700 !important;
+            color: #1f2937 !important;
+            margin-bottom: 0.75rem !important;
+        }
 
-            <!-- <h1 class="Main-head">Available Machines</h1>
-        {% for eq,machines in equipments.items %}
-        <div class="row">
-            {% if machines %}
-            <h2>{{eq}}</h2>
-            <div class="col-sm">
-                {% for m in machines %}
-                <div class="card m-4" style="width: 18rem; float: left;">
-                    {% if m.image %}
-                    <img src="{{ m.image.url }}" class="card-img-top" alt="{{ m.name }} ">
-                    {% else %}
-                    <img src="{% static 'index/images/img2.png' %}" class="card-img-top" alt="...">
-                    {% endif %}
-                    <div class="card-body">
-                      <h5 class="card-title">{{m.name}}</h5>
-                      <p class="card-text">{{m.purchase_cost}}</p>
-                      <a href="{% url 'User:machineDetail' pk=m.pk %}" class="btn btn-primary">Details</a>
-                    </div>
-                </div>     
-                {% endfor %}
-            </div>  
-            {% endif %}
-            
-        </div>
-           
+        .action-card .card-text {
+            font-size: 0.9rem !important;
+            color: #6b7280 !important;
+            line-height: 1.6 !important;
+        }
 
+        /* Modern Buttons */
+        .btn-modern-primary,
+        .btn-primary,
+        .btn {
+            border-radius: 12px !important;
+            padding: 0.875rem 1.5rem !important;
+            font-weight: 600 !important;
+            font-size: 1rem !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+            border: none !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            position: relative;
+            overflow: hidden;
+        }
 
-        {% endfor %} -->
+        .btn-modern-primary::before,
+        .btn-primary::before,
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
 
-            
+        .btn-modern-primary:active,
+        .btn-primary:active,
+        .btn:active {
+            transform: scale(0.95) !important;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2) !important;
+        }
 
-        </div>
-        {% endblock main-body %}
+        .btn-modern-primary:active::before,
+        .btn-primary:active::before,
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
 
-        <!-- MAIN BODY ENDS -->
+        /* Modern Section Titles */
+        .section-title {
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 1.5rem !important;
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
+        .section-title::before {
+            width: 5px !important;
+            height: 36px !important;
+            border-radius: 10px !important;
+        }
+
+        /* Modern Equipment Cards */
+        .equipment-card {
+            border-radius: 20px !important;
+            padding: 1.75rem !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+            border: none !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .equipment-card:active {
+            transform: scale(0.97) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Modern Status Badges */
+        .badge-status {
+            padding: 0.5rem 1rem !important;
+            border-radius: 100px !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        .badge-operational {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            color: white !important;
+        }
+
+        .badge-pending {
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%) !important;
+            color: white !important;
+        }
+
+        .badge-critical {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+            color: white !important;
+        }
+
+        /* Modern Activity Items */
+        .activity-item {
+            border-radius: 16px !important;
+            padding: 1.25rem !important;
+            border-left: 4px solid var(--primary-color) !important;
+            background: white !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .activity-item:active {
+            transform: translateX(8px) scale(0.98) !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1) !important;
+        }
+
+        /* Smooth Page Transitions */
+        .container-fluid {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Add spacing for mobile */
+        .row {
+            margin-bottom: 0.5rem !important;
+        }
+
+        .card {
+            margin-bottom: 1rem !important;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+        <h2>👋 Welcome back, {{ user.username }}!</h2>
+        <p>Here's what's happening with your equipment today. Stay on top of maintenance and keep everything running smoothly.</p>
     </div>
 
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card blue">
+                <div class="stats-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div class="stats-number">{{ total_issues|default:0 }}</div>
+                <div class="stats-label">Total Issues</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card orange">
+                <div class="stats-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stats-number">{{ pending_issues|default:0 }}</div>
+                <div class="stats-label">Pending Tickets</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card green">
+                <div class="stats-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-number">{{ resolved_today|default:0 }}</div>
+                <div class="stats-label">Resolved Today</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card red">
+                <div class="stats-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stats-number">{{ critical_issues|default:0 }}</div>
+                <div class="stats-label">Critical Issues</div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="section-title">Quick Actions</h3>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="action-card modern-card h-100">
+                <div class="card-body text-center">
+                    <div class="card-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <h5 class="card-title">New Complaint</h5>
+                    <p class="card-text text-muted">Report a new equipment issue or maintenance request.</p>
+                    <a href="{% url 'User:create_complain' %}" class="btn-modern btn-primary-modern">
+                        <i class="fas fa-plus"></i>
+                        Create Complaint
+                    </a>
+                </div>
+            </div>
+        </div>
 
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="action-card modern-card h-100">
+                <div class="card-body text-center">
+                    <div class="card-icon">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <h5 class="card-title">View Tickets</h5>
+                    <p class="card-text text-muted">Check the status of all maintenance tickets and complaints.</p>
+                    <a href="{% url 'maintenance:complain_list' %}" class="btn-modern btn-warning-modern">
+                        <i class="fas fa-list"></i>
+                        View Tickets
+                    </a>
+                </div>
+            </div>
+        </div>
 
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="action-card modern-card h-100">
+                <div class="card-body text-center">
+                    <div class="card-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <h5 class="card-title">Inventory</h5>
+                    <p class="card-text text-muted">Manage spare parts and equipment inventory.</p>
+                    <a href="{% url 'User:spares' %}" class="btn-modern btn-success-modern">
+                        <i class="fas fa-warehouse"></i>
+                        Manage Inventory
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"
-        integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V"
-        crossorigin="anonymous"></script>
+    <!-- Equipment Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="section-title">Equipment Overview</h3>
+        </div>
+        {% for equipment, machines in equipments.items %}
+        {% if machines %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="equipment-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2 text-primary"></i>
+                        {{ equipment|safe }}
+                    </h5>
+                    <span class="badge-status badge-operational">{{ machines|length }} Units</span>
+                </div>
+                <div class="row">
+                    {% for m in machines|slice:":4" %}
+                    <div class="col-6 mb-2">
+                        <div class="d-flex align-items-center p-2 bg-light rounded">
+                            <i class="fas fa-circle text-primary me-2" style="font-size: 0.4rem;"></i>
+                            <small class="text-truncate">{{ m }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if machines|length > 4 %}
+                    <div class="col-12 mt-2">
+                        <small class="text-muted"><i class="fas fa-plus-circle me-1"></i>+{{ machines|length|add:"-4" }} more machine{{ machines|length|add:"-4"|pluralize }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="mt-3 d-grid">
+                    <button class="btn-modern btn-primary-modern" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                        <i class="fas fa-eye"></i>
+                        View All Machines
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
 
+    <!-- Engineering Tools (Inventory Management) -->
+    {% if perms.core.view_spares %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="section-title">Engineering Tools</h3>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-card h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-warehouse fa-2x text-warning"></i>
+                    </div>
+                    <h6 class="card-title">Inventory Management</h6>
+                    <p class="card-text small text-muted">Manage spare parts and equipment</p>
+                    <a href="{% url 'User:spares' %}" class="btn-modern btn-warning-modern" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                        <i class="fas fa-boxes"></i>
+                        Manage Inventory
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
-</body>
+    <!-- Management Tools (Machines, Units, Users) -->
+    {% if perms.core.add_machines or perms.core.view_unit or perms.core.view_employee %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="section-title">Management Tools</h3>
+        </div>
+        
+        {% if perms.core.add_machines %}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-card h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-plus fa-2x text-primary"></i>
+                    </div>
+                    <h6 class="card-title">Machine Management</h6>
+                    <p class="card-text small text-muted">Add and manage machines</p>
+                    <a href="{% url 'User:add_machine' %}" class="btn-modern btn-primary-modern" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                        <i class="fas fa-plus"></i>
+                        Add Machine
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if perms.core.view_unit %}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-card h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-building fa-2x text-info"></i>
+                    </div>
+                    <h6 class="card-title">Unit Management</h6>
+                    <p class="card-text small text-muted">Manage organizational units</p>
+                    <a href="{% url 'User:list_unit' %}" class="btn-modern btn-info-modern" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                        <i class="fas fa-list"></i>
+                        Manage Units
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if perms.core.view_employee %}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-card h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-users fa-2x text-success"></i>
+                    </div>
+                    <h6 class="card-title">User Management</h6>
+                    <p class="card-text small text-muted">Manage system users</p>
+                    <a href="{% url 'User:list_users' %}" class="btn-modern btn-success-modern" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                        <i class="fas fa-users"></i>
+                        Manage Users
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
-</html>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-card h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-chart-line fa-2x text-danger"></i>
+                    </div>
+                    <h6 class="card-title">Downtime Report</h6>
+                    <p class="card-text small text-muted">Machine downtime analysis</p>
+                    <a href="{% url 'User:downtime_report' %}" class="btn-modern btn-danger-modern" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                        <i class="fas fa-chart-bar"></i>
+                        View Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Activity & System Health -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="modern-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+                    <a href="{% url 'maintenance:complain_list' %}" class="btn-modern btn-primary-modern" style="font-size: 0.75rem; padding: 0.4rem 0.8rem;">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_issues %}
+                        {% for issue in recent_issues %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        {% if issue.status == 'PENDING' %}
+                                            <span class="badge-status badge-pending me-2">{{ issue.get_status_display }}</span>
+                                        {% elif issue.status == 'IN_PROGRESS' %}
+                                            <span class="badge-status badge-pending me-2" style="background: #dbeafe; color: #1e40af;">{{ issue.get_status_display }}</span>
+                                        {% elif issue.status == 'RESOLVED' or issue.status == 'CLOSED' %}
+                                            <span class="badge-status badge-operational me-2">{{ issue.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge-status badge-critical me-2">{{ issue.get_status_display }}</span>
+                                        {% endif %}
+                                        <strong class="text-dark">Ticket #{{ issue.ticket_num }}</strong>
+                                    </div>
+                                    <p class="mb-1 text-muted">{{ issue.equipment }} - {{ issue.machine_id }}</p>
+                                    <p class="mb-0 small">{{ issue.description_user|truncatewords:15 }}</p>
+                                </div>
+                                <div class="text-end ms-3">
+                                    <div class="activity-time">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ issue.date_time|timesince }} ago
+                                    </div>
+                                    <div class="mt-2">
+                                        <a href="{% url 'User:complain_track' pk=issue.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-check-circle fa-3x mb-3" style="opacity: 0.3;"></i>
+                            <p class="mb-0">No recent activity</p>
+                            <small>All systems running smoothly!</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="modern-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-heartbeat me-2"></i>System Health</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Equipment Status</span>
+                            <strong class="text-success">{{ equipment_operational|default:95 }}%</strong>
+                        </div>
+                        <div class="progress" style="height: 8px; border-radius: 10px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ equipment_operational|default:95 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Response Rate</span>
+                            <strong class="text-primary">{{ response_rate|default:88 }}%</strong>
+                        </div>
+                        <div class="progress" style="height: 8px; border-radius: 10px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ response_rate|default:88 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Resolution Rate</span>
+                            <strong class="text-info">{{ resolution_rate|default:92 }}%</strong>
+                        </div>
+                        <div class="progress" style="height: 8px; border-radius: 10px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ resolution_rate|default:92 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted"><i class="fas fa-cogs me-2"></i>Total Equipment</span>
+                        <strong>{{ total_machines|default:0 }}</strong>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted"><i class="fas fa-boxes me-2"></i>Spare Parts</span>
+                        <strong>{{ total_spares|default:0 }}</strong>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted"><i class="fas fa-users me-2"></i>Active Users</span>
+                        <strong>{{ active_users|default:0 }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Animated counter for statistics
+    function animateCounter(element, target) {
+        let current = 0;
+        const increment = target / 50;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                element.textContent = target;
+                clearInterval(timer);
+            } else {
+                element.textContent = Math.floor(current);
+            }
+        }, 20);
+    }
+
+    // Run counter animation on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const statsNumbers = document.querySelectorAll('.stats-number');
+        statsNumbers.forEach(stat => {
+            const target = parseInt(stat.textContent);
+            if (!isNaN(target)) {
+                stat.textContent = '0';
+                setTimeout(() => animateCounter(stat, target), 300);
+            }
+        });
+
+        // Add fade-in animation to cards
+        const cards = document.querySelectorAll('.stats-card, .action-card, .equipment-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 50);
+        });
+    });
+</script>
+{% endblock main-body %}

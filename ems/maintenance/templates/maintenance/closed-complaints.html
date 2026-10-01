@@ -1,0 +1,813 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block page-title %}Closed Complaints - Documentation Archive{% endblock page-title %}
+
+{% block main-body %}
+<style>
+    /* Archive Page Styles */
+    .archive-header {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .archive-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .archive-subtitle {
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+    
+    /* Filters and Search */
+    .filter-bar {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+    }
+    
+    .filter-row {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: end;
+    }
+    
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .filter-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--secondary-color);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filter-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease;
+    }
+    
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    /* Complaint Cards */
+    .complaint-archive-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow);
+    }
+    
+    .complaint-archive-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+    
+    .complaint-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .complaint-title-section {
+        flex: 1;
+    }
+    
+    .ticket-badge {
+        display: inline-block;
+        background: var(--dark-color);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .complaint-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--secondary-color);
+    }
+    
+    .meta-item i {
+        color: var(--primary-color);
+    }
+    
+    .expand-button {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .expand-button:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+    
+    .expand-button i {
+        transition: transform 0.3s ease;
+    }
+    
+    .expand-button.expanded i {
+        transform: rotate(180deg);
+    }
+    
+    /* Complaint Body - Collapsible */
+    .complaint-body {
+        padding: 1.5rem;
+        display: none;
+    }
+    
+    .complaint-body.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            max-height: 0;
+        }
+        to {
+            opacity: 1;
+            max-height: 2000px;
+        }
+    }
+    
+    /* Documentation Sections */
+    .doc-section {
+        background: var(--light-color);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .doc-section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--dark-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .doc-section-title i {
+        color: var(--primary-color);
+    }
+    
+    .doc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .doc-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .doc-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--secondary-color);
+        font-weight: 600;
+    }
+    
+    .doc-value {
+        font-size: 1rem;
+        color: var(--dark-color);
+        font-weight: 500;
+    }
+    
+    .doc-description {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        line-height: 1.6;
+        color: var(--dark-color);
+        margin-top: 0.5rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    .priority-badge {
+        display: inline-block;
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .priority-high {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .priority-moderate {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .priority-low {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .parts-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .part-badge {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .image-thumbnail {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .image-thumbnail:hover {
+        transform: scale(1.05);
+        border-color: var(--primary-color);
+    }
+    
+    /* Stats Summary */
+    .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--secondary-color);
+        margin-top: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--secondary-color);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    
+    /* Print Styles */
+    @media print {
+        .filter-bar,
+        .expand-button,
+        .sidebar,
+        .header {
+            display: none !important;
+        }
+        
+        .complaint-body {
+            display: block !important;
+        }
+        
+        .main-content {
+            margin-left: 0 !important;
+            margin-top: 0 !important;
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .complaint-meta-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .doc-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-row {
+            flex-direction: column;
+        }
+        
+        .filter-group {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="archive-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="archive-title">
+                    <i class="fas fa-archive me-2"></i>
+                    Closed Complaints Archive
+                </div>
+                <div class="archive-subtitle">
+                    Complete documentation and review history for all closed tickets
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'maintenance:temp_issue_list' %}" class="btn btn-outline-light position-relative">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    Temporary Issues
+                    {% if pending_temp_issues_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        {{ pending_temp_issues_count }}
+                        <span class="visually-hidden">pending reviews</span>
+                    </span>
+                    {% endif %}
+                </a>
+                <button onclick="window.print()" class="btn-modern btn-secondary">
+                    <i class="fas fa-print"></i>
+                    Print Archive
+                </button>
+                <a href="{% url 'maintenance:complain_list' %}" class="btn-modern btn-primary-modern">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Tickets
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Summary -->
+    <div class="stats-summary">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_closed }}</div>
+            <div class="stat-label">Total Closed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ closed_this_month }}</div>
+            <div class="stat-label">This Month</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ avg_resolution_time|floatformat:1 }}</div>
+            <div class="stat-label">Avg Days to Close</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_contractors_used }}</div>
+            <div class="stat-label">Contractors Used</div>
+        </div>
+    </div>
+    
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label class="filter-label">Date From</label>
+                <input type="date" class="filter-input" id="filter-date-from">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Date To</label>
+                <input type="date" class="filter-input" id="filter-date-to">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Equipment</label>
+                <select class="filter-input" id="filter-equipment">
+                    <option value="">All Equipment</option>
+                    {% for equipment in all_equipment %}
+                    <option value="{{ equipment.name }}">{{ equipment.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Search</label>
+                <input type="text" class="filter-input" id="filter-search" placeholder="Ticket #, description...">
+            </div>
+            <div class="filter-group" style="flex: 0 0 auto;">
+                <button class="btn-modern btn-primary-modern" onclick="applyFilters()" style="padding: 0.75rem 1.5rem;">
+                    <i class="fas fa-filter"></i>
+                    Filter
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Closed Complaints List -->
+    <div id="complaints-container">
+        {% for issue in closed_issues %}
+        <div class="complaint-archive-card" data-ticket="{{ issue.ticket_num }}" data-equipment="{{ issue.equipment.name }}" data-date="{{ issue.date_time|date:'Y-m-d' }}">
+            <div class="complaint-header">
+                <div class="complaint-title-section">
+                    <div class="ticket-badge">
+                        <i class="fas fa-ticket-alt me-2"></i>
+                        Ticket #{{ issue.ticket_num }}
+                    </div>
+                    <h5 class="mb-2">{{ issue.equipment.name }} - {{ issue.machine_id.name }}</h5>
+                    <div class="complaint-meta-grid">
+                        <div class="meta-item">
+                            <i class="fas fa-user"></i>
+                            <span><strong>Reported by:</strong> {{ issue.user.name }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-building"></i>
+                            <span><strong>Department:</strong> {{ issue.error_department.name }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-check"></i>
+                            <span><strong>Created:</strong> {{ issue.date_time|date:"M d, Y" }}</span>
+                        </div>
+                        {% if issue.machineissue.issueclosing %}
+                        <div class="meta-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span><strong>Closed:</strong> {{ issue.machineissue.issueclosing.date_ended|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span><strong>Duration:</strong> {{ issue.machineissue.issueclosing.duration|default:"N/A" }} hours</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <button class="expand-button" onclick="toggleComplaint(this, {{ issue.pk }})">
+                        <span>View Details</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="complaint-body" id="complaint-body-{{ issue.pk }}">
+                <!-- Original Complaint -->
+                <div class="doc-section">
+                    <div class="doc-section-title">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Original Complaint
+                    </div>
+                    <div class="doc-description">
+                        {{ issue.description_user }}
+                    </div>
+                    {% if issue.image.all %}
+                    <div class="images-grid">
+                        {% for img in issue.image.all %}
+                        <img src="{{ img.image.url }}" alt="Complaint Image" class="image-thumbnail" onclick="window.open(this.src)">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Engineer Review -->
+                {% if issue.machineissue %}
+                <div class="doc-section" style="border-left-color: #10b981;">
+                    <div class="doc-section-title">
+                        <i class="fas fa-user-tie"></i>
+                        Engineer Review
+                    </div>
+                    <div class="doc-grid">
+                        <div class="doc-item">
+                            <span class="doc-label">Reviewed By</span>
+                            <span class="doc-value">{{ issue.machineissue.reviewer.name }}</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Review Date</span>
+                            <span class="doc-value">{{ issue.machineissue.reviewDate|date:"M d, Y h:i A" }}</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Priority</span>
+                            <span class="doc-value">
+                                <span class="priority-badge priority-{{ issue.machineissue.priority|lower }}">
+                                    {{ issue.machineissue.priority }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Type</span>
+                            <span class="doc-value">{{ issue.machineissue.get_type_display }}</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Problem Nature</span>
+                            <span class="doc-value">{{ issue.machineissue.get_problemNature_display }}</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Assigned To</span>
+                            <span class="doc-value">{{ issue.machineissue.assignPerson.name }}</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Assigned Department</span>
+                            <span class="doc-value">{{ issue.machineissue.assignDepartment.name }}</span>
+                        </div>
+                    </div>
+                    {% if issue.machineissue.description_reviewer %}
+                    <div class="doc-description">
+                        <strong>Engineer Assessment:</strong><br>
+                        {{ issue.machineissue.description_reviewer }}
+                    </div>
+                    {% endif %}
+                    {% if issue.machineissue.malfunction_part.all %}
+                    <div class="mt-3">
+                        <span class="doc-label">Malfunction Parts:</span>
+                        <div class="parts-list">
+                            {% for part in issue.machineissue.malfunction_part.all %}
+                            <span class="part-badge">{{ part.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if issue.machineissue.reviewrImages.all %}
+                    <div class="images-grid">
+                        {% for img in issue.machineissue.reviewrImages.all %}
+                        <img src="{{ img.image.url }}" alt="Review Image" class="image-thumbnail" onclick="window.open(this.src)">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Management Approval -->
+                {% if issue.issue_remarks %}
+                <div class="doc-section" style="border-left-color: #f59e0b;">
+                    <div class="doc-section-title">
+                        <i class="fas fa-user-shield"></i>
+                        Management Approval
+                    </div>
+                    <div class="doc-grid">
+                        <div class="doc-item">
+                            <span class="doc-label">Approved By</span>
+                            <span class="doc-value">{{ issue.issue_remarks.user_id.username }}</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Approval Date</span>
+                            <span class="doc-value">{{ issue.issue_remarks.date_time|date:"M d, Y h:i A" }}</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Status</span>
+                            <span class="doc-value">
+                                <span class="priority-badge priority-low">APPROVED</span>
+                            </span>
+                        </div>
+                    </div>
+                    {% if issue.issue_remarks.comment %}
+                    <div class="doc-description">
+                        <strong>Comments:</strong><br>
+                        {{ issue.issue_remarks.comment }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Resolution & Closing Documentation -->
+                {% if issue.machineissue.issueclosing %}
+                <div class="doc-section" style="border-left-color: #10b981;">
+                    <div class="doc-section-title">
+                        <i class="fas fa-check-double"></i>
+                        Resolution & Closing Documentation
+                    </div>
+                    <div class="doc-grid">
+                        <div class="doc-item">
+                            <span class="doc-label">Technician</span>
+                            <span class="doc-value">{{ issue.machineissue.issueclosing.technician|default:"N/A" }}</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Supervisor</span>
+                            <span class="doc-value">{{ issue.machineissue.issueclosing.supervisor|default:"N/A" }}</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Duration</span>
+                            <span class="doc-value">{{ issue.machineissue.issueclosing.duration|default:"0" }} hours</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Equipment Status</span>
+                            <span class="doc-value">{{ issue.machineissue.issueclosing.equipment_status|default:"N/A" }}</span>
+                        </div>
+                        <div class="doc-item">
+                            <span class="doc-label">Machine Hours at Closure</span>
+                            <span class="doc-value">{{ issue.machineissue.issueclosing.machineHours|default:"N/A" }} hours</span>
+                        </div>
+                        {% if issue.machineissue.issueclosing.contractor %}
+                        <div class="doc-item">
+                            <span class="doc-label">Contractor</span>
+                            <span class="doc-value">{{ issue.machineissue.issueclosing.contractor.contractor }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="doc-item">
+                            <span class="doc-label">Closed On</span>
+                            <span class="doc-value">{{ issue.machineissue.issueclosing.date_ended|date:"M d, Y h:i A" }}</span>
+                        </div>
+                    </div>
+                    {% if issue.machineissue.issueclosing.solutionDescription %}
+                    <div class="doc-description">
+                        <strong>Solution Description:</strong><br>
+                        {{ issue.machineissue.issueclosing.solutionDescription }}
+                    </div>
+                    {% endif %}
+                    {% if issue.machineissue.issueclosing.remarks %}
+                    <div class="doc-description">
+                        <strong>Additional Remarks:</strong><br>
+                        {{ issue.machineissue.issueclosing.remarks }}
+                    </div>
+                    {% endif %}
+                    {% if issue.machineissue.issueclosing.image.all %}
+                    <div class="images-grid">
+                        {% for img in issue.machineissue.issueclosing.image.all %}
+                        <img src="{{ img.image.url }}" alt="Closing Image" class="image-thumbnail" onclick="window.open(this.src)">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2 justify-content-end mt-3">
+                    <a href="{% url 'User:complain_track' pk=issue.pk %}" class="btn-modern btn-primary-modern" target="_blank">
+                        <i class="fas fa-external-link-alt"></i>
+                        Full Tracking View
+                    </a>
+                    <button onclick="printComplaint({{ issue.pk }})" class="btn-modern btn-secondary">
+                        <i class="fas fa-print"></i>
+                        Print This Ticket
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <h4>No Closed Complaints Found</h4>
+            <p>There are no closed complaints matching your criteria.</p>
+            <a href="{% url 'maintenance:complain_list' %}" class="btn-modern btn-primary-modern mt-3">
+                <i class="fas fa-arrow-left"></i>
+                Back to Active Tickets
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // Toggle complaint details
+    function toggleComplaint(button, issueId) {
+        const body = document.getElementById(`complaint-body-${issueId}`);
+        const isShowing = body.classList.contains('show');
+        
+        if (isShowing) {
+            body.classList.remove('show');
+            button.classList.remove('expanded');
+            button.querySelector('span').textContent = 'View Details';
+        } else {
+            body.classList.add('show');
+            button.classList.add('expanded');
+            button.querySelector('span').textContent = 'Hide Details';
+        }
+    }
+    
+    // Apply filters
+    function applyFilters() {
+        const dateFrom = document.getElementById('filter-date-from').value;
+        const dateTo = document.getElementById('filter-date-to').value;
+        const equipment = document.getElementById('filter-equipment').value.toLowerCase();
+        const searchText = document.getElementById('filter-search').value.toLowerCase();
+        
+        const cards = document.querySelectorAll('.complaint-archive-card');
+        let visibleCount = 0;
+        
+        cards.forEach(card => {
+            const ticketNum = card.dataset.ticket.toLowerCase();
+            const cardEquipment = card.dataset.equipment.toLowerCase();
+            const cardDate = card.dataset.date;
+            const cardText = card.textContent.toLowerCase();
+            
+            let show = true;
+            
+            // Date filter
+            if (dateFrom && cardDate < dateFrom) show = false;
+            if (dateTo && cardDate > dateTo) show = false;
+            
+            // Equipment filter
+            if (equipment && !cardEquipment.includes(equipment)) show = false;
+            
+            // Search filter
+            if (searchText && !cardText.includes(searchText)) show = false;
+            
+            if (show) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        console.log(`Showing ${visibleCount} of ${cards.length} complaints`);
+    }
+    
+    // Print individual complaint
+    function printComplaint(issueId) {
+        // Expand the complaint if not already
+        const body = document.getElementById(`complaint-body-${issueId}`);
+        if (!body.classList.contains('show')) {
+            const button = body.previousElementSibling.querySelector('.expand-button');
+            toggleComplaint(button, issueId);
+        }
+        
+        // Wait for expansion animation, then print
+        setTimeout(() => {
+            window.print();
+        }, 300);
+    }
+    
+    // Auto-expand first complaint on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstButton = document.querySelector('.expand-button');
+        if (firstButton) {
+            // Auto-expand first complaint for quick access
+            // firstButton.click();
+        }
+    });
+</script>
+{% endblock main-body %}
+
+
+

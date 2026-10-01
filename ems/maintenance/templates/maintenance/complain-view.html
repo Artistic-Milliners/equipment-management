@@ -1,83 +1,2197 @@
-{% extends "user/home.html" %}
-
+{% extends "index.html" %}
 {% load static %}
 
-{% block head %}
-
-<meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
-        integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <script src="https://kit.fontawesome.com/a06ab02596.js" crossorigin="anonymous"></script>
-  
-    <link rel="stylesheet" href="{% static 'maintenance/css/complain-list.css' %}">
-    <link rel="stylesheet" href="{% static 'User/home.css' %}">
-{% endblock head %}
-
-
-
-{% block title %}
-  Complain View
-{% endblock title %}
+{% block page-title %}Tickets{% endblock page-title %}
 
 {% block main-body %}
-    <div class="header">
-      <h1>Work Order Status</h1> 
-      <button class="compalain"> <a href="{% url 'User:create_complain' %}"><i class="fa fa-plus"> New</i></a></button>
+<style>
+    /* ============================================
+       TICKET MANAGEMENT - Mobile-First Redesign
+       Colorful, modern, easy to navigate
+       ============================================ */
 
-      {% for issue in issue_list  %}
-      {% if issue.user.id == emp.id or issue.user.department == emp.department or issue.error_department == emp.department %}
-      <div class="issue-section">
-        <h1>{{ issue.equipment.name }}</a></h1>
-          <h6><a href="
-            
-            {% if emp.department.dpt_type == 'PRODUCTION'   %}
-              {% url 'User:complain_track' pk=issue.pk %}
-            {% elif emp.department.dpt_type != 'PRODUCTION' %}
-              {% if issue.status == 'PENDING' %}
-                {% url 'User:review_complain' pk=issue.pk %}  
-              {% elif issue.status == 'REVIEWED'%}
-                {% url 'maintenance:complain_detail' pk=issue.pk %}    
-              {% elif issue.status|lower == 'approved' or issue.status|lower == 'rejected'%}
-                {% url 'User:complain_closing' pk=issue.pk %}
-              {% elif issue.status|lower == 'closed' %}
-                {% url 'User:complain_closing_list' %}    
-              {% endif %}
-            {% endif %}"
-            >{{ issue.description_user }}</a></h6>    
-           
-        <div class="priority">{{issue.status}}</div>
-      </div>
-        {% endif %}
-        {% endfor %}
-    </div>
+    .tm {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1rem 6rem;
+        -webkit-font-smoothing: antialiased;
+    }
 
-    
-    <script>
-      async function filterData(id){
-        const elem = document.getElementById(id);
-        // console.log(elem.value)
-        // const selectIndex = elem.selectIndex;
-        // const selectOption = elem.options[selectIndex];
-        const selectValue = elem.value;
-        console.log(selectValue)
-        const url = `http://127.0.0.1:8000/machine-issue/${selectValue}`;
-        console.log(url)
-        const response = await fetch(url);
-        const data = await response.json();
+    /* ===== TOP BAR: Search + Actions ===== */
+    .tm-topbar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+        margin-bottom: 0.25rem;
+    }
 
-        if(!response.ok){
-          throw new Error(`Error fetching Issue List:${response.status}`);
+    .tm-search-box {
+        flex: 1;
+        position: relative;
+    }
+
+    .tm-search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.9rem;
+        pointer-events: none;
+    }
+
+    .tm-search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.75rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        background: #fff;
+        color: #1e293b;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tm-search-input:focus {
+        outline: none;
+        border-color: #818cf8;
+        box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15);
+    }
+
+    .tm-search-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .tm-action-btn {
+        flex-shrink: 0;
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        text-decoration: none;
+        position: relative;
+    }
+
+    .tm-btn-new {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        font-size: 1.15rem;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    }
+
+    .tm-btn-new:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+        color: #fff;
+    }
+
+    .tm-btn-new:active {
+        transform: scale(0.95);
+    }
+
+    .tm-btn-filter {
+        background: #fff;
+        color: #64748b;
+        font-size: 1.05rem;
+        border: 2px solid #e2e8f0;
+    }
+
+    .tm-btn-filter.is-active {
+        border-color: #818cf8;
+        color: #6366f1;
+        background: #eef2ff;
+    }
+
+    .tm-btn-temp {
+        background: #fff;
+        color: #64748b;
+        font-size: 1.05rem;
+        border: 2px solid #e2e8f0;
+        text-decoration: none;
+    }
+
+    .tm-btn-temp:hover {
+        border-color: #f59e0b;
+        color: #d97706;
+    }
+
+    .tm-temp-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        min-width: 18px;
+        height: 18px;
+        background: #ef4444;
+        color: #fff;
+        font-size: 0.65rem;
+        font-weight: 700;
+        border-radius: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+        animation: tmBadgePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes tmBadgePulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    /* ===== STATS ROW ===== */
+    .tm-stats {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding: 0.25rem 0;
+    }
+
+    .tm-stats::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tm-stat-card {
+        flex-shrink: 0;
+        padding: 0.75rem 1rem;
+        border-radius: 14px;
+        min-width: 100px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tm-stat-num {
+        font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.15rem;
+        letter-spacing: -0.03em;
+    }
+
+    .tm-stat-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        opacity: 0.8;
+    }
+
+    .tm-stat--total {
+        background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+        color: #4338ca;
+    }
+
+    .tm-stat--pending {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        color: #92400e;
+    }
+
+    .tm-stat--active {
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        color: #1e40af;
+    }
+
+    .tm-stat--resolved {
+        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+        color: #065f46;
+    }
+
+    /* ===== STATUS FILTER CHIPS ===== */
+    .tm-chips {
+        display: flex;
+        gap: 0.4rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding: 0.25rem 0 0.75rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tm-chips::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tm-chip {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 0.85rem;
+        border-radius: 100px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    .tm-chip:active {
+        transform: scale(0.95);
+    }
+
+    .tm-chip-count {
+        min-width: 18px;
+        height: 18px;
+        border-radius: 100px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 0 5px;
+    }
+
+    /* Chip: All */
+    .tm-chip--all {
+        background: #f1f5f9;
+        color: #475569;
+    }
+    .tm-chip--all.is-on {
+        background: #1e293b;
+        color: #fff;
+    }
+    .tm-chip--all .tm-chip-count {
+        background: rgba(0,0,0,0.08);
+        color: inherit;
+    }
+    .tm-chip--all.is-on .tm-chip-count {
+        background: rgba(255,255,255,0.2);
+    }
+
+    /* Chip: Pending */
+    .tm-chip--pending {
+        background: #fffbeb;
+        color: #b45309;
+    }
+    .tm-chip--pending.is-on {
+        background: #f59e0b;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+    .tm-chip--pending .tm-chip-count { background: rgba(180,83,9,0.1); }
+    .tm-chip--pending.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Chip: In Progress */
+    .tm-chip--in_progress {
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+    .tm-chip--in_progress.is-on {
+        background: #3b82f6;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+    .tm-chip--in_progress .tm-chip-count { background: rgba(29,78,216,0.1); }
+    .tm-chip--in_progress.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Chip: User Feedback */
+    .tm-chip--user_feedback {
+        background: #f5f3ff;
+        color: #6d28d9;
+    }
+    .tm-chip--user_feedback.is-on {
+        background: #8b5cf6;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+    }
+    .tm-chip--user_feedback .tm-chip-count { background: rgba(109,40,217,0.1); }
+    .tm-chip--user_feedback.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Chip: Reviewed */
+    .tm-chip--reviewed {
+        background: #ecfeff;
+        color: #0e7490;
+    }
+    .tm-chip--reviewed.is-on {
+        background: #06b6d4;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+    }
+    .tm-chip--reviewed .tm-chip-count { background: rgba(14,116,144,0.1); }
+    .tm-chip--reviewed.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Chip: Approved */
+    .tm-chip--approved {
+        background: #f0fdf4;
+        color: #15803d;
+    }
+    .tm-chip--approved.is-on {
+        background: #22c55e;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    }
+    .tm-chip--approved .tm-chip-count { background: rgba(21,128,61,0.1); }
+    .tm-chip--approved.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Chip: Rejected */
+    .tm-chip--rejected {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+    .tm-chip--rejected.is-on {
+        background: #ef4444;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+    .tm-chip--rejected .tm-chip-count { background: rgba(185,28,28,0.1); }
+    .tm-chip--rejected.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Chip: Awaiting Doc */
+    .tm-chip--awaiting_documentation {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+    .tm-chip--awaiting_documentation.is-on {
+        background: #f97316;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+    }
+    .tm-chip--awaiting_documentation .tm-chip-count { background: rgba(194,65,12,0.1); }
+    .tm-chip--awaiting_documentation.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Chip: Under Observation */
+    .tm-chip--under_observation {
+        background: #fefce8;
+        color: #a16207;
+    }
+    .tm-chip--under_observation.is-on {
+        background: #eab308;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(234, 179, 8, 0.3);
+    }
+    .tm-chip--under_observation .tm-chip-count { background: rgba(161,98,7,0.1); }
+    .tm-chip--under_observation.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Chip: Resolved */
+    .tm-chip--resolved {
+        background: #ecfdf5;
+        color: #047857;
+    }
+    .tm-chip--resolved.is-on {
+        background: #10b981;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+    .tm-chip--resolved .tm-chip-count { background: rgba(4,120,87,0.1); }
+    .tm-chip--resolved.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Chip: Closed */
+    .tm-chip--closed {
+        background: #f1f5f9;
+        color: #475569;
+    }
+    .tm-chip--closed.is-on {
+        background: #64748b;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(100, 116, 139, 0.3);
+    }
+    .tm-chip--closed .tm-chip-count { background: rgba(71,85,105,0.1); }
+    .tm-chip--closed.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* ===== TICKET COUNT BAR ===== */
+    .tm-results-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 0.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .tm-results-count {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .tm-results-count strong {
+        color: #1e293b;
+    }
+
+    .tm-sort-btn {
+        background: none;
+        border: none;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #6366f1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 8px;
+        transition: background 0.2s;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tm-sort-btn:hover {
+        background: #eef2ff;
+    }
+
+    /* ===== MAIN LAYOUT ===== */
+    .tm-body {
+        display: flex;
+        gap: 1.25rem;
+    }
+
+    .tm-list-col {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tm-detail-col {
+        display: none;
+    }
+
+    /* ===== TICKET CARDS ===== */
+    .tm-ticket {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1rem 1.15rem;
+        margin-bottom: 0.65rem;
+        border: 2px solid transparent;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+        position: relative;
+        display: flex;
+        gap: 0.85rem;
+        overflow: hidden;
+    }
+
+    .tm-ticket::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        border-radius: 4px 0 0 4px;
+    }
+
+    .tm-ticket:active {
+        transform: scale(0.98);
+    }
+
+    .tm-ticket.is-selected {
+        border-color: #818cf8;
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
+    }
+
+    /* Color accents per status */
+    .tm-ticket[data-status="PENDING"]::before { background: #f59e0b; }
+    .tm-ticket[data-status="IN_PROGRESS"]::before { background: #3b82f6; }
+    .tm-ticket[data-status="User Feedback"]::before { background: #8b5cf6; }
+    .tm-ticket[data-status="REVIEWED"]::before { background: #06b6d4; }
+    .tm-ticket[data-status="APPROVED"]::before { background: #22c55e; }
+    .tm-ticket[data-status="REJECTED"]::before { background: #ef4444; }
+    .tm-ticket[data-status="AWAITING_DOCUMENTATION"]::before { background: #f97316; }
+    .tm-ticket[data-status="UNDER_OBSERVATION"]::before { background: #eab308; }
+    .tm-ticket[data-status="RESOLVED"]::before { background: #10b981; }
+    .tm-ticket[data-status="CLOSED"]::before { background: #94a3b8; }
+
+    .tm-ticket-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tm-ticket-row1 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .tm-ticket-id {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+    }
+
+    .tm-ticket-id i {
+        color: #6366f1;
+        margin-right: 0.2rem;
+    }
+
+    .tm-status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.6rem;
+        border-radius: 100px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Status pill colors */
+    .tm-status--pending { background: #fef3c7; color: #92400e; }
+    .tm-status--in_progress { background: #dbeafe; color: #1e40af; }
+    .tm-status--user_feedback { background: #ede9fe; color: #5b21b6; }
+    .tm-status--reviewed { background: #cffafe; color: #0e7490; }
+    .tm-status--approved { background: #dcfce7; color: #166534; }
+    .tm-status--rejected { background: #fee2e2; color: #991b1b; }
+    .tm-status--awaiting_documentation { background: #ffedd5; color: #9a3412; }
+    .tm-status--under_observation { background: #fef9c3; color: #854d0e; }
+    .tm-status--resolved { background: #d1fae5; color: #065f46; }
+    .tm-status--closed { background: #e2e8f0; color: #475569; }
+
+    .tm-ticket-desc {
+        font-size: 0.85rem;
+        color: #475569;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .tm-ticket-footer {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .tm-ticket-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.72rem;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    .tm-ticket-meta i {
+        font-size: 0.65rem;
+    }
+
+    /* New-issue indicator dot */
+    .tm-new-dot {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        animation: tmDotPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes tmDotPulse {
+        0%, 100% { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+        50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.08); }
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .tm-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .tm-empty-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #818cf8;
+    }
+
+    .tm-empty h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.35rem;
+    }
+
+    .tm-empty p {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+
+    /* ===== DETAIL PANEL (Desktop) ===== */
+    .tm-detail-panel {
+        background: #fff;
+        border-radius: 18px;
+        border: 2px solid #e2e8f0;
+        overflow: hidden;
+        position: sticky;
+        top: 80px;
+        max-height: calc(100vh - 100px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tm-detail-head {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .tm-detail-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .tm-detail-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .tm-detail-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 0.85rem;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .tm-detail-action-btn--primary {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+
+    .tm-detail-action-btn--primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        color: #fff;
+    }
+
+    .tm-detail-action-btn--secondary {
+        background: #f1f5f9;
+        color: #475569;
+        text-decoration: none;
+    }
+
+    .tm-detail-action-btn--secondary:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+
+    .tm-detail-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+    }
+
+    .tm-detail-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        min-height: 400px;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .tm-detail-placeholder-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #94a3b8;
+        margin-bottom: 1rem;
+    }
+
+    .tm-detail-placeholder h4 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 0.25rem;
+    }
+
+    .tm-detail-placeholder p {
+        font-size: 0.85rem;
+        color: #94a3b8;
+    }
+
+    /* Detail sections */
+    .tm-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .tm-section-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .tm-section-title i {
+        font-size: 0.75rem;
+        color: #6366f1;
+    }
+
+    .tm-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem;
+    }
+
+    .tm-detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+
+    .tm-detail-label {
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #94a3b8;
+    }
+
+    .tm-detail-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.35;
+    }
+
+    .tm-detail-desc-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-left: 3px solid #6366f1;
+        border-radius: 0 10px 10px 0;
+        padding: 0.85rem 1rem;
+        font-size: 0.88rem;
+        color: #334155;
+        line-height: 1.65;
+    }
+
+    /* Detail image gallery */
+    .tm-detail-gallery {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .tm-detail-thumb {
+        width: 80px;
+        height: 80px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 2px solid #e2e8f0;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .tm-detail-thumb:hover {
+        border-color: #6366f1;
+        transform: scale(1.05);
+    }
+
+    /* Issue type badges in detail */
+    .tm-issue-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.25rem 0.7rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .tm-issue-badge--existing {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .tm-issue-badge--new {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .tm-issue-badge--unreviewed {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    /* Loading spinner */
+    .tm-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+    }
+
+    .tm-spinner-ring {
+        width: 36px;
+        height: 36px;
+        border: 3px solid #e2e8f0;
+        border-top-color: #6366f1;
+        border-radius: 50%;
+        animation: tmSpin 0.7s linear infinite;
+    }
+
+    @keyframes tmSpin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ===== FILTER DRAWER (Mobile) ===== */
+    .tm-filter-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 10000;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .tm-filter-overlay.is-open {
+        display: flex;
+    }
+
+    .tm-filter-drawer {
+        background: #fff;
+        width: 100%;
+        max-width: 480px;
+        border-radius: 20px 20px 0 0;
+        max-height: 80vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        animation: tmDrawerUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes tmDrawerUp {
+        from { opacity: 0; transform: translateY(100%); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tm-filter-drawer-handle {
+        width: 36px;
+        height: 4px;
+        border-radius: 2px;
+        background: #d1d5db;
+        margin: 0.75rem auto 0;
+    }
+
+    .tm-filter-drawer-head {
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .tm-filter-drawer-head h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+    }
+
+    .tm-filter-drawer-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: none;
+        background: #f1f5f9;
+        color: #64748b;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tm-filter-drawer-body {
+        padding: 1.25rem 1.5rem 2rem;
+    }
+
+    .tm-filter-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .tm-filter-group-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        margin-bottom: 0.5rem;
+    }
+
+    .tm-filter-date-row {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .tm-filter-date-row > div {
+        flex: 1;
+    }
+
+    .tm-filter-date-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+
+    .tm-filter-date-input {
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-family: inherit;
+        color: #1e293b;
+        transition: border-color 0.2s;
+    }
+
+    .tm-filter-date-input:focus {
+        outline: none;
+        border-color: #818cf8;
+    }
+
+    .tm-filter-drawer-actions {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0 1.5rem 1.5rem;
+    }
+
+    .tm-filter-btn {
+        flex: 1;
+        padding: 0.75rem;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        min-height: 48px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tm-filter-btn--apply {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+    }
+
+    .tm-filter-btn--clear {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    /* ===== MOBILE ACTION SHEET ===== */
+    .tm-sheet-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 10001;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .tm-sheet-overlay.is-open {
+        display: flex;
+    }
+
+    .tm-sheet {
+        background: #fff;
+        width: 100%;
+        max-width: 480px;
+        border-radius: 20px 20px 0 0;
+        animation: tmDrawerUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .tm-sheet-handle {
+        width: 36px;
+        height: 4px;
+        border-radius: 2px;
+        background: #d1d5db;
+        margin: 0.75rem auto 0;
+    }
+
+    .tm-sheet-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .tm-sheet-ticket-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tm-sheet-ticket-num {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .tm-sheet-ticket-num i {
+        color: #6366f1;
+    }
+
+    .tm-sheet-meta {
+        font-size: 0.78rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .tm-sheet-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .tm-sheet-meta i {
+        font-size: 0.68rem;
+    }
+
+    .tm-sheet-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: none;
+        background: #f1f5f9;
+        color: #64748b;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .tm-sheet-body {
+        padding: 0.75rem 1.25rem 1.5rem;
+    }
+
+    .tm-sheet-actions-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        margin-bottom: 0.65rem;
+    }
+
+    .tm-sheet-action {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.85rem 0.75rem;
+        border-radius: 14px;
+        text-decoration: none;
+        color: #1e293b;
+        transition: background 0.15s;
+        -webkit-tap-highlight-color: transparent;
+        margin-bottom: 0.25rem;
+    }
+
+    .tm-sheet-action:hover,
+    .tm-sheet-action:active {
+        background: #f8fafc;
+        text-decoration: none;
+        color: #1e293b;
+    }
+
+    .tm-sheet-action-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+        flex-shrink: 0;
+    }
+
+    .tm-sheet-action-icon--primary {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        box-shadow: 0 3px 10px rgba(99, 102, 241, 0.25);
+    }
+
+    .tm-sheet-action-icon--review {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+        color: #fff;
+        box-shadow: 0 3px 10px rgba(6, 182, 212, 0.25);
+    }
+
+    .tm-sheet-action-icon--approve {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: #fff;
+        box-shadow: 0 3px 10px rgba(34, 197, 94, 0.25);
+    }
+
+    .tm-sheet-action-icon--work {
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        color: #fff;
+        box-shadow: 0 3px 10px rgba(249, 115, 22, 0.25);
+    }
+
+    .tm-sheet-action-icon--document {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        color: #fff;
+        box-shadow: 0 3px 10px rgba(139, 92, 246, 0.25);
+    }
+
+    .tm-sheet-action-icon--timeline {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .tm-sheet-action-text {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tm-sheet-action-title {
+        font-size: 0.9rem;
+        font-weight: 650;
+        line-height: 1.2;
+    }
+
+    .tm-sheet-action-desc {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 0.1rem;
+    }
+
+    .tm-sheet-action-arrow {
+        color: #cbd5e1;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+
+    .tm-sheet-divider {
+        height: 1px;
+        background: #f1f5f9;
+        margin: 0.35rem 0.75rem;
+    }
+
+    /* ===== LIGHTBOX ===== */
+    .tm-lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.92);
+        z-index: 99999;
+        align-items: center;
+        justify-content: center;
+        cursor: zoom-out;
+        padding: 1rem;
+    }
+
+    .tm-lightbox.is-open {
+        display: flex;
+    }
+
+    .tm-lightbox img {
+        max-width: 100%;
+        max-height: 90vh;
+        object-fit: contain;
+        border-radius: 8px;
+        pointer-events: none;
+    }
+
+    .tm-lightbox-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 40px;
+        height: 40px;
+        background: rgba(255,255,255,0.15);
+        border: none;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tm-lightbox-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        background: rgba(255,255,255,0.15);
+        border: none;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tm-lightbox-prev { left: 1rem; }
+    .tm-lightbox-next { right: 1rem; }
+
+    .tm-lightbox-counter {
+        position: absolute;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255,255,255,0.6);
+        font-size: 0.85rem;
+    }
+
+    /* ===== DESKTOP ENHANCEMENTS ===== */
+    @media (min-width: 1024px) {
+        .tm {
+            padding: 0 1.5rem 2rem;
         }
 
-        console.log(data)
+        .tm-body {
+            display: flex;
+        }
 
+        .tm-list-col {
+            flex: 0 0 460px;
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
 
-      }
-    </script>
+        .tm-list-col::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .tm-list-col::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .tm-list-col::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .tm-detail-col {
+            display: block;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tm-ticket:hover {
+            border-color: #c7d2fe;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .tm-ticket:active {
+            transform: scale(1);
+        }
+
+        .tm-stat-card {
+            min-width: 130px;
+        }
+    }
+
+    @media (min-width: 1280px) {
+        .tm-list-col {
+            flex: 0 0 520px;
+        }
+    }
+
+    /* ===== MOBILE SPECIFIC ===== */
+    @media (max-width: 1023px) {
+        .tm {
+            padding: 0 0.75rem 5rem;
+        }
+
+        .tm-detail-col {
+            display: none;
+        }
+
+        .tm-stat-card {
+            min-width: 90px;
+            padding: 0.6rem 0.85rem;
+        }
+
+        .tm-stat-num {
+            font-size: 1.3rem;
+        }
+
+        .tm-ticket {
+            border-radius: 14px;
+            padding: 0.85rem 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .tm-topbar {
+            gap: 0.5rem;
+        }
+
+        .tm-search-input {
+            padding: 0.65rem 1rem 0.65rem 2.5rem;
+            font-size: 16px;
+        }
+
+        .tm-action-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+        }
+
+        .tm-stat-card {
+            min-width: 82px;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .tm-stat-num {
+            font-size: 1.15rem;
+        }
+
+        .tm-stat-label {
+            font-size: 0.6rem;
+        }
+
+        .tm-chip {
+            padding: 0.4rem 0.7rem;
+            font-size: 0.72rem;
+        }
+
+        .tm-ticket {
+            padding: 0.75rem 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tm-ticket-desc {
+            font-size: 0.82rem;
+            -webkit-line-clamp: 1;
+        }
+    }
+</style>
+
+<div class="tm">
+    <!-- Top Bar: Search + Actions -->
+    <div class="tm-topbar">
+        <div class="tm-search-box">
+            <i class="fas fa-search"></i>
+            <input
+                type="text"
+                class="tm-search-input"
+                id="tmSearch"
+                placeholder="Search tickets, machines, users..."
+                autocomplete="off"
+            >
+        </div>
+        <button class="tm-action-btn tm-btn-filter" id="tmFilterBtn" title="Filters">
+            <i class="fas fa-sliders-h"></i>
+        </button>
+        {% if is_engineer or is_approver %}
+        <a href="{% url 'maintenance:temp_issue_list' %}" class="tm-action-btn tm-btn-temp" title="Review Temp Issues">
+            <i class="fas fa-clipboard-list"></i>
+            {% if pending_temp_issues_count > 0 %}
+            <span class="tm-temp-badge">{{ pending_temp_issues_count }}</span>
+            {% endif %}
+        </a>
+        {% endif %}
+        <a href="{% url 'User:create_complain' %}" class="tm-action-btn tm-btn-new" title="New Ticket">
+            <i class="fas fa-plus"></i>
+        </a>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="tm-stats">
+        <div class="tm-stat-card tm-stat--total">
+            <div class="tm-stat-num" id="tmStatTotal">0</div>
+            <div class="tm-stat-label">Total</div>
+        </div>
+        <div class="tm-stat-card tm-stat--pending">
+            <div class="tm-stat-num" id="tmStatPending">0</div>
+            <div class="tm-stat-label">Pending</div>
+        </div>
+        <div class="tm-stat-card tm-stat--active">
+            <div class="tm-stat-num" id="tmStatActive">0</div>
+            <div class="tm-stat-label">In Progress</div>
+        </div>
+        <div class="tm-stat-card tm-stat--resolved">
+            <div class="tm-stat-num" id="tmStatDone">0</div>
+            <div class="tm-stat-label">Resolved</div>
+        </div>
+    </div>
+
+    <!-- Status Filter Chips -->
+    <div class="tm-chips" id="tmChips">
+        <button class="tm-chip tm-chip--all is-on" data-filter="ALL">
+            All <span class="tm-chip-count" id="tmChipAll">0</span>
+        </button>
+        <button class="tm-chip tm-chip--pending" data-filter="PENDING">
+            Pending <span class="tm-chip-count" id="tmChipPending">0</span>
+        </button>
+        <button class="tm-chip tm-chip--in_progress" data-filter="IN_PROGRESS">
+            In Progress <span class="tm-chip-count" id="tmChipInProgress">0</span>
+        </button>
+        <button class="tm-chip tm-chip--user_feedback" data-filter="User Feedback">
+            Feedback <span class="tm-chip-count" id="tmChipFeedback">0</span>
+        </button>
+        <button class="tm-chip tm-chip--reviewed" data-filter="REVIEWED">
+            Reviewed <span class="tm-chip-count" id="tmChipReviewed">0</span>
+        </button>
+        <button class="tm-chip tm-chip--approved" data-filter="APPROVED">
+            Approved <span class="tm-chip-count" id="tmChipApproved">0</span>
+        </button>
+        <button class="tm-chip tm-chip--awaiting_documentation" data-filter="AWAITING_DOCUMENTATION">
+            Docs <span class="tm-chip-count" id="tmChipDocs">0</span>
+        </button>
+        <button class="tm-chip tm-chip--under_observation" data-filter="UNDER_OBSERVATION">
+            Observation <span class="tm-chip-count" id="tmChipObservation">0</span>
+        </button>
+        <button class="tm-chip tm-chip--resolved" data-filter="RESOLVED">
+            Resolved <span class="tm-chip-count" id="tmChipResolved">0</span>
+        </button>
+        <button class="tm-chip tm-chip--rejected" data-filter="REJECTED">
+            Rejected <span class="tm-chip-count" id="tmChipRejected">0</span>
+        </button>
+        <button class="tm-chip tm-chip--closed" data-filter="CLOSED">
+            Closed <span class="tm-chip-count" id="tmChipClosed">0</span>
+        </button>
+    </div>
+
+    <!-- Results Bar -->
+    <div class="tm-results-bar">
+        <span class="tm-results-count">Showing <strong id="tmVisibleCount">0</strong> tickets</span>
+        <button class="tm-sort-btn" id="tmSortBtn">
+            <i class="fas fa-sort-amount-down"></i> Newest
+        </button>
+    </div>
+
+    <!-- Main Body -->
+    <div class="tm-body">
+        <!-- Ticket List -->
+        <div class="tm-list-col" id="tmListCol">
+            <div class="tm-spinner">
+                <div class="tm-spinner-ring"></div>
+            </div>
+        </div>
+
+        <!-- Detail Panel (Desktop only) -->
+        <div class="tm-detail-col">
+            <div class="tm-detail-panel">
+                <div class="tm-detail-head">
+                    <div class="tm-detail-title" id="tmDetailTitle">Ticket Details</div>
+                    <div class="tm-detail-actions" id="tmDetailActions"></div>
+                </div>
+                <div class="tm-detail-body" id="tmDetailBody">
+                    <div class="tm-detail-placeholder">
+                        <div class="tm-detail-placeholder-icon">
+                            <i class="fas fa-hand-pointer"></i>
+                        </div>
+                        <h4>Select a Ticket</h4>
+                        <p>Tap any ticket from the list to view details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Drawer (Mobile) -->
+<div class="tm-filter-overlay" id="tmFilterOverlay">
+    <div class="tm-filter-drawer">
+        <div class="tm-filter-drawer-handle"></div>
+        <div class="tm-filter-drawer-head">
+            <h3><i class="fas fa-sliders-h" style="color:#6366f1; margin-right:0.4rem;"></i> Filters</h3>
+            <button class="tm-filter-drawer-close" id="tmFilterClose"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="tm-filter-drawer-body">
+            <div class="tm-filter-group">
+                <div class="tm-filter-group-label">Date Range</div>
+                <div class="tm-filter-date-row">
+                    <div>
+                        <span class="tm-filter-date-label">From</span>
+                        <input type="date" class="tm-filter-date-input" id="tmDateFrom">
+                    </div>
+                    <div>
+                        <span class="tm-filter-date-label">To</span>
+                        <input type="date" class="tm-filter-date-input" id="tmDateTo">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tm-filter-drawer-actions">
+            <button class="tm-filter-btn tm-filter-btn--clear" id="tmFilterClear">
+                <i class="fas fa-undo"></i> Reset
+            </button>
+            <button class="tm-filter-btn tm-filter-btn--apply" id="tmFilterApply">
+                <i class="fas fa-check"></i> Apply
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Action Sheet -->
+<div class="tm-sheet-overlay" id="tmSheetOverlay">
+    <div class="tm-sheet">
+        <div class="tm-sheet-handle"></div>
+        <div class="tm-sheet-header">
+            <div class="tm-sheet-ticket-info">
+                <div class="tm-sheet-ticket-num">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span id="tmSheetTicketNum">--</span>
+                    <span class="tm-status-pill" id="tmSheetStatus"></span>
+                </div>
+                <div class="tm-sheet-meta">
+                    <span><i class="fas fa-cog"></i> <span id="tmSheetEquipment">--</span></span>
+                    <span><i class="fas fa-microchip"></i> <span id="tmSheetMachine">--</span></span>
+                </div>
+            </div>
+            <button class="tm-sheet-close" id="tmSheetClose"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="tm-sheet-body">
+            <div class="tm-sheet-actions-label">Actions</div>
+            <div id="tmSheetActions"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Lightbox -->
+<div class="tm-lightbox" id="tmLightbox">
+    <button class="tm-lightbox-close" id="tmLightboxClose"><i class="fas fa-times"></i></button>
+    <button class="tm-lightbox-nav tm-lightbox-prev" id="tmLightboxPrev"><i class="fas fa-chevron-left"></i></button>
+    <img id="tmLightboxImg" src="" alt="Full size image">
+    <button class="tm-lightbox-nav tm-lightbox-next" id="tmLightboxNext"><i class="fas fa-chevron-right"></i></button>
+    <div class="tm-lightbox-counter" id="tmLightboxCounter"></div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ===== CONFIG =====
+    var USER_ROLE = {
+        isApprover: {{ is_approver|yesno:"true,false" }},
+        isEngineer: {{ is_engineer|yesno:"true,false" }},
+        employeeId: {{ emp.id|default:"null" }}
+    };
+
+    var STATUS_LABELS = {
+        'PENDING': 'Pending',
+        'IN_PROGRESS': 'In Progress',
+        'User Feedback': 'Feedback',
+        'REVIEWED': 'Reviewed',
+        'APPROVED': 'Approved',
+        'REJECTED': 'Rejected',
+        'AWAITING_DOCUMENTATION': 'Awaiting Docs',
+        'UNDER_OBSERVATION': 'Observation',
+        'RESOLVED': 'Resolved',
+        'CLOSED': 'Closed'
+    };
+
+    // ===== STATE =====
+    var allTickets = [];
+    var filteredTickets = [];
+    var selectedTicketId = null;
+    var activeChipFilter = 'ALL';
+    var sortNewest = true;
+
+    // ===== DOM =====
+    var $ = function(id) { return document.getElementById(id); };
+    var $$ = function(sel) { return document.querySelectorAll(sel); };
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', function() {
+        loadTickets();
+        bindEvents();
+    });
+
+    // ===== LOAD TICKETS =====
+    function loadTickets() {
+        allTickets = [
+            {% for issue in issue_list %}
+            {
+                id: {{ issue.pk }},
+                ticket_num: "{{ issue.ticket_num|default:'N/A' }}",
+                status: "{{ issue.status }}",
+                equipment: "{{ issue.equipment.name }}",
+                machine: "{{ issue.machine_id.name }}",
+                description: "{{ issue.description_user|escapejs }}",
+                user: "{{ issue.user.name }}",
+                department: "{{ issue.error_department.name }}",
+                date: "{{ issue.date_time|date:'Y-m-d' }}",
+                date_display: "{{ issue.date_time|date:'M d, Y' }}",
+                time_display: "{{ issue.date_time|date:'h:i A' }}",
+                issue_info: {% if issue.temporary_issue %}{
+                    type: "NEW",
+                    reviewed: {{ issue.temporary_issue.reviewed|yesno:"true,false" }},
+                    description: "{{ issue.temporary_issue.user_description|escapejs }}"
+                }{% elif issue.selected_issue %}{
+                    type: "EXISTING",
+                    error_code: "{{ issue.selected_issue.error_code|default:'' }}",
+                    description: "{{ issue.selected_issue.c_desc|escapejs }}"
+                }{% else %}null{% endif %}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        updateStats();
+        updateChipCounts();
+        applyFilters();
+    }
+
+    // ===== BIND EVENTS =====
+    function bindEvents() {
+        // Search with debounce
+        var searchTimer;
+        $('tmSearch').addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(applyFilters, 250);
+        });
+
+        // Chip filters
+        $$('.tm-chip').forEach(function(chip) {
+            chip.addEventListener('click', function() {
+                var filter = chip.getAttribute('data-filter');
+                activeChipFilter = filter;
+                $$('.tm-chip').forEach(function(c) { c.classList.remove('is-on'); });
+                chip.classList.add('is-on');
+                applyFilters();
+            });
+        });
+
+        // Sort toggle
+        $('tmSortBtn').addEventListener('click', function() {
+            sortNewest = !sortNewest;
+            this.innerHTML = sortNewest
+                ? '<i class="fas fa-sort-amount-down"></i> Newest'
+                : '<i class="fas fa-sort-amount-up"></i> Oldest';
+            applyFilters();
+        });
+
+        // Filter drawer
+        $('tmFilterBtn').addEventListener('click', function() {
+            $('tmFilterOverlay').classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        });
+
+        $('tmFilterClose').addEventListener('click', closeFilterDrawer);
+        $('tmFilterOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeFilterDrawer();
+        });
+
+        $('tmFilterApply').addEventListener('click', function() {
+            closeFilterDrawer();
+            applyFilters();
+        });
+
+        $('tmFilterClear').addEventListener('click', function() {
+            $('tmDateFrom').value = '';
+            $('tmDateTo').value = '';
+            closeFilterDrawer();
+            applyFilters();
+        });
+
+        // Mobile action sheet
+        $('tmSheetClose').addEventListener('click', closeMobileSheet);
+        $('tmSheetOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeMobileSheet();
+        });
+
+        // Lightbox
+        $('tmLightboxClose').addEventListener('click', closeLightbox);
+        $('tmLightbox').addEventListener('click', function(e) {
+            if (e.target.tagName !== 'IMG') closeLightbox();
+        });
+        $('tmLightboxPrev').addEventListener('click', function(e) { e.stopPropagation(); navigateLightbox(-1); });
+        $('tmLightboxNext').addEventListener('click', function(e) { e.stopPropagation(); navigateLightbox(1); });
+
+        // Keyboard
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeFilterDrawer();
+                closeMobileSheet();
+                closeLightbox();
+            }
+        });
+    }
+
+    function closeFilterDrawer() {
+        $('tmFilterOverlay').classList.remove('is-open');
+        document.body.style.overflow = '';
+    }
+
+    // ===== UPDATE STATS =====
+    function updateStats() {
+        var counts = {};
+        allTickets.forEach(function(t) {
+            counts[t.status] = (counts[t.status] || 0) + 1;
+        });
+
+        $('tmStatTotal').textContent = allTickets.length;
+        $('tmStatPending').textContent = (counts['PENDING'] || 0) + (counts['User Feedback'] || 0);
+        $('tmStatActive').textContent = (counts['IN_PROGRESS'] || 0) + (counts['UNDER_OBSERVATION'] || 0);
+        $('tmStatDone').textContent = (counts['RESOLVED'] || 0) + (counts['APPROVED'] || 0) + (counts['CLOSED'] || 0);
+    }
+
+    // ===== UPDATE CHIP COUNTS =====
+    function updateChipCounts() {
+        var counts = {};
+        allTickets.forEach(function(t) {
+            counts[t.status] = (counts[t.status] || 0) + 1;
+        });
+
+        $('tmChipAll').textContent = allTickets.length;
+        $('tmChipPending').textContent = counts['PENDING'] || 0;
+        $('tmChipInProgress').textContent = counts['IN_PROGRESS'] || 0;
+        $('tmChipFeedback').textContent = counts['User Feedback'] || 0;
+        $('tmChipReviewed').textContent = counts['REVIEWED'] || 0;
+        $('tmChipApproved').textContent = counts['APPROVED'] || 0;
+        $('tmChipDocs').textContent = counts['AWAITING_DOCUMENTATION'] || 0;
+        $('tmChipObservation').textContent = counts['UNDER_OBSERVATION'] || 0;
+        $('tmChipResolved').textContent = counts['RESOLVED'] || 0;
+        $('tmChipRejected').textContent = counts['REJECTED'] || 0;
+        $('tmChipClosed').textContent = counts['CLOSED'] || 0;
+
+        // Hide chips with zero count (except All)
+        $$('.tm-chip').forEach(function(chip) {
+            var filter = chip.getAttribute('data-filter');
+            if (filter === 'ALL') return;
+            var count = counts[filter] || 0;
+            chip.style.display = count > 0 ? '' : 'none';
+        });
+    }
+
+    // ===== APPLY FILTERS =====
+    function applyFilters() {
+        var searchText = $('tmSearch').value.toLowerCase().trim();
+        var dateFrom = $('tmDateFrom').value;
+        var dateTo = $('tmDateTo').value;
+
+        filteredTickets = allTickets.filter(function(t) {
+            // Chip filter
+            if (activeChipFilter !== 'ALL' && t.status !== activeChipFilter) return false;
+
+            // Date filter
+            if (dateFrom && t.date < dateFrom) return false;
+            if (dateTo && t.date > dateTo) return false;
+
+            // Search
+            if (searchText) {
+                var haystack = (t.ticket_num + ' ' + t.description + ' ' + t.equipment + ' ' + t.machine + ' ' + t.user + ' ' + t.department).toLowerCase();
+                if (haystack.indexOf(searchText) === -1) return false;
+            }
+
+            return true;
+        });
+
+        // Sort
+        filteredTickets.sort(function(a, b) {
+            return sortNewest ? (b.date > a.date ? 1 : -1) : (a.date > b.date ? 1 : -1);
+        });
+
+        renderTickets();
+    }
+
+    // ===== RENDER TICKETS =====
+    function renderTickets() {
+        var container = $('tmListCol');
+        $('tmVisibleCount').textContent = filteredTickets.length;
+
+        if (filteredTickets.length === 0) {
+            container.innerHTML =
+                '<div class="tm-empty">' +
+                    '<div class="tm-empty-icon"><i class="fas fa-inbox"></i></div>' +
+                    '<h3>No tickets found</h3>' +
+                    '<p>Try changing your filters or search query</p>' +
+                '</div>';
+            return;
+        }
+
+        var html = '';
+        filteredTickets.forEach(function(t) {
+            var statusClass = 'tm-status--' + t.status.toLowerCase().replace(/\s+/g, '_');
+            var selectedClass = selectedTicketId === t.id ? ' is-selected' : '';
+            var newDot = (t.issue_info && t.issue_info.type === 'NEW' && !t.issue_info.reviewed)
+                ? '<div class="tm-new-dot"></div>' : '';
+
+            html +=
+                '<div class="tm-ticket' + selectedClass + '" data-status="' + t.status + '" data-id="' + t.id + '" onclick="TM.selectTicket(' + t.id + ', this)">' +
+                    newDot +
+                    '<div class="tm-ticket-body">' +
+                        '<div class="tm-ticket-row1">' +
+                            '<span class="tm-ticket-id"><i class="fas fa-ticket-alt"></i>#' + t.ticket_num + '</span>' +
+                            '<span class="tm-status-pill ' + statusClass + '">' + (STATUS_LABELS[t.status] || t.status) + '</span>' +
+                        '</div>' +
+                        '<div class="tm-ticket-desc">' + t.description + '</div>' +
+                        '<div class="tm-ticket-footer">' +
+                            '<span class="tm-ticket-meta"><i class="fas fa-cog"></i> ' + t.equipment + '</span>' +
+                            '<span class="tm-ticket-meta"><i class="fas fa-microchip"></i> ' + t.machine + '</span>' +
+                            '<span class="tm-ticket-meta"><i class="fas fa-calendar-alt"></i> ' + t.date_display + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+        });
+
+        container.innerHTML = html;
+    }
+
+    // ===== SELECT TICKET =====
+    window.TM = window.TM || {};
+    TM.selectTicket = function(ticketId, cardEl) {
+        selectedTicketId = ticketId;
+
+        // Update selection visual
+        $$('.tm-ticket').forEach(function(c) { c.classList.remove('is-selected'); });
+        if (cardEl) cardEl.classList.add('is-selected');
+
+        var isMobile = window.innerWidth < 1024;
+
+        if (isMobile) {
+            // Regular users (not engineer, not approver): go directly to tracking
+            if (!USER_ROLE.isEngineer && !USER_ROLE.isApprover) {
+                window.location.href = '/home/complain/complainTracking/' + ticketId;
+                return;
+            }
+            // Engineers/Approvers: show mobile action sheet
+            openMobileSheet(ticketId);
+            return;
+        }
+
+        // Desktop: load details in panel
+        loadDetailPanel(ticketId);
+    };
+
+    // ===== MOBILE ACTION SHEET =====
+    function openMobileSheet(ticketId) {
+        // Find ticket in local data
+        var ticket = null;
+        for (var i = 0; i < allTickets.length; i++) {
+            if (allTickets[i].id === ticketId) { ticket = allTickets[i]; break; }
+        }
+        if (!ticket) return;
+
+        // Populate header
+        $('tmSheetTicketNum').textContent = '#' + ticket.ticket_num;
+        var statusEl = $('tmSheetStatus');
+        statusEl.textContent = STATUS_LABELS[ticket.status] || ticket.status;
+        statusEl.className = 'tm-status-pill tm-status--' + ticket.status.toLowerCase().replace(/\s+/g, '_');
+        $('tmSheetEquipment').textContent = ticket.equipment;
+        $('tmSheetMachine').textContent = ticket.machine;
+
+        // Build action buttons based on role + status
+        var actionsHtml = '';
+
+        // Role-specific primary action
+        if (USER_ROLE.isApprover && ticket.status === 'REVIEWED') {
+            actionsHtml += buildSheetAction(
+                '/complain-view/complain-detail/' + ticketId,
+                'approve', 'fas fa-gavel',
+                'Approve / Reject', 'Review and make a decision on this ticket'
+            );
+        }
+
+        if (USER_ROLE.isEngineer && (ticket.status === 'PENDING' || ticket.status === 'IN_PROGRESS')) {
+            actionsHtml += buildSheetAction(
+                '/complain-view/quick-review/' + ticketId,
+                'review', 'fas fa-clipboard-check',
+                'Quick Review', 'Assess and review this complaint'
+            );
+        }
+
+        if (USER_ROLE.isEngineer && ticket.status === 'APPROVED') {
+            actionsHtml += buildSheetAction(
+                '/home/complain/review/' + ticketId,
+                'work', 'fas fa-wrench',
+                'Work on Ticket', 'Start working on the approved complaint'
+            );
+        }
+
+        if (USER_ROLE.isEngineer && ticket.status === 'AWAITING_DOCUMENTATION') {
+            actionsHtml += buildSheetAction(
+                '/home/complain/closing/' + ticketId,
+                'document', 'fas fa-file-alt',
+                'Complete Documentation', 'Fill in closing details and documentation'
+            );
+        }
+
+        // Divider before common actions (only if we added role-specific actions)
+        if (actionsHtml) {
+            actionsHtml += '<div class="tm-sheet-divider"></div>';
+        }
+
+        // Common action: View Timeline (always available)
+        actionsHtml += buildSheetAction(
+            '/home/complain/complainTracking/' + ticketId,
+            'timeline', 'fas fa-stream',
+            'View Timeline', 'See full ticket history and updates'
+        );
+
+        $('tmSheetActions').innerHTML = actionsHtml;
+
+        // Show overlay
+        $('tmSheetOverlay').classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function buildSheetAction(href, iconType, iconClass, title, desc) {
+        return '<a href="' + href + '" class="tm-sheet-action">' +
+            '<div class="tm-sheet-action-icon tm-sheet-action-icon--' + iconType + '"><i class="' + iconClass + '"></i></div>' +
+            '<div class="tm-sheet-action-text">' +
+                '<div class="tm-sheet-action-title">' + title + '</div>' +
+                '<div class="tm-sheet-action-desc">' + desc + '</div>' +
+            '</div>' +
+            '<i class="fas fa-chevron-right tm-sheet-action-arrow"></i>' +
+        '</a>';
+    }
+
+    function closeMobileSheet() {
+        $('tmSheetOverlay').classList.remove('is-open');
+        document.body.style.overflow = '';
+    }
+
+    // ===== LOAD DETAIL PANEL =====
+    function loadDetailPanel(ticketId) {
+        var body = $('tmDetailBody');
+        var title = $('tmDetailTitle');
+        var actions = $('tmDetailActions');
+
+        body.innerHTML = '<div class="tm-spinner"><div class="tm-spinner-ring"></div></div>';
+
+        fetch('/api/ticket-detail/' + ticketId + '/')
+            .then(function(res) {
+                if (!res.ok) throw new Error('Failed to load (status ' + res.status + ')');
+                return res.json();
+            })
+            .then(function(data) {
+                title.textContent = 'Ticket #' + data.ticket_num;
+                actions.innerHTML = buildActionButtons(data);
+                body.innerHTML = buildDetailHTML(data);
+            })
+            .catch(function(err) {
+                body.innerHTML =
+                    '<div class="tm-detail-placeholder">' +
+                        '<div class="tm-detail-placeholder-icon"><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i></div>' +
+                        '<h4>Error loading details</h4>' +
+                        '<p>' + err.message + '</p>' +
+                    '</div>';
+            });
+    }
+
+    // ===== BUILD ACTION BUTTONS =====
+    function buildActionButtons(data) {
+        var btns = '';
+
+        btns += '<a href="/home/complain/complainTracking/' + data.id + '" class="tm-detail-action-btn tm-detail-action-btn--secondary"><i class="fas fa-stream"></i> Timeline</a>';
+
+        if (USER_ROLE.isApprover && data.status === 'REVIEWED') {
+            btns += '<a href="/complain-view/complain-detail/' + data.id + '" class="tm-detail-action-btn tm-detail-action-btn--primary"><i class="fas fa-gavel"></i> Approve</a>';
+        } else if (USER_ROLE.isEngineer && (data.status === 'PENDING' || data.status === 'IN_PROGRESS')) {
+            btns += '<a href="/complain-view/quick-review/' + data.id + '" class="tm-detail-action-btn tm-detail-action-btn--primary"><i class="fas fa-clipboard-check"></i> Review</a>';
+        } else if (USER_ROLE.isEngineer && data.status === 'APPROVED') {
+            btns += '<a href="/home/complain/review/' + data.id + '" class="tm-detail-action-btn tm-detail-action-btn--primary"><i class="fas fa-wrench"></i> Work</a>';
+        } else if (USER_ROLE.isEngineer && data.status === 'AWAITING_DOCUMENTATION') {
+            btns += '<a href="/home/complain/closing/' + data.id + '" class="tm-detail-action-btn tm-detail-action-btn--primary"><i class="fas fa-file-alt"></i> Document</a>';
+        }
+
+        return btns;
+    }
+
+    // ===== BUILD DETAIL HTML =====
+    function buildDetailHTML(data) {
+        var html = '';
+
+        // Basic Info
+        html += '<div class="tm-section">' +
+            '<div class="tm-section-title"><i class="fas fa-info-circle"></i> Basic Information</div>' +
+            '<div class="tm-detail-grid">' +
+                '<div class="tm-detail-item"><span class="tm-detail-label">Ticket</span><span class="tm-detail-value">#' + data.ticket_num + '</span></div>' +
+                '<div class="tm-detail-item"><span class="tm-detail-label">Status</span><span class="tm-detail-value"><span class="tm-status-pill tm-status--' + data.status.toLowerCase().replace(/\s+/g, '_') + '">' + (STATUS_LABELS[data.status] || data.status) + '</span></span></div>' +
+                '<div class="tm-detail-item"><span class="tm-detail-label">Equipment</span><span class="tm-detail-value">' + data.equipment + '</span></div>' +
+                '<div class="tm-detail-item"><span class="tm-detail-label">Machine</span><span class="tm-detail-value">' + data.machine + '</span></div>' +
+                '<div class="tm-detail-item"><span class="tm-detail-label">Reported By</span><span class="tm-detail-value">' + data.user + '</span></div>' +
+                '<div class="tm-detail-item"><span class="tm-detail-label">Department</span><span class="tm-detail-value">' + data.department + '</span></div>' +
+                '<div class="tm-detail-item"><span class="tm-detail-label">Date</span><span class="tm-detail-value">' + data.date_display + '</span></div>' +
+                '<div class="tm-detail-item"><span class="tm-detail-label">Time</span><span class="tm-detail-value">' + data.time_display + '</span></div>' +
+            '</div>' +
+        '</div>';
+
+        // Issue Info
+        if (data.issue_info) {
+            html += '<div class="tm-section">' +
+                '<div class="tm-section-title"><i class="fas fa-exclamation-triangle"></i> Issue Details</div>';
+
+            if (data.issue_info.type === 'EXISTING') {
+                html += '<div style="margin-bottom:0.5rem"><span class="tm-issue-badge tm-issue-badge--existing"><i class="fas fa-database"></i> Existing Issue</span></div>';
+                if (data.issue_info.error_code) {
+                    html += '<div class="tm-detail-grid" style="margin-bottom:0.5rem">' +
+                        '<div class="tm-detail-item"><span class="tm-detail-label">Error Code</span><span class="tm-detail-value" style="color:#1e40af; font-weight:700;">' + data.issue_info.error_code + '</span></div>' +
+                        (data.issue_info.programmer_string ? '<div class="tm-detail-item"><span class="tm-detail-label">Programmer String</span><span class="tm-detail-value">' + data.issue_info.programmer_string + '</span></div>' : '') +
+                    '</div>';
+                }
+                html += '<div class="tm-detail-desc-box">' + (data.issue_info.description || 'N/A') + '</div>';
+            } else if (data.issue_info.type === 'NEW') {
+                html += '<div style="margin-bottom:0.5rem">' +
+                    '<span class="tm-issue-badge tm-issue-badge--new"><i class="fas fa-plus-circle"></i> New Issue</span>' +
+                    (!data.issue_info.reviewed ? ' <span class="tm-issue-badge tm-issue-badge--unreviewed"><i class="fas fa-exclamation"></i> Pending Review</span>' : '') +
+                '</div>' +
+                '<div class="tm-detail-desc-box">' + (data.issue_info.description || 'N/A') + '</div>';
+            } else {
+                html += '<p style="color:#64748b;">' + (data.issue_info.display || 'No details') + '</p>';
+            }
+
+            html += '</div>';
+        }
+
+        // Description
+        html += '<div class="tm-section">' +
+            '<div class="tm-section-title"><i class="fas fa-align-left"></i> Problem Description</div>' +
+            '<div class="tm-detail-desc-box">' + data.description + '</div>' +
+        '</div>';
+
+        // Images
+        if (data.images && data.images.length > 0) {
+            html += '<div class="tm-section">' +
+                '<div class="tm-section-title"><i class="fas fa-images"></i> Attachments</div>' +
+                '<div class="tm-detail-gallery">';
+            data.images.forEach(function(img, i) {
+                html += '<img src="' + img + '" alt="Image" class="tm-detail-thumb" onclick="TM.openLightbox(' + i + ')">';
+            });
+            html += '</div></div>';
+        }
+
+        // Review
+        if (data.review) {
+            html += '<div class="tm-section">' +
+                '<div class="tm-section-title"><i class="fas fa-user-tie"></i> Engineer Review</div>' +
+                '<div class="tm-detail-grid">' +
+                    '<div class="tm-detail-item"><span class="tm-detail-label">Reviewer</span><span class="tm-detail-value">' + data.review.reviewer + '</span></div>' +
+                    '<div class="tm-detail-item"><span class="tm-detail-label">Priority</span><span class="tm-detail-value">' + data.review.priority + '</span></div>' +
+                    (data.review.type ? '<div class="tm-detail-item"><span class="tm-detail-label">Type</span><span class="tm-detail-value">' + data.review.type + '</span></div>' : '') +
+                    (data.review.assigned_person ? '<div class="tm-detail-item"><span class="tm-detail-label">Assigned To</span><span class="tm-detail-value">' + data.review.assigned_person + '</span></div>' : '') +
+                '</div>' +
+                (data.review.description ? '<div class="tm-detail-desc-box" style="margin-top:0.75rem;">' + data.review.description + '</div>' : '') +
+            '</div>';
+        }
+
+        // Approval
+        if (data.approval) {
+            html += '<div class="tm-section">' +
+                '<div class="tm-section-title"><i class="fas fa-user-shield"></i> HOD Approval</div>' +
+                '<div class="tm-detail-grid">' +
+                    '<div class="tm-detail-item"><span class="tm-detail-label">Approver</span><span class="tm-detail-value">' + data.approval.approver + '</span></div>' +
+                    '<div class="tm-detail-item"><span class="tm-detail-label">Decision</span><span class="tm-detail-value"><span class="tm-status-pill tm-status--' + data.approval.status.toLowerCase().replace(/\s+/g, '_') + '">' + data.approval.status + '</span></span></div>' +
+                '</div>' +
+                (data.approval.comment ? '<div class="tm-detail-desc-box" style="margin-top:0.75rem;">' + data.approval.comment + '</div>' : '') +
+            '</div>';
+        }
+
+        // Closing
+        if (data.closing) {
+            html += '<div class="tm-section">' +
+                '<div class="tm-section-title"><i class="fas fa-check-double"></i> Resolution Details</div>' +
+                '<div class="tm-detail-grid">' +
+                    (data.closing.technician ? '<div class="tm-detail-item"><span class="tm-detail-label">Technician</span><span class="tm-detail-value">' + data.closing.technician + '</span></div>' : '') +
+                    (data.closing.duration ? '<div class="tm-detail-item"><span class="tm-detail-label">Duration</span><span class="tm-detail-value">' + data.closing.duration + ' hours</span></div>' : '') +
+                    (data.closing.equipment_status ? '<div class="tm-detail-item"><span class="tm-detail-label">Equipment Status</span><span class="tm-detail-value">' + data.closing.equipment_status + '</span></div>' : '') +
+                '</div>' +
+                (data.closing.solution ? '<div class="tm-detail-desc-box" style="margin-top:0.75rem;"><strong>Solution:</strong><br>' + data.closing.solution + '</div>' : '') +
+            '</div>';
+        }
+
+        return html;
+    }
+
+    // ===== LIGHTBOX =====
+    var lbImages = [];
+    var lbIndex = 0;
+
+    TM.openLightbox = function(index) {
+        lbImages = Array.from($$('.tm-detail-gallery .tm-detail-thumb')).map(function(img) { return img.src; });
+        lbIndex = index;
+        $('tmLightboxImg').src = lbImages[lbIndex];
+        $('tmLightboxCounter').textContent = lbImages.length > 1 ? (lbIndex + 1) + ' / ' + lbImages.length : '';
+        $('tmLightboxPrev').style.display = lbImages.length > 1 ? '' : 'none';
+        $('tmLightboxNext').style.display = lbImages.length > 1 ? '' : 'none';
+        $('tmLightbox').classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    };
+
+    function closeLightbox() {
+        $('tmLightbox').classList.remove('is-open');
+        document.body.style.overflow = '';
+    }
+
+    function navigateLightbox(dir) {
+        lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length;
+        $('tmLightboxImg').src = lbImages[lbIndex];
+        $('tmLightboxCounter').textContent = (lbIndex + 1) + ' / ' + lbImages.length;
+    }
+
+})();
+</script>
 {% endblock main-body %}
-
-
-

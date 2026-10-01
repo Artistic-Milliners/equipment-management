@@ -1,5 +1,297 @@
-.navbar-top{
-    display: flex;
-    flex: 0 0 auto;
-    justify-content: space-between;
+body {
+  font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
+  background-color: #183153;
 }
+
+h1 {
+  text-align: center;
+}
+
+.navbar-top {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  background-color: #183153;
+  align-items: center;
+  border-bottom: 2px solid #ffd43a;
+  height: 10vh;
+}
+
+.maximo-icon {
+  margin: 0 0 0 15px;
+  height: 50px;
+}
+
+.maximo-text {
+  width: 70px;
+  height: 18px;
+}
+
+.nav-icon-left {
+  display: flex;
+  flex-direction: row;
+  margin-right: 0.5em;
+}
+
+.nav-icon-left i {
+  color: #ffd43a;
+  font-size: 30px;
+  margin: 0.2em;
+}
+
+.offcanvas {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.offcanvas-body {
+  width: 50%;
+  height: 100%;
+  justify-content: center;
+  padding: 0px;
+  margin: 0;
+}
+
+.offcanvas-header {
+  font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
+  background-color: #183153;
+  color: white;
+  justify-content: space-between;
+  margin: 0;
+}
+
+.btn-close {
+  background-color: white;
+  justify-self: flex-end;
+}
+
+.offcanvas-title {
+  font-size: x-large;
+  font-weight: Bold;
+}
+
+.sidebar {
+   font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
+  height: 100%;
+  margin-top: 0;
+  background-color: #183153;
+  opacity: 1;
+  justify-content: flex-start;
+  padding: 1em;
+  padding-left: 1em;
+  z-index: 1;
+}
+
+.sidebar ul {
+  list-style-type: None;
+}
+
+.sidebar li {
+  font-size: large;
+  color: white;
+  padding: 2px;
+  margin-top: 1.5rem;
+  text-align: start;
+}
+
+.sidebar li > a {
+  text-decoration: none;
+  color: white;
+}
+
+/* Active/current link */
+.sidebar li.active {
+  background-color: #04aa6d;
+  color: white;
+}
+
+/* Links on mouse-over */
+.sidebar a:hover {
+  background-color: white;
+  color: white;
+}
+
+.btn-info .fa-bars {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.container {
+  margin: 0 auto;
+  padding: 1em;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 90vw;
+}
+.card {
+  margin:0.5em;
+  width: 35vw;
+  height: 35vw;
+  max-width: 250px;
+  max-height:250px ;
+  border: 2px solid none;
+  border-style: outset;
+  background-color: rgb(255, 212, 59, 1);
+  border-radius: 15px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  /* flex: 1; */
+}
+
+
+.card p{
+  font-size: 30px;
+}
+
+
+.card i {
+  font-size: 50px;
+  color: #183153;
+  align-items: center;
+  text-align: center;
+  margin: 0 auto;
+}
+
+
+.card a {
+  display: flex;
+  text-decoration: none;
+  color: #183153;
+  align-items: center;
+  justify-content: center;
+  
+}
+
+
+
+
+@media (min-width:1024px) {
+
+  .maximo-icon {
+    margin: 0 0 0 15px;
+    height: 50px;
+  }
+  
+  .maximo-text {
+    width: 70px;
+    height: 18px;
+  }
+  
+  
+  .container{
+    flex-direction: row;
+    align-items: center;
+  }
+  .card{
+    width: 25vw;
+    height: 25vw;
+    margin: 2em;
+
+  }
+  .card i{
+
+    font-size: 75px;
+  
+  }
+
+  .card p{
+    font-size: 20px;
+  }
+}
+
+@media (max-width:900px) {
+
+  .maximo-icon {
+    margin: 0 0 0 15px;
+    height: 50px;
+  }
+  
+  .maximo-text {
+    width: 70px;
+    height: 18px;
+  }
+  
+  
+  .container{
+    flex-direction: column;
+    align-items: center;
+  }
+  .card{
+    width: 25vw;
+    height: 25vw;
+    margin: 2em;
+
+  }
+  .card i{
+    font-size: 12vw;
+  }
+
+  .card p{
+    font-size: 20px;
+  }
+}
+
+@media (max-width:600px) {
+
+  .maximo-icon {
+    margin: 0 0 0 15px;
+    height: 50px;
+  }
+  
+  .maximo-text {
+    width: 70px;
+    height: 18px;
+  }
+  
+  
+  .container{
+    flex-direction: column;
+    align-items: center;
+  }
+  .card{
+    width: 35vw;
+    height: 35vw;
+    margin: 1em;
+
+  }
+  .card i{
+    font-size: 10vw;
+  }
+
+  .card p{
+    font-size: 15px;
+  }
+}
+
+
+
+
+
+
+
+/* Page content. The value of the margin-left property should match the value of the sidebar's width property */
+/* div.content {
+    margin-left: 200px;
+    padding: 1px 16px;
+    height: 1000px;
+  } */
+
+/* On screens that are less than 700px wide, make the sidebar into a topbar */
+/* @media screen and (max-width: 700px) {
+    .sidebar {
+      width: 100%;
+      height: auto;
+      position: relative;
+    }
+    .sidebar a {float: left;}
+    div.content {margin-left: 0;}
+  } */
+
+/* On screens that are less than 400px, display the bar vertically, instead of horizontally */
+/* @media screen and (max-width: 400px) {
+    .sidebar a {
+      text-align: center;
+      float: none;
+    }
+  } */

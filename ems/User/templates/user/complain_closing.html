@@ -1,174 +1,1108 @@
-{% extends "user/home.html" %}
-
+{% extends "index.html" %}
 {% load static %}
+{% load app_filters %}
 
-{% block head %}
-<meta charset="UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="{% static 'user/css/custom.css' %}">
-<link rel="stylesheet" href="{% static 'User/complain_closing.css' %}">
-<link rel="stylesheet" href="{% static 'User/home.css' %}">
-{% endblock head %}
-
-
-{% block title %}
-  Complain Closing
-{% endblock title %}
+{% block page-title %}Close Complaint - #{{ issue.ticket_num }}{% endblock page-title %}
 {% block main-body %}
-<div class="form-container">
-    <form action="{% url 'User:complain_closing' pk=issue.pk %}" method="post" enctype="multipart/form-data">
+<style>
+    /* Modern Complaint Closing Styles */
+    .closing-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .closing-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);
+    }
+    
+    .closing-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .ticket-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+    }
+    
+    .closing-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        margin-top: 1.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .meta-item i {
+        font-size: 1.2rem;
+        opacity: 0.8;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f1f5f9;
+    }
+    
+    .section-title i {
+        color: #10b981;
+        font-size: 1.4rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+    
+    .form-control:disabled {
+        background: #f8fafc;
+        color: #64748b;
+        cursor: not-allowed;
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 1rem;
+        background: white;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+    
+    .textarea {
+        min-height: 120px;
+        resize: vertical;
+        font-family: inherit;
+    }
+    
+    .malfunction-parts {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        min-height: 60px;
+    }
+    
+    .part-item {
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin: 0.25rem;
+        display: inline-block;
+    }
+    
+    /* Modern Spares Selector */
+    .modern-spares-selector {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0;
+        overflow: visible;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .modern-spares-selector:focus-within {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+    
+    /* Spares Search Container */
+    .spares-search-container {
+        padding: 16px;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+    
+    .spares-search-input-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .spares-search-input {
+        flex: 1;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 14px;
+        background: white;
+        transition: all 0.2s ease;
+    }
+    
+    .spares-search-input:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+    
+    .spares-search-btn {
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .spares-search-btn:hover {
+        background: #059669;
+        transform: translateY(-1px);
+    }
+    
+    /* Spares Search Results */
+    .spares-search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white !important;
+        border: 2px solid #e2e8f0;
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 9999;
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 0;
+    }
+    
+    .spares-search-results[style*="display: block"] {
+        display: block !important;
+    }
+    
+    .spares-results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 14px;
+        font-weight: 500;
+        color: #1e293b;
+    }
+    
+    .spares-close-results {
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+    
+    .spares-close-results:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+    
+    .spares-results-list {
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    
+    .spares-result-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+        list-style: none;
+    }
+    
+    .spares-result-item:hover {
+        background: #f8fafc;
+        color: #10b981;
+    }
+    
+    .spares-result-item:last-child {
+        border-bottom: none;
+    }
+    
+    .spares-result-item i {
+        margin-right: 8px;
+        color: #10b981;
+        width: 16px;
+    }
+    
+    .spares-no-results {
+        padding: 20px;
+        text-align: center;
+        color: #64748b;
+        font-style: italic;
+    }
+    
+    /* Selected Spares */
+    .spares-selected-items {
+        padding: 16px;
+        background: white;
+    }
+    
+    .spares-selected-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #1e293b;
+    }
+    
+    .spares-selected-list {
+        min-height: 60px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .spares-no-selection {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        font-style: italic;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .spares-no-selection i {
+        margin-right: 8px;
+        font-size: 16px;
+    }
+    
+    .spares-selected-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .spares-selected-item:hover {
+        background: #bae6fd;
+    }
+    
+    .spares-selected-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .spares-selected-item i {
+        margin-right: 8px;
+        color: #0369a1;
+    }
+    
+    .spares-remove-item {
+        background: none;
+        border: none;
+        color: #0369a1;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        font-size: 12px;
+    }
+    
+    .spares-remove-item:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+    
+    .file-upload {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+    
+    .file-upload input[type="file"] {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    
+    .file-upload-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 2rem;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        background: #f9fafb;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .file-upload-label:hover {
+        border-color: #10b981;
+        background: #f0fdf4;
+    }
+    
+    .file-upload-label i {
+        font-size: 2rem;
+        color: #6b7280;
+    }
+    
+    .action-section {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        margin-top: 2rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-temp-close, .btn-close {
+        padding: 1rem 2rem;
+        border: 2px solid transparent;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 180px;
+        height: 56px;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+    
+    .btn-temp-close {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        border: 2px solid transparent;
+    }
+    
+    .btn-temp-close:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        background: linear-gradient(135deg, #d97706, #b45309);
+    }
+    
+    .btn-close {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: 2px solid transparent;
+    }
+    
+    .btn-close:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        background: linear-gradient(135deg, #059669, #047857);
+    }
+    
+    .back-button {
+        background: #f8fafc;
+        color: #64748b;
+        border: 2px solid #e2e8f0;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .back-button:hover {
+        background: #e2e8f0;
+        color: #374151;
+        transform: translateY(-1px);
+    }
+    
+    .hidden-field {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .closing-container {
+            padding: 1rem;
+        }
         
+        .closing-title {
+            font-size: 2rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .closing-meta {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="closing-container">
+    <!-- Back Button -->
+    <a href="{% url 'maintenance:complain_detail' pk=issue.pk %}" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+        Back to Complaint Details
+    </a>
+    
+    <!-- Closing Header -->
+    <div class="closing-header">
+        <div class="closing-title">
+            <i class="fas fa-check-circle"></i>
+            Close Complaint
+            <span class="ticket-badge">#{{ issue.ticket_num|default:"N/A" }}</span>
+        </div>
+        <div class="closing-meta">
+            <div class="meta-item">
+                <i class="fas fa-calendar"></i>
+                <span id="current-date"></span>
+            </div>
+            <div class="meta-item">
+                <i class="fas fa-user"></i>
+                <span>{{ issue.user.name|default:issue.user.user.username }}</span>
+            </div>
+            <div class="meta-item">
+                <i class="fas fa-cogs"></i>
+                <span>{{ issue.equipment.name|default:issue.machine_id.name }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <form action="{% url 'User:complain_closing' pk=issue.pk %}" method="post" enctype="multipart/form-data" id="closing-form">
         {% csrf_token %}
             
-        <label for="date">Date</label>
-        <input type="text" class="set-date form-content" id="date" name="date" value="" disabled>
-
-        <label for="complain#">Complain#</label>
-        <input type="text" class="complain-number" id="complain" name="complain" value="{{ issue.ticket_num }}" disabled>
-
-        <label for="generated_by">Generated by</label>
-        <input type="text" id="generated_by" class="form-content" name="generated_by" value="{{ issue.user.name|title }}" disabled>
+        <!-- Hidden fields for basic info -->
+        <input type="hidden" id="date" name="date" value="">
+        <input type="hidden" id="complain" name="complain" value="{{ issue.ticket_num }}">
+        <input type="hidden" id="generated_by" name="generated_by" value="{{ issue.user.name|title }}">
+        <input type="hidden" name="initial-machine-hours" value="{{ issue.machine_hours }}">
         
-        <label for="initial-machine-hours">Machine Hours At Failure</label>
-        <input type="number" class="machine-hours form-content" name="initial-machine-hours" id="initial-machine-hours" value="{{ issue.machine_hours }}" disabled>
-
-        <label for="final-machine-hours">Machine Hours After Failure</label>
-        <input type="number" class="machine-hours form-content" id="final-machine-hours" name="machine-hours" placeholder="Type the current machine hours" required>
-        
-        <label for="spares">Malfunction Part</label>
-        <div id=spares-box disabled>
-            {% if issue.machineissue.malfunction_part.all|length == 0 %}
-            <div  id="spares" contenteditable="false">
-                None
+        <div class="form-grid">
+            <!-- Machine Information -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    Machine Information
+                </h3>
+                
+                <div class="form-group">
+                    <label class="form-label" for="final-machine-hours">
+                        <i class="fas fa-clock me-1"></i>
+                        Current Machine Hours
+                    </label>
+                    <input type="number" class="form-control" id="final-machine-hours" name="machine-hours" placeholder="Enter current machine hours" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="duration">
+                        <i class="fas fa-hourglass-half me-1"></i>
+                        Repair Duration (Hours)
+                    </label>
+                    <input type="number" class="form-control" id="duration" name="duration" placeholder="Enter repair duration in hours" step="0.1">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="equipment-status">
+                        <i class="fas fa-power-off me-1"></i>
+                        Equipment Status
+                    </label>
+                    <select class="form-select" name="equipment-status" id="equipment-status">
+                        <option value="on">Operational</option>
+                        <option value="off">Non-Operational</option>
+                    </select>
+                </div>
             </div>
             
+            <!-- Parts Information -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-puzzle-piece"></i>
+                    Parts Information
+                </h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Malfunction Parts</label>
+                    <div class="malfunction-parts">
+                        {% if issue.machineissue.malfunction_part.all %}
+                            {% for part in issue.machineissue.malfunction_part.all %}
+                                <span class="part-item">{{ part.name }}</span>
+                            {% endfor %}
             {% else %}
-
-
-            {% for part  in issue.machineissue.malfunction_part.all %}
-            <div  id="spares" contenteditable="false">
-                {{ part }}
+                            <span class="text-muted">No malfunction parts identified</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="spares-select">
+                        <i class="fas fa-tools me-1"></i>
+                        Spares Installed
+                    </label>
+                    
+                    <!-- Modern Spares Selection Interface -->
+                    <div class="modern-spares-selector">
+                        <!-- Search Box -->
+                        <div class="spares-search-container">
+                            <div class="spares-search-input-group">
+                                <input type="text" id="spares-search" class="spares-search-input" placeholder="Type to search spares...">
+                                <button type="button" class="spares-search-btn" id="spares-search-btn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Search Results Dropdown -->
+                        <div class="spares-search-results" id="spares-search-results" style="display: none;">
+                            <div class="spares-results-header">
+                                <span class="spares-results-count">0 spares found</span>
+                                <button type="button" class="spares-close-results" id="spares-close-results">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="spares-results-list" id="spares-results-list">
+                                <!-- Results will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Selected Spares Display -->
+                        <div class="spares-selected-items" id="spares-selected-items">
+                            <div class="spares-selected-header">
+                                <span class="spares-selected-count">Selected Spares (0)</span>
+                            </div>
+                            <div class="spares-selected-list" id="spares-selected-list">
+                                <div class="spares-no-selection">
+                                    <i class="fas fa-info-circle"></i>
+                                    No spares selected yet
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden select with all available spares for JavaScript -->
+                    <select id="all-spares-options" style="display: none;">
+                        {% for spare in spares %}
+                            <option value="{{spare.spare.id}}">{{ spare.spare.name }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <!-- Hidden select for form submission -->
+                    <select name="states[]" id="spares-select" multiple style="display: none;">
+                        <!-- Will be populated with selected values by JavaScript -->
+                    </select>
+                </div>
             </div>
-            {% endfor %}
-            {% endif %}
+            
+            <!-- Resolution Details -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-user-tie"></i>
+                    Resolution Details
+                </h3>
+                
+                <div class="form-group">
+                    <label class="form-label" for="resolved-by-type">
+                        <i class="fas fa-wrench me-1"></i>
+                        Resolution Type
+                    </label>
+                    <select class="form-select" name="resolved-by-type" id="resolved-by-type" onchange="changeOptions()">
+                        <option value="InHouse">In-House</option>
+                        <option value="OutSource" selected>Outsourced</option>
+                    </select>
         </div>    
         
-        <label for="spares">Spares Installed</label>
-        <select id="spares-select"  name="states[]" multiple>
-            {% for spare in spares %}
-                <option value="{{spare.spare.id}}">{{ spare.spare }}</option>
+                <div class="form-group" id="service-provider-group">
+                    <label class="form-label" id="resolvedLabel" for="service-provider">
+                        <i class="fas fa-building me-1"></i>
+                        Service Provider
+                    </label>
+                    <select class="form-select" name="resolvedby" id="service-provider">
+                        <option value="">-- Select Service Provider --</option>
+                        {% for contractor in contractors %}
+                            <option value="{{contractor.id}}">{{contractor.contractor}}</option>
             {% endfor %}
         </select>
-            
+                </div>
                 
-        <input type="text" id="searchBox" placeholder="Type to search..." oninput="filterOptions()">    
-        
-        <label for="resolvedby">Resolver</label>
-        <select onchange="changeOptions()" name="resolvedby" id="resolvedby">
-                <option value="InHouse" >Inhouse</option>
-                <option value="OutSource" selected>Outsource</option>  
-        </select>
-        
-        <label id="resolvedLabel" for="resolvedby">Service Provider</label>
-        <select   name="resolvedby" id="resolvedByinhouse">
-            {% if issue.machineissuereview.assignDepartment.name %}
-                <option value= "" id="inhouse">{{issue.machineissuereview.assignDepartment.name}}</option>  
-            {% else %}
-            {% for contractor in contractors  %}
-                <option value="{{contractor.id}}">{{contractor.contractor}}</option>  
-            {% endfor %}    
-            {% endif %}
-        </select>
-
-        <label for="technician">Technician name</label>
-        <input type="text" class="machine-hours form-content" id="technician" name="technician" placeholder="Type in the technician name">
-    
-        
-        <label for="supervisor">Supervior</label>
-        <input type="text" class="machine-hours form-content" id="supervisor" name="supervisor" placeholder="Type in the supervisor name">
-        
-        
-        <label for="solution-description">Solution Description</label>
-        <textarea name="solution-description" id="solution-description" class="form-content" cols="12" rows="5" placeholder="write the solution description"></textarea>
-
-        
-        
-        <label for="equipment-status">Equipment Status</label>
-        <select class="selectors form-content" name="equipment-status" id="equipment-status">
-            <option value="on">on</option>
-            <option value="off">off</option>
-        </select>
-        
+                <div class="form-group hidden-field" id="department-group">
+                    <label class="form-label" for="department-select">
+                        <i class="fas fa-building me-1"></i>
+                        Department
+                    </label>
+                    <select class="form-select" name="resolvedby" id="department-select">
+                        <option value="">-- Select Department --</option>
+                        {% if issue.machineissue.assignDepartment %}
+                            <option value="{{issue.machineissue.assignDepartment.id}}">{{issue.machineissue.assignDepartment.name}}</option>
+                        {% endif %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="technician">
+                        <i class="fas fa-user-hard-hat me-1"></i>
+                        Technician Name
+                    </label>
+                    <input type="text" class="form-control" id="technician" name="technician" placeholder="Enter technician name">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="supervisor">
+                        <i class="fas fa-user-tie me-1"></i>
+                        Supervisor Name
+                    </label>
+                    <input type="text" class="form-control" id="supervisor" name="supervisor" placeholder="Enter supervisor name">
+                </div>
+            </div>
             
-        <label for="duration">Duration</label>
-        <input type="number" class="machine-hours form-content" id="duration" name="duration">
-
-
+            <!-- Solution Details -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-lightbulb"></i>
+                    Solution Details
+                </h3>
+                
+                <div class="form-group">
+                    <label class="form-label" for="solution-description">
+                        <i class="fas fa-file-alt me-1"></i>
+                        Solution Description
+                    </label>
+                    <textarea name="solution-description" id="solution-description" class="form-control textarea" placeholder="Describe the solution implemented..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="additional-remarks">
+                        <i class="fas fa-comment me-1"></i>
+                        Additional Remarks
+                    </label>
+                    <textarea name="additional-remarks" id="additional-remarks" class="form-control textarea" placeholder="Any additional notes or observations..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="image">
+                        <i class="fas fa-images me-1"></i>
+                        Upload Documentation
+                    </label>
+                    <div class="file-upload">
+                        <input type="file" id="image" name="image[]" multiple accept="image/*">
+                        <label for="image" class="file-upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Click to upload images or drag and drop</span>
+                            <small>Upload repair photos, documentation, or alarm history</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
         
-        <label for="additional-remarks">Additional Remarks</label>
-        <textarea placeholder="write any additional-remarks here.." name="additional-remarks" id="additional-remarks" class="form-content" cols="12" rows="5"></textarea>
-
-        
-        <label for="images">Upload Alarm history</label>
-        <input type="file" id="image" class="form-content" name="image[]" multiple>
-
-        <div class="submission">
-            <input type="submit" class="button btn-primary" name="temp-close" id="temp-close" value="Temp Close">
-            <input type="submit" class="button btn-danger" name="close-complain" id="close-complain" value="Close">
+        <!-- Action Section -->
+        <div class="action-section">
+            <h3 class="section-title">
+                <i class="fas fa-gavel"></i>
+                Final Action
+            </h3>
+            <p class="text-muted mb-4">Choose how to close this complaint. Temporary closure allows for follow-up, while permanent closure marks the issue as fully resolved.</p>
+            
+            <div class="action-buttons">
+                {% comment %} <button type="submit" class="btn-temp-close" name="temp-close" id="temp-close">
+                    <i class="fas fa-pause"></i>
+                    Temp Close
+                </button> {% endcomment %}
+                <button type="submit" class="btn-close" name="close-complain" id="close-complain">
+                    <i class="fas fa-check-circle"></i>
+                    Close 
+                </button>
+            </div>
         </div>
     </form>
-    
 </div>
 
 <script>
+    // Set current date
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateField = document.getElementById('date');
+        const currentDate = new Date();
+        const formattedDate = currentDate.toISOString().substring(0, 16);
+        dateField.value = formattedDate;
+        
+        // Update display date
+        document.getElementById('current-date').textContent = currentDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    });
 
-function filterOptions() {
-    // Get the input text
-    var input = document.getElementById("searchBox").value.toLowerCase();
-    
-    // Get all the options in the select element
-    var select = document.getElementById("spares-select");
-    var options = select.options;
-
-    // Loop through the options and hide those that don't match
-    for (var i = 0; i < options.length; i++) {
-        var optionText = options[i].text.toLowerCase();
-
-        // Show the option if it contains the input text
-        if (optionText.includes(input)) {
-            options[i].style.display = "block";
+    // Modern Spares Selector JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Spares selector script loaded');
+        
+        // Get all available spares from the hidden select with all options
+        const allSpares = [];
+        const allSparesSelect = document.getElementById('all-spares-options');
+        if (allSparesSelect) {
+            console.log('Found all-spares-options select');
+            for (let i = 0; i < allSparesSelect.options.length; i++) {
+                const option = allSparesSelect.options[i];
+                if (option.value) {
+                    allSpares.push({
+                        id: option.value,
+                        text: option.text
+                    });
+                }
+            }
         } else {
-            // Hide the option if it does not contain the input text
-            options[i].style.display = "none";
+            console.error('all-spares-options select not found!');
+        }
+        
+        console.log('Loaded spares:', allSpares);
+        
+        let selectedSpares = [];
+        
+        // Search functionality
+        document.getElementById('spares-search').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            console.log('Spares search input:', searchTerm);
+            if (searchTerm.length >= 1) {
+                searchSpares(searchTerm);
+            } else {
+                hideSparesResults();
+            }
+        });
+        
+        // Search button click
+        document.getElementById('spares-search-btn').addEventListener('click', function() {
+            const searchTerm = document.getElementById('spares-search').value.toLowerCase();
+            if (searchTerm.length >= 1) {
+                searchSpares(searchTerm);
+            } else {
+                // Show all spares if no search term
+                searchSpares('');
+            }
+        });
+        
+        // Show all spares when search box is focused
+        document.getElementById('spares-search').addEventListener('focus', function() {
+            console.log('Spares search box focused');
+            if (this.value.length === 0) {
+                // Show all spares
+                searchSpares('');
+            }
+        });
+        
+        // Close results
+        document.getElementById('spares-close-results').addEventListener('click', function() {
+            hideSparesResults();
+        });
+        
+        // Click outside to close results
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.modern-spares-selector')) {
+                hideSparesResults();
+            }
+        });
+        
+        function searchSpares(searchTerm) {
+            console.log('=== SEARCH SPARES FUNCTION CALLED ===');
+            console.log('Search term:', searchTerm);
+            console.log('All spares:', allSpares);
+            console.log('All spares count:', allSpares.length);
+            
+            const filteredSpares = allSpares.filter(spare => 
+                spare.text.toLowerCase().includes(searchTerm)
+            );
+            
+            console.log('Filtered spares:', filteredSpares);
+            console.log('Filtered count:', filteredSpares.length);
+            
+            const resultsList = document.getElementById('spares-results-list');
+            if (!resultsList) {
+                console.error('Results list element not found!');
+                return;
+            }
+            
+            resultsList.innerHTML = '';
+            
+            if (filteredSpares.length === 0) {
+                resultsList.innerHTML = '<div class="spares-no-results">No spares found matching "' + searchTerm + '"</div>';
+            } else {
+                filteredSpares.forEach(spare => {
+                    const isSelected = selectedSpares.some(selected => selected.id === spare.id);
+                    const item = document.createElement('div');
+                    item.className = 'spares-result-item';
+                    item.setAttribute('data-id', spare.id);
+                    item.setAttribute('data-text', spare.text);
+                    item.innerHTML = '<i class="fas fa-tools"></i><span>' + spare.text + '</span>' + 
+                        (isSelected ? '<i class="fas fa-check text-success ms-auto"></i>' : '');
+                    resultsList.appendChild(item);
+                });
+            }
+            
+            const resultsCount = document.querySelector('.spares-results-count');
+            if (resultsCount) {
+                resultsCount.textContent = filteredSpares.length + ' spares found';
+            }
+            
+            // Show the results
+            const searchResults = document.getElementById('spares-search-results');
+            if (searchResults) {
+                searchResults.style.display = 'block';
+                console.log('Search results display set to block');
+                console.log('Search results element:', searchResults);
+                console.log('Search results computed display:', window.getComputedStyle(searchResults).display);
+                console.log('Search results position:', searchResults.getBoundingClientRect());
+            } else {
+                console.error('Search results element not found!');
+            }
+        }
+        
+        function hideSparesResults() {
+            document.getElementById('spares-search-results').style.display = 'none';
+        }
+        
+        // Add spare to selection
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.spares-result-item')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const item = e.target.closest('.spares-result-item');
+                const spareId = item.getAttribute('data-id');
+                const spareText = item.getAttribute('data-text');
+                
+                console.log('Clicked spare:', spareId, spareText);
+                
+                // Check if already selected
+                if (!selectedSpares.some(spare => spare.id === spareId)) {
+                    selectedSpares.push({ id: spareId, text: spareText });
+                    console.log('Added to selection:', selectedSpares);
+                    updateSparesSelectedDisplay();
+                    updateSparesHiddenSelect();
+                    hideSparesResults();
+                } else {
+                    console.log('Spare already selected');
+                }
+            }
+        });
+        
+        // Remove spare from selection
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.spares-remove-item')) {
+                const spareId = e.target.closest('.spares-remove-item').getAttribute('data-id');
+                selectedSpares = selectedSpares.filter(spare => spare.id !== spareId);
+                updateSparesSelectedDisplay();
+                updateSparesHiddenSelect();
+            }
+        });
+        
+        function updateSparesSelectedDisplay() {
+            const selectedList = document.getElementById('spares-selected-list');
+            selectedList.innerHTML = '';
+            
+            if (selectedSpares.length === 0) {
+                selectedList.innerHTML = '<div class="spares-no-selection"><i class="fas fa-info-circle"></i>No spares selected yet</div>';
+            } else {
+                selectedSpares.forEach(spare => {
+                    const item = document.createElement('div');
+                    item.className = 'spares-selected-item';
+                    item.innerHTML = '<div><i class="fas fa-tools"></i>' + spare.text + '</div>' +
+                        '<button type="button" class="spares-remove-item" data-id="' + spare.id + '">' +
+                        '<i class="fas fa-times"></i>' +
+                        '</button>';
+                    selectedList.appendChild(item);
+                });
+            }
+            
+            document.querySelector('.spares-selected-count').textContent = 'Selected Spares (' + selectedSpares.length + ')';
+        }
+        
+        function updateSparesHiddenSelect() {
+            const hiddenSelect = document.getElementById('spares-select');
+            hiddenSelect.innerHTML = '';
+            
+            selectedSpares.forEach(spare => {
+                const option = document.createElement('option');
+                option.value = spare.id;
+                option.text = spare.text;
+                option.selected = true;
+                hiddenSelect.appendChild(option);
+            });
+        }
+        
+        // Initialize display
+        updateSparesSelectedDisplay();
+        
+        // Log available spares count
+        console.log('Total spares available:', allSpares.length);
+    });
+
+    function changeOptions() {
+        const selectedValue = document.querySelector("#resolved-by-type");
+        const serviceProviderGroup = document.querySelector('#service-provider-group');
+        const departmentGroup = document.querySelector('#department-group');
+        
+        if (selectedValue.value === 'InHouse') {
+            // Hide contractor dropdown, show department dropdown
+            serviceProviderGroup.classList.add('hidden-field');
+            departmentGroup.classList.remove('hidden-field');
+            // Disable contractor select so it doesn't submit
+            document.querySelector('#service-provider').disabled = true;
+            document.querySelector('#department-select').disabled = false;
+        } else {
+            // Show contractor dropdown, hide department dropdown
+            serviceProviderGroup.classList.remove('hidden-field');
+            departmentGroup.classList.add('hidden-field');
+            // Disable department select so it doesn't submit
+            document.querySelector('#service-provider').disabled = false;
+            document.querySelector('#department-select').disabled = true;
         }
     }
-}
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        changeOptions(); // Set initial state
+    });
 
-
-    function changeOptions(){
-        selectedValue = document.querySelector("#resolvedby")
-        inhouse = document.querySelector('#resolvedByinhouse')
-        label = document.querySelector('#resolvedLabel')
-      
-        if (selectedValue.value === 'InHouse'){
-            inhouse.style.display = 'None';
-            label.style.display = 'None'
+    // File upload preview
+    document.getElementById('image').addEventListener('change', function(e) {
+        const files = e.target.files;
+        const label = document.querySelector('.file-upload-label');
+        
+        if (files.length > 0) {
+            label.innerHTML = `
+                <i class="fas fa-check-circle text-success"></i>
+                <span>${files.length} file(s) selected</span>
+                <small>Click to change files</small>
+            `;
         }
+    });
 
-        else{
-            inhouse.style.display = 'block'
-            label.style.display = 'block'
+    // Form validation
+    document.getElementById('closing-form').addEventListener('submit', function(e) {
+        const currentHours = document.getElementById('final-machine-hours').value;
+        const initialHours = '{{ issue.machine_hours }}';
+        
+        if (parseInt(currentHours) <= parseInt(initialHours)) {
+            e.preventDefault();
+            alert('Current machine hours must be greater than initial failure hours.');
+            return false;
         }
-    }
-
-
-    date = document.querySelector("#date")
-    const today = new Date();
-    const formattedDate = today.toISOString().substring(0, 16); // YYYY-MM-DD format 
-    date.value = formattedDate;
+        
+        const action = e.submitter.name;
+        const actionText = action === 'temp-close' ? 'temporarily close' : 'permanently close';
+        
+        if (!confirm(`Are you sure you want to ${actionText} this complaint?`)) {
+            e.preventDefault();
+            return false;
+        }
+    });
 </script>
-
 {% endblock main-body %}

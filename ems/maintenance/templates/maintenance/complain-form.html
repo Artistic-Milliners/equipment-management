@@ -1,147 +1,615 @@
-{% extends "user/home.html" %}
+{% extends "index.html" %}
 {% load static %}
 {% load app_filters %}
 
-{% block head %}
-<meta charset="UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<script src="https://kit.fontawesome.com/a06ab02596.js" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="{% static 'user/css/custom.css' %}">
-<!-- <link rel="stylesheet" href="{% static 'maintenance/css/complain-list.css' %}"> -->
-<link rel="stylesheet" href="{% static 'User/home.css' %}">
-<link rel="stylesheet" href="{% static 'maintenance/css/complain-review.css' %}">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-{% endblock head %}
+{% block page-title %}Engineer Review{% endblock page-title %}
 
-
-
-{% block title %}
-  Complain Detail | page
-{% endblock title %}
 
 {% block main-body %}
-<div class="main-container">
-  <div class="main-header">
-    <div><h1>ENGINEER'S DEN</h1></div>
-    {% comment %} <div><a href="{% url 'maintenance:complain_list' %}">Ticket List</a></div> {% endcomment %}
-  </div>
+<style>
+    /* --- Modern Design System Variables --- */
+    :root {
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --success: #10b981;
+        --success-hover: #059669;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --bg-main: #f8fafc;
+        --bg-card: #ffffff;
+        --border-soft: #e2e8f0;
+        --border-focus: #93c5fd;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --radius-lg: 12px;
+        --radius-md: 8px;
+        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-  <div>
-    <div class="issue-section">
-      <!-- <h1> Ticket# {{issue.ticket_num}}</a></h1> -->
-      <h1>{{ issue.equipment.name }}</a></h4>
-        
-        <h6><a href="#">{{ issue.description_user }}</a></h6>    
-          
-    <div class="priority">T#{{issue.ticket_num}}</div>
+    /* --- Base Layout & Typography --- */
+    .review-container {
+        max-width: 1000px; /* Narrower for better reading line-length */
+        margin: 0 auto;
+        padding: 1rem;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: var(--text-main);
+    }
+
+    /* --- Header Card --- */
+    .review-header {
+        background: linear-gradient(135deg, var(--primary), #3b82f6);
+        color: white;
+        padding: 2rem;
+        border-radius: var(--radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-md);
+    }
+
+    .ticket-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .ticket-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        backdrop-filter: blur(4px);
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    /* --- Sections & Cards --- */
+    .form-section {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-soft);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+    .section-header h4 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+    .section-header i {
+        color: var(--primary);
+        font-size: 1.25rem;
+    }
+
+    /* --- Form Grid & Inputs --- */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-label.required::after {
+        content: '*';
+        color: var(--danger);
+    }
+
+    .form-control, .form-select {
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        font-size: 1rem;
+        background-color: var(--bg-main);
+        transition: var(--transition);
+        min-height: 48px; /* Mobile touch target standard */
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        background-color: white;
+        outline: none;
+        box-shadow: 0 0 0 3px var(--border-focus);
+    }
+
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    /* --- Modern Radio Cards (Resolution Status) --- */
+    .radio-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .radio-card-label {
+        cursor: pointer;
+        position: relative;
+    }
+
+    .radio-card-label input {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .radio-card-content {
+        display: flex;
+        flex-direction: column;
+        padding: 1.25rem;
+        border: 2px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        transition: var(--transition);
+        background: white;
+        height: 100%;
+    }
+
+    .radio-card-label input:checked + .radio-card-content {
+        border-color: var(--primary);
+        background: #eff6ff;
+    }
+
+    .radio-card-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .radio-card-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    /* --- Choices.js Overrides for Modern Look --- */
+    .choices[data-type*="select-multiple"] .choices__inner {
+        background-color: var(--bg-main);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        min-height: 48px;
+        padding: 4px 8px;
+    }
     
-  </div>
-  
-  
+    .choices.is-focused .choices__inner {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--border-focus);
+        background-color: white;
+    }
 
-  <form id="ticket-form" action="" method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-  
+    .choices__list--multiple .choices__item {
+        background-color: var(--primary);
+        border: none;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
 
-      <input class="form-control-inline" value="{{issue.id}}" type="hidden" name="issue-number" id="issue-number">       
-      
-      <label  for="malfunction-part"><h6>Malfunction part</h6></label>
-      <select type="text" name="malfunction-part" id="malfunction-part" multiple>
-          
-        {% if issue.machine_id.machine_spare.all|length == 0  %}
-          <option value="">There are no spares</option>
-        {% endif %}
-        {% for part in issue.machine_id.machine_spare.all %}
-            <option value="{{part.id}}">{{ part.name}}</option>
-          {% endfor %}   
-      </select>
-      
-      <label for="search-bar">Search</label>
-      <input type="text" name="search-bar" id="search-bar">
-      <div class="search-box">
-        <button type="button" class="btn" onclick="searchSpare('malfunction-part', 'search-bar')"><i class="fa fa-search"></i></button>
-        <p>enter your search in small letters</p>
-      </div>
-      
-      <label  for="machine-section"><h6>Machine section</h6></label>
-      <input  type="text" name="machine-section" id="machine-section" required>    
-      
-      <label  for="machine-hours"><h6>Machine Hours</h6></label>
-      <input value="{{issue.machine_hours}}" type="number" name="machine-hours" id="machine-hours" required> 
-      
-      <label for="issue-type"><h6>Type</h6></label>
-      <select type="text" name="issue-type" id="issue-type">
-        {% for value, label in typeChoices  %}
-          <option value="{{value}}">{{label}}</option>
-        {% endfor %}
-      </select>
-      
-      <label  for="issue-priority"><h6>Issue Priority</h6></label>
-      <select  type="text" name="issue-priority" id="issue-priority">
-        {% for value, label in priorityChoices %}
-          <option value="{{value}}">{{label}}</option>
-        {% endfor %}
-      </select>
-     
-      <label  for="problem-nature"> <h6>Problem Nature</h6> </label>
-      <select type="text" name="problem-nature" id="problem-nature">
-        {% for value, label in problemNatureChoices %}
-        <option value="{{value}}">{{label}}</option>
-      {% endfor %}
-      </select>
-      
-      <label  for="description-reviewer"><h6>Description</h6></label>
-      <textarea  type="text" name="description-reviewer" id="description-reviewer" rows="4" required></textarea>
-      
-      <label  for="assign-to-department"> <h6>Assign To (Department)</h6> </label>
-      <select  type="text" name="assign-to-department" id="assign-to-department">
-        {% for d in departments %}
-          <option value="{{d.pk}}">{{d.name}}</option>
-        {% endfor %}
-      </select>
-      
-      <label  for="assign-to-person"> <h6>Assign To (Person)</h6> </label>
-      <select  type="text" name="assign-to-person" id="assign-to-person">
-        {% for user in users %}
-          <option value="{{user.pk}}">{{user.name}}</option>
-        {% endfor %}
-      </select>     
+    /* --- File Upload Drag & Drop --- */
+    .file-upload-wrapper {
+        position: relative;
+        width: 100%;
+    }
+    
+    .file-upload-input {
+        position: absolute;
+        width: 0; height: 0; opacity: 0;
+    }
 
-      <!-- <label><h6>Upload Images</h6></label>
-      <input  type="file" name="machine-images[]" id="machine-images[]" class="file-upload-input" multiple>
-      <label for="machine-images" class="file-upload-label">
-        <h6>Choose Files</h6>
-      </label> -->
+    .file-upload-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem 1.5rem;
+        border: 2px dashed var(--border-soft);
+        border-radius: var(--radius-lg);
+        background: var(--bg-main);
+        cursor: pointer;
+        transition: var(--transition);
+        color: var(--text-muted);
+        gap: 0.75rem;
+    }
 
-      <label><h6>Upload Images</h6></label>
-      <input type="file" name="machine-images[]" id="machine-images" class="file-upload-input" multiple>
-      <label for="machine-images" class="file-upload-label">
-        Choose Files
-      </label>
-      <span id="file-upload-filename" class="file-upload-filename"></span>
+    .file-upload-label:hover, .file-upload-label.dragover {
+        border-color: var(--primary);
+        background: #eff6ff;
+        color: var(--primary);
+    }
 
-      <script>
-        document.getElementById('machine-images').addEventListener('change', function() {
-          const fileNameElement = document.getElementById('file-upload-filename');
-          const files = this.files;
-          if (files.length > 0) {
-            const fileNames = Array.from(files).map(file => file.name).join(', ');
-            fileNameElement.textContent = `*Selected file: ${fileNames}`;
-          } else {
-            fileNameElement.textContent = '';
-          }
-        });
-      </script>
+    .file-upload-filename {
+        display: block;
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+        color: var(--success);
+        font-weight: 500;
+    }
 
-      <button class="submit-btn" type="submit">Submit</button>
-  </form>
+    /* --- Action Buttons --- */
+    .submit-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+    }
 
+    .btn {
+        padding: 0.75rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+        border: none;
+        min-height: 48px;
+    }
+
+    .btn-primary {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--success-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid var(--border-soft);
+        color: var(--text-main);
+    }
+
+    .btn-outline:hover {
+        background: var(--bg-main);
+        border-color: var(--text-muted);
+    }
+
+    /* --- Responsive --- */
+    @media (max-width: 768px) {
+        .review-header { padding: 1.5rem; }
+        .form-section { padding: 1.25rem; }
+        .submit-actions { flex-direction: column-reverse; }
+        .btn { width: 100%; justify-content: center; }
+        .radio-card-grid { grid-template-columns: 1fr; }
+    }
+    /* --- THE BULLETPROOF MOBILE OVERRIDE --- */
+    @media (max-width: 768px) {
+        
+        /* 1. The Main Input Area */
+        .choices .choices__inner {
+            padding: 10px !important;
+            min-height: 54px !important;
+            border-radius: 12px !important;
+        }
+        
+        .choices .choices__input {
+            font-size: 16px !important; 
+            min-height: 30px !important;
+        }
+
+        /* 2. The Floating Dropdown Menu */
+        .choices .choices__list--dropdown {
+            max-height: 350px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2) !important;
+            border: 2px solid #cbd5e1 !important;
+            margin-top: 8px !important;
+        }
+
+        /* 3. The Selectable Items (Huge tap targets) */
+        .choices .choices__list--dropdown .choices__item--selectable {
+            padding: 18px 20px !important;
+            font-size: 16px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+        }
+
+        /* 4. The Selected Pills/Tags */
+        .choices .choices__list--multiple .choices__item {
+            font-size: 14px !important;
+            padding: 8px 12px !important;
+            border-radius: 8px !important;
+            margin: 4px !important;
+            background-color: #2563eb !important; 
+        }
+
+        /* 5. The 'X' Remove Button */
+        .choices .choices__list--multiple .choices__item[data-deletable] {
+            padding-right: 45px !important;
+        }
+
+        .choices .choices__list--multiple .choices__button {
+            width: 40px !important;
+            border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
+            background-size: 12px !important;
+        }
+    }
+    /* TEMPORARY DEBUG LINE */
+    .choices .choices__inner { border: 5px solid red !important; }
+</style>
+
+
+
+<div class="review-container">
+    <div class="review-header">
+        <div class="ticket-title">
+            <i class="fas fa-clipboard-check"></i> Engineer Review
+        </div>
+        <div class="ticket-meta-grid">
+            <div class="meta-item"><i class="fas fa-ticket-alt"></i> Ticket #{{ issue.ticket_num }}</div>
+            <div class="meta-item"><i class="fas fa-calendar"></i> {{ issue.date_time|date:"M d, Y" }}</div>
+            <div class="meta-item"><i class="fas fa-user"></i> {{ issue.user.name }}</div>
+            <div class="meta-item" style="font-weight: 700; color: #fff;"><i class="fas fa-cog"></i> {{ issue.equipment.name }}</div>
+        </div>
+    </div>
+
+    <div style="background: #fef2f2; border-left: 4px solid var(--danger); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+        <h5 style="color: var(--danger); margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-exclamation-triangle"></i> Reported Issue
+        </h5>
+        <p style="margin: 0; color: #7f1d1d; line-height: 1.6;">{{ issue.description_user }}</p>
+    </div>
+
+    <form id="ticket-form" action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="issue-number" value="{{ issue.id }}">
+
+        <div class="form-section">
+            <div class="section-header">
+                <i class="fas fa-tags"></i>
+                <h4>Issue Classification</h4>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label required" for="issue-type"><i class="fas fa-wrench"></i> Maintenance Type</label>
+                    <select class="form-select" name="issue-type" id="issue-type" required>
+                        {% for value, label in typeChoices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required" for="problem-nature"><i class="fas fa-cog"></i> Problem Nature</label>
+                    <select class="form-select" name="problem-nature" id="problem-nature" required>
+                        {% for value, label in problemNatureChoices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-header">
+                <i class="fas fa-tools"></i>
+                <h4>Technical Details</h4>
+            </div>
+            
+            <div class="form-grid" style="margin-bottom: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label required" for="machine-hours"><i class="fas fa-clock"></i> Machine Hours</label>
+                    <input type="number" class="form-control" name="machine-hours" id="machine-hours" value="{{ issue.machine_hours }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required" for="machine-section"><i class="fas fa-map-marker-alt"></i> Machine Section</label>
+                    <input type="text" class="form-control" name="machine-section" id="machine-section" placeholder="e.g., Drive System" required>
+                </div>
+            </div>
+
+            <div class="form-group full-width" style="margin-bottom: 1.5rem;">
+                <label class="form-label" for="malfunction-part">
+                    <i class="fas fa-puzzle-piece"></i> Malfunction Parts Used
+                </label>
+                <select name="malfunction-part" id="malfunction-part" multiple>
+                    {% for part in issue.machine_id.machine_spare.all %}
+                        <option value="{{ part.id }}">{{ part.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group full-width" style="margin-bottom: 1.5rem;">
+                <label class="form-label required" for="selected-issue">
+                    <i class="fas fa-list-check"></i> System Identified Issues
+                </label>
+                <select name="selected-issue" id="selected-issue" multiple required>
+                    <option value="{{ issue.id }}">{{ issue.selected_issue }}</option>
+                </select>
+            </div>
+
+            <div class="form-group full-width">
+                <label class="form-label required" for="description-reviewer">
+                    <i class="fas fa-file-alt"></i> Engineer Assessment
+                </label>
+                <textarea class="form-control" name="description-reviewer" id="description-reviewer" placeholder="Provide detailed technical assessment, root cause, and recommended actions..." required></textarea>
+            </div>
+        </div>
+        <div class="form-section">
+            <div class="section-header">
+                <i class="fas fa-paperclip"></i>
+                <h4>Resolution & Attachments</h4>
+            </div>
+            
+            <div class="form-group full-width" style="margin-bottom: 2rem;">
+                <label class="form-label">Upload Images</label>
+                <div class="file-upload-wrapper">
+                    <input type="file" name="machine-images[]" id="machine-images" class="file-upload-input" multiple accept="image/*">
+                    <label for="machine-images" class="file-upload-label" id="drop-zone">
+                        <i class="fas fa-cloud-upload-alt fa-2x" style="color: var(--primary);"></i>
+                        <span>Click to browse or drag and drop images here</span>
+                    </label>
+                </div>
+                <span id="file-upload-filename" class="file-upload-filename"></span>
+            </div>
+        </div>
+
+        <div class="submit-actions">
+            <a href="{% url 'maintenance:complain_list' %}" class="btn btn-outline">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary" id="submit-btn">
+                <i class="fas fa-check-circle"></i> Submit Review
+            </button>
+        </div>
+    </form>
 </div>
-  
 
-  <script src="{% static 'maintenance/js/custom-complain.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. Initialize API Issues Dropdown
+    const issueElement = document.getElementById('selected-issue');
+    const issueChoices = new Choices(issueElement, {
+        removeItemButton: true,
+        searchEnabled: true,
+        placeholderValue: 'Search system issues...',
+        shouldSort: false
+    });
+
+    // 2. Initialize Spare Parts Dropdown (Replacing 200 lines of jQuery!)
+    const partsElement = document.getElementById('malfunction-part');
+    const partsChoices = new Choices(partsElement, {
+        removeItemButton: true,
+        searchEnabled: true,
+        placeholderValue: 'Search and tag consumed parts...',
+        noChoicesText: 'No spare parts available for this machine'
+    });
+
+    // 3. Eager Load the System Issues from API
+    async function fetchIssues() {
+        const equipment = "{{ issue.equipment.id }}";
+        const defaultIssueId = "{{ issue.id }}";
+        const issueUrl = `{{API_BASE_URL}}:{{API_PORT}}/api/issuelist/${equipment}/`;
+        
+        try {
+            issueChoices.setChoices([{ value: '', label: 'Loading issues...', disabled: true }], 'value', 'label', false);
+            
+            const response = await fetch(issueUrl);
+            const data = await response.json();
+            
+            if (!response.ok || !data.success) throw new Error("API Error");
+
+            const newOptions = data.issues.map(item => ({
+                value: String(item.id),
+                label: `[${item.error_code}] PRG: ${item.programmer_string} MACH: ${item.machine_string} ${item.c_desc}`,
+                selected: String(item.id) === String(defaultIssueId)
+            }));
+
+            issueChoices.clearChoices();
+            issueChoices.setChoices(newOptions, 'value', 'label', true);
+
+        } catch(error) {
+            console.error("Failed to fetch issues", error);
+            issueChoices.clearChoices();
+            issueChoices.setChoices([{ value: '', label: 'Failed to load system issues', disabled: true }], 'value', 'label', true);
+        }
+    }
+    
+    // Trigger fetch immediately
+    fetchIssues();
+
+    // 4. Modern File Upload Handler & Drag/Drop
+    const fileInput = document.getElementById('machine-images');
+    const fileNameDisplay = document.getElementById('file-upload-filename');
+    const dropZone = document.getElementById('drop-zone');
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            const fileNames = Array.from(this.files).map(f => f.name).join(', ');
+            fileNameDisplay.innerHTML = `<i class="fas fa-check-circle"></i> Attached: ${fileNames}`;
+        } else {
+            fileNameDisplay.innerHTML = '';
+        }
+    });
+
+    // Simple Drag and Drop styling
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        let dt = e.dataTransfer;
+        let files = dt.files;
+        fileInput.files = files; // Assign files to input
+        fileInput.dispatchEvent(new Event('change')); // Trigger update
+    });
+
+    // 5. Form Validation UX
+    document.getElementById('ticket-form').addEventListener('submit', function(e) {
+        const desc = document.getElementById('description-reviewer').value.trim();
+        if (desc.length < 20) {
+            e.preventDefault();
+            alert('Please provide a more detailed engineer assessment (minimum 20 characters).');
+            document.getElementById('description-reviewer').focus();
+            return;
+        }
+        
+        const btn = document.getElementById('submit-btn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        btn.style.opacity = '0.7';
+        btn.style.pointerEvents = 'none';
+    });
+});
+</script>
 {% endblock main-body %}
