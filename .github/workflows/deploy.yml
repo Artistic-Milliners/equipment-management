@@ -30,13 +30,21 @@ jobs:
         run: docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 
       - name: Health check
+        timeout-minutes: 3
         run: |
+          # Hit nginx on this machine directly; the Host header satisfies Django's ALLOWED_HOSTS.
           for i in $(seq 1 20); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" http://172.25.0.166/ || true)
+            code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 --max-time 5 \
+                   -H "Host: 172.25.25.173" http://127.0.0.1/ || true)
             if [ "$code" = "200" ] || [ "$code" = "302" ]; then echo "App is up ($code)"; exit 0; fi
-            echo "Waiting... ($code)"; sleep 5
+            echo "Attempt $i: got '$code', retrying in 5s..."; sleep 5
           done
+          echo "Health check failed. Container status:"
+          docker ps --filter name=ems_ --format "{{.Names}}: {{.Status}}"
+          echo "--- last 50 lines of ems_web ---"
           docker logs --tail 50 ems_web
+          echo "--- last 20 lines of ems_nginx ---"
+          docker logs --tail 20 ems_nginx
           exit 1
 
       - name: Remove old images
