@@ -1,0 +1,44 @@
+name: Deploy to production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:          # adds a manual "Run workflow" button
+
+concurrency: deploy-production  # never run two deploys at once
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, ems-server]
+    env:
+      APP_DIR: /opt/ems/equipment-management
+    steps:
+      - name: Back up database before deploying
+        run: |
+          mkdir -p /opt/ems/backups
+          docker exec ems_postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
+            | gzip > /opt/ems/backups/predeploy_$(date +%F_%H%M).sql.gz
+
+      - name: Update code
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Rebuild and restart containers
+        working-directory: ${{ env.APP_DIR }}/ems
+        run: docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+
+      - name: Health check
+        run: |
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://172.25.0.166/ || true)
+            if [ "$code" = "200" ] || [ "$code" = "302" ]; then echo "App is up ($code)"; exit 0; fi
+            echo "Waiting... ($code)"; sleep 5
+          done
+          docker logs --tail 50 ems_web
+          exit 1
+
+      - name: Remove old images
+        if: success()
+        run: docker image prune -f
