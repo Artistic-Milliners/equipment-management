@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
 from .models import (CustomUser, Department, Designation, Contractor, Manufacturer,
                      IssueList, TemporaryIssue, Employee, Machines, Spares, MachineIssue, Equipment,
-                     SpareTransaction, IssueClosing, Unit, WorkSession)
+                     SpareTransaction, IssueClosing, Unit, WorkSession, MachineSection)
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django import forms
@@ -85,6 +85,27 @@ class MachinesForm(forms.ModelForm):
     class Meta:
         model = Machines
         fields = '__all__'
+
+class MachineSectionForm(forms.ModelForm):
+
+    class Meta:
+        model = MachineSection
+        fields = ['machine', 'section_name']
+
+    def clean_section_name(self):
+        return self.cleaned_data['section_name'].strip()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        machine = cleaned_data.get('machine')
+        section_name = cleaned_data.get('section_name')
+        if machine and section_name:
+            duplicates = MachineSection.objects.filter(machine=machine, section_name__iexact=section_name)
+            if self.instance.pk:
+                duplicates = duplicates.exclude(pk=self.instance.pk)
+            if duplicates.exists():
+                raise forms.ValidationError(f'"{section_name}" already exists for {machine}.')
+        return cleaned_data
 
 class EmployeeCreationForm(forms.ModelForm):
     class Meta:
@@ -248,6 +269,19 @@ class TemporaryIssueAdmin(admin.ModelAdmin):
 @admin.register(Machines)
 class Machine(admin.ModelAdmin):
     form = MachinesForm
+
+@admin.register(MachineSection)
+class MachineSectionAdmin(admin.ModelAdmin):
+    form = MachineSectionForm
+    list_display = ['section_name', 'machine', 'equipment']
+    list_filter = ['machine__type_of_machine', 'machine']
+    search_fields = ['section_name', 'machine__name']
+    list_select_related = ['machine__type_of_machine']
+    ordering = ['machine__name', 'section_name']
+
+    def equipment(self, obj):
+        return obj.machine.type_of_machine if obj.machine else '-'
+    equipment.short_description = 'Equipment'
 
 @admin.register(Employee)
 class EmployeeCreation(admin.ModelAdmin):

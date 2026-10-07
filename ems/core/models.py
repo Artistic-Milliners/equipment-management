@@ -353,10 +353,6 @@ def get_department():
     return Department.objects.get(name="Workshop").pk
 
 
-
-
-
-
 class MachineIssue(models.Model):
 
     # Status constants
