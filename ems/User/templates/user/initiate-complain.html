@@ -1103,7 +1103,7 @@
         issueSelect.innerHTML = '<option value="">Loading issues...</option>';
 
         // Fetch machines
-        const machineUrl = `{{API_BASE_URL}}:{{API_PORT}}/machine-code/${equipment}`;
+        const machineUrl = `/machine-code/${equipment}`;
         try {
             const response = await fetch(machineUrl);
 
@@ -1119,7 +1119,7 @@
         }
 
         // Fetch issue list for this equipment
-        const issueUrl = `{{API_BASE_URL}}:{{API_PORT}}/api/issuelist/${equipment}/`;
+        const issueUrl = `/api/issuelist/${equipment}/`;
         try {
             const response = await fetch(issueUrl);
             const data = await response.json();
@@ -1148,7 +1148,7 @@
         }
 
         // Fetch machine hours
-        const hoursUrl = `{{API_BASE_URL}}:{{API_PORT}}/machine-hours/${machineId}`;
+        const hoursUrl = `/machine-hours/${machineId}`;
 
         try {
             const response = await fetch(hoursUrl);
@@ -1171,7 +1171,7 @@
 
         // Fetch machine sections
         sectionSelect.innerHTML = '<option value="">Loading sections...</option>';
-        const sectionUrl = `{{API_BASE_URL}}:{{API_PORT}}/api/machine-section/${machineId}/`;
+        const sectionUrl = `/api/machine-section/${machineId}/`;
 
         try {
             const response = await fetch(sectionUrl);

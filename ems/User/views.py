@@ -721,14 +721,16 @@ def home(request):
 
     # Scope the statistics to the issues this user is allowed to see:
     # view_all_issues (Engineers, admin, superusers) -> every issue
-    # view_own_issues (User group)                   -> only issues they raised
+    # everyone else -> issues on machines of their department, plus any they raised themselves
     can_view_all = request.user.has_perm('core.view_all_issues')
     if can_view_all:
         issues = MachineIssue.objects.all()
-    elif request.user.has_perm('core.view_own_issues'):
-        issues = MachineIssue.objects.filter(user__user=request.user)
     else:
-        issues = MachineIssue.objects.none()
+        employee = Employee.objects.filter(user=request.user).select_related('department').first()
+        scope = Q(user__user=request.user)
+        if employee and employee.department:
+            scope |= Q(machine_id__Department=employee.department)
+        issues = MachineIssue.objects.filter(scope)
 
     # Calculate statistics
     total_issues = issues.count()

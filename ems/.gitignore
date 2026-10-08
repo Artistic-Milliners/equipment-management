@@ -5,6 +5,8 @@
 db.sqlite3
 ems/ems.log
 ems.log
+__pycache__/
+*.pyc
 
 #Virtual environment
 venv/
@@ -21,3 +23,4 @@ env/
 .env
 .env.*
 >>>>>>> loginPage
+        

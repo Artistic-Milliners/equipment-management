@@ -527,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchIssues() {
         const equipment = "{{ issue.equipment.id }}";
         const defaultIssueId = "{{ issue.id }}";
-        const issueUrl = `{{API_BASE_URL}}:{{API_PORT}}/api/issuelist/${equipment}/`;
+        const issueUrl = `/api/issuelist/${equipment}/`;
         
         try {
             issueChoices.setChoices([{ value: '', label: 'Loading issues...', disabled: true }], 'value', 'label', false);
