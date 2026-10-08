@@ -1177,7 +1177,10 @@
                     {{ user.username|first|upper }}
                 </div>
                 <span>{{ user.username }}</span>
-                <a href="{% url 'User:logout' %}" class="btn-modern btn-danger-modern" style="padding: 0.5rem; margin-left: 0.5rem;">
+                <a href="{% url 'User:change_password' %}" class="btn-modern btn-primary-modern" style="padding: 0.5rem; margin-left: 0.5rem;" title="Change password">
+                    <i class="fas fa-key"></i>
+                </a>
+                <a href="{% url 'User:logout' %}" class="btn-modern btn-danger-modern" style="padding: 0.5rem;" title="Logout">
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             </div>

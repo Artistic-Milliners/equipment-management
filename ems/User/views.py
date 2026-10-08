@@ -1,5 +1,5 @@
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm, UserChangeForm, PasswordResetForm
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.forms import AuthenticationForm, UserChangeForm, PasswordResetForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.utils import timezone
@@ -677,6 +677,25 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect("User:login")
+
+
+@login_required(login_url='User:login')
+def change_password(request):
+    """Let the logged-in user change their own password."""
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Keep the user logged in; otherwise changing the password ends this session
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Your password has been changed successfully.')
+            return redirect('User:change_password')
+    else:
+        form = PasswordChangeForm(user=request.user)
+
+    for field in form.fields.values():
+        field.widget.attrs['class'] = 'form-control'
+    return render(request, 'user/change_password.html', {'form': form})
 
 
 
