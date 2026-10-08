@@ -12,13 +12,15 @@ from User.views import home
 from django.utils import timezone
 import logging
 from django.contrib import messages
+from core.access import visible_machines
 
+@login_required
 def get_machines(request):
-    
+
     equipment_id = request.GET['equipment_id']
     if equipment_id:
         equipment = get_object_or_404(Equipment, pk=equipment_id)
-        machines = Machines.objects.filter(type_of_machine=equipment).prefetch_related(
+        machines = visible_machines(request.user).filter(type_of_machine=equipment).prefetch_related(
             Prefetch('machine_spare', queryset=Spares.objects.all())
         )
         machine_options = [{'id':machine.id, 'name':machine.name, 'spares':\

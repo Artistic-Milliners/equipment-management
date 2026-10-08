@@ -257,7 +257,7 @@ class Machines(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     def save(self, *args, **kwargs):
         # Save first to ensure the file is written to disk
         super().save(*args, **kwargs)
@@ -272,6 +272,11 @@ class Machines(models.Model):
             except Exception as e:
                 # Log error but don't fail the save operation
                 print(f"Error processing image for machine {self.name}: {e}")
+
+    class Meta:
+        permissions = [
+            ('view_all_machines', 'Can view machines of all departments'),
+        ]
 
 class ImageModel(models.Model):
     image = models.ImageField(upload_to='images')

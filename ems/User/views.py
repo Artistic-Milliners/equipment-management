@@ -35,6 +35,7 @@ from rest_framework.renderers import JSONRenderer
 from core.serializers import machineHoursSerializer,MachineCodeSerializer, IssueSerializer
 from django.db.models import Prefetch
 from django.http import Http404
+from core.access import visible_machines
 import logging
 
 # Create your views here.
@@ -77,13 +78,10 @@ class InitiateComplainView(View):
             emp = Employee.objects.get(user=user)
         except Exception as e:
             return render(request, 'user/error/404.html', {'e': str(e)})
-        department = emp.department
-        if department.dpt_type not in ['SERVICES', 'MAINTENANCE']:
-            equipment = models.Equipment.objects.filter(typeOfMachine__Department=department).distinct()
-            if equipment.count() == 0:
-                return render(request, 'user/error/404.html', {'e': 'No equipment found for your department'})
-        else:
-            equipment = models.Equipment.objects.all()
+        # Only equipment types that have at least one machine this user may see
+        equipment = models.Equipment.objects.filter(typeOfMachine__in=visible_machines(user)).distinct()
+        if not equipment.exists():
+            return render(request, 'user/error/404.html', {'e': 'No equipment found for your department'})
         departments = Department.objects.filter(dpt_type__in=['SERVICES','MAINTENANCE'])
         return render(request, self.template_name, {'user':user, 'equipments':equipment, 'departments':departments})
     
@@ -109,11 +107,11 @@ class InitiateComplainView(View):
         try:
             employee = Employee.objects.get(user=user_id)
             equipment = Equipment.objects.get(pk=equipment_id)
-            machine = Machines.objects.get(pk=machine_code)
+            machine = visible_machines(request.user).get(pk=machine_code)
             error_department = Department.objects.get(pk=error_department)
-            
+
             if not machine_hours:
-                machine_hours = Machines.objects.get(pk=machine_code).machine_hours
+                machine_hours = machine.machine_hours
 
         except ObjectDoesNotExist as e:
             return render(request, 'user/error/404.html', {'e': str(e)})
@@ -572,7 +570,7 @@ class MachineCodeAPIView(APIView):
         
         try:
             equipment = self.get_queryset().get(pk=pk)
-            machines = models.Machines.objects.filter(type_of_machine=equipment)
+            machines = visible_machines(request.user).filter(type_of_machine=equipment)
             machine_code = MachineCodeSerializer(machines, many=True).data
             # print(machine_code)
             return JsonResponse(machine_code, safe=False)
@@ -587,8 +585,8 @@ class machineHoursAPIView(APIView):
     
     def get(self, request, pk):
         
-        try: 
-            machine = models.Machines.objects.get(pk=pk)
+        try:
+            machine = visible_machines(request.user).get(pk=pk)
             machine_hours = machineHoursSerializer(machine)
             # print(machine_hours.data)
             return Response(machine_hours.data)
@@ -628,8 +626,10 @@ class MachineSectionAPIView(APIView):
 
     def get(self, request, machine_pk):
         try:
-            # Get all sections for this machine
-            sections = MachineSection.objects.filter(machine_id=machine_pk).values(
+            # Get all sections for this machine (only if the user may see the machine)
+            sections = MachineSection.objects.filter(
+                machine_id=machine_pk, machine__in=visible_machines(request.user)
+            ).values(
                 'id', 'section_name'
             )
 
@@ -760,9 +760,10 @@ def home(request):
     return render(request, "user/home.html", context)
 
 
+@login_required(login_url='User:login')
 def machine_detail(request,pk):
-    
-    machine_detail = models.Machines.objects.get(pk=pk)
+
+    machine_detail = get_object_or_404(visible_machines(request.user), pk=pk)
     return render(request, "user/machine_detail.html", {"machine_detail":machine_detail})
 
 @permission_required('core.machine_create_perm', raise_exception=True)
