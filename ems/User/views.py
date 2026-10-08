@@ -719,19 +719,30 @@ def home(request):
     # Get today's date
     today = date.today()
 
+    # Scope the statistics to the issues this user is allowed to see:
+    # view_all_issues (Engineers, admin, superusers) -> every issue
+    # view_own_issues (User group)                   -> only issues they raised
+    can_view_all = request.user.has_perm('core.view_all_issues')
+    if can_view_all:
+        issues = MachineIssue.objects.all()
+    elif request.user.has_perm('core.view_own_issues'):
+        issues = MachineIssue.objects.filter(user__user=request.user)
+    else:
+        issues = MachineIssue.objects.none()
+
     # Calculate statistics
-    total_issues = MachineIssue.objects.count()
-    pending_issues = MachineIssue.objects.filter(status='PENDING').count()
+    total_issues = issues.count()
+    pending_issues = issues.filter(status='PENDING').count()
 
     # Get issues resolved today (status RESOLVED, CLOSED, or APPROVED)
     # Note: Using date_time for now until timestamp tracking fields are added
-    resolved_today = MachineIssue.objects.filter(
+    resolved_today = issues.filter(
         status__in=['RESOLVED', 'CLOSED', 'APPROVED'],
         date_time__date=today
     ).count()
 
     # Critical issues: machines with operational status NON_OPERATIONAL and status not yet closed
-    critical_issues = MachineIssue.objects.filter(
+    critical_issues = issues.filter(
         operational_status='NON_OPERATIONAL',
         status__in=['PENDING', 'UNDER_OBSERVATION', 'REVIEWED']
     ).count()
@@ -741,6 +752,7 @@ def home(request):
         'pending_issues': pending_issues,
         'resolved_today': resolved_today,
         'critical_issues': critical_issues,
+        'can_view_all_issues': can_view_all,
     }
 
     return render(request, "user/home.html", context)

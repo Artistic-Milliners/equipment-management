@@ -477,7 +477,7 @@
                     <i class="fas fa-tools"></i>
                 </div>
                 <div class="stats-number">{{ total_issues|default:0 }}</div>
-                <div class="stats-label">Total Issues</div>
+                <div class="stats-label">{% if can_view_all_issues %}Total Issues{% else %}My Issues{% endif %}</div>
             </div>
         </div>
         
@@ -487,7 +487,7 @@
                     <i class="fas fa-clock"></i>
                 </div>
                 <div class="stats-number">{{ pending_issues|default:0 }}</div>
-                <div class="stats-label">Pending Tickets</div>
+                <div class="stats-label">{% if can_view_all_issues %}Pending Tickets{% else %}My Pending Tickets{% endif %}</div>
             </div>
         </div>
         
@@ -497,7 +497,7 @@
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <div class="stats-number">{{ resolved_today|default:0 }}</div>
-                <div class="stats-label">Resolved Today</div>
+                <div class="stats-label">{% if can_view_all_issues %}Resolved Today{% else %}My Resolved Today{% endif %}</div>
             </div>
         </div>
         
@@ -507,7 +507,7 @@
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div class="stats-number">{{ critical_issues|default:0 }}</div>
-                <div class="stats-label">Critical Issues</div>
+                <div class="stats-label">{% if can_view_all_issues %}Critical Issues{% else %}My Critical Issues{% endif %}</div>
             </div>
         </div>
     </div>

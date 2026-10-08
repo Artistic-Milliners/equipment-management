@@ -520,6 +520,12 @@ class MachineIssue(models.Model):
     def __str__(self):
         return f"Work Order: {self.ticket_num} \n Issue Description: {self.description_user}"
 
+    class Meta:
+        permissions = [
+            ('view_all_issues', 'Can view all issues'),
+            ('view_own_issues', 'Can view own raised issues'),
+        ]
+
 
 class QuickReviewComments(models.Model):
 
