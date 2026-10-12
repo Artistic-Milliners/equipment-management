@@ -78,8 +78,8 @@ class Manufacturer(models.Model):
 class Equipment(models.Model):
     
     name = models.CharField(max_length=255)
-    quantity = models.IntegerField()    
-    manufacturer = models.ForeignKey(Manufacturer, on_delete=models.PROTECT)
+    quantity = models.IntegerField()
+    manufacturers = models.ManyToManyField(Manufacturer, related_name='equipments', blank=True)
     contractor = models.ForeignKey(Contractor, on_delete=models.PROTECT, null=True, blank=True)
     
     def __str__(self) -> str:
@@ -241,6 +241,9 @@ class Machines(models.Model):
     
     name = models.CharField(max_length=50)
     type_of_machine = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='typeOfMachine')
+    manufacturer = models.ForeignKey(Manufacturer, on_delete=models.PROTECT, null=True, blank=True,
+                                     related_name='machines',
+                                     help_text="Must be one of the manufacturers of the selected equipment")
     machine_spare = models.ManyToManyField(Spares,related_name='machines' ,through="MachineSpares", blank=True)
     dop = models.DateField(verbose_name="Date of Purcahse", blank=True, null=True)
     purchase_cost = models.FloatField(default=0)
@@ -257,6 +260,22 @@ class Machines(models.Model):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+        # A machine's manufacturer must be one that makes its equipment type
+        if self.manufacturer_id and self.type_of_machine_id:
+            if not self.type_of_machine.manufacturers.filter(pk=self.manufacturer_id).exists():
+                raise ValidationError({
+                    'manufacturer': f'{self.manufacturer} is not a manufacturer of {self.type_of_machine}. '
+                                    f'Add it to the equipment first.'
+                })
+
+    def sync_manufacturer(self):
+        # Keep the manufacturer valid for the equipment type; pick it automatically when there is only one
+        allowed = list(self.type_of_machine.manufacturers.all())
+        if self.manufacturer_id not in [m.pk for m in allowed]:
+            self.manufacturer = allowed[0] if len(allowed) == 1 else None
 
     def save(self, *args, **kwargs):
         # Save first to ensure the file is written to disk

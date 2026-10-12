@@ -269,6 +269,10 @@ class TemporaryIssueAdmin(admin.ModelAdmin):
 @admin.register(Machines)
 class Machine(admin.ModelAdmin):
     form = MachinesForm
+    list_display = ['name', 'type_of_machine', 'manufacturer', 'Department']
+    list_filter = ['type_of_machine', 'manufacturer', 'Department']
+    search_fields = ['name', 'model']
+    list_select_related = ['type_of_machine', 'manufacturer', 'Department']
 
 @admin.register(MachineSection)
 class MachineSectionAdmin(admin.ModelAdmin):
@@ -295,6 +299,16 @@ class MachineIssueCreate(admin.ModelAdmin):
 @admin.register(Equipment)
 class Equipment(admin.ModelAdmin):
     form = EquipmentForm
+    filter_horizontal = ['manufacturers']
+    list_display = ['name', 'manufacturer_list', 'quantity']
+    search_fields = ['name']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('manufacturers')
+
+    def manufacturer_list(self, obj):
+        return ', '.join(m.name for m in obj.manufacturers.all()) or '-'
+    manufacturer_list.short_description = 'Manufacturers'
 
 @admin.register(WorkSession)
 class WorkSessionAdmin(admin.ModelAdmin):

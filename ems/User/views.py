@@ -794,9 +794,9 @@ def add_machine(request):
             model = model,
             dop = dop,
             purchase_cost = purchase_cost,
-            image=image, 
+            image=image,
         )
-
+        machine.sync_manufacturer()
         machine.save()
 
 
@@ -840,7 +840,7 @@ def update_machine(request,pk):
         machine.model=model
         machine.purchase_cost=purchase_cost
         machine.machine_hours=machine_hours
-        
+        machine.sync_manufacturer()
         machine.save()
 
         return redirect( 'User:home' )

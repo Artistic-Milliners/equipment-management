@@ -31,6 +31,7 @@
         <div>
             <ul>
                 <li>{{machine_detail.type_of_machine.name}}</li>
+                {% if machine_detail.manufacturer %}<li>Manufacturer: {{machine_detail.manufacturer.name}}</li>{% endif %}
                 <li>{{machine_detail.model}}</li>
                 <li>{{machine_detail.purchase_cost}}</li>
                 <li>{{machine_detail.machine_hours}}</li>
