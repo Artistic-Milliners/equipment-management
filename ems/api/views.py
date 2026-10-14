@@ -123,11 +123,14 @@ class TicketDetailAPIView(APIView):
                 selected = issue.selected_issue
                 data['issue_info'] = {
                     'type': "EXISTING",
-                    'error_code': selected.error_code or '',
-                    'programmer_string': selected.programmer_string or '',
-                    'machine_string': selected.machine_string or '',
-                    'description': selected.c_desc or '',
-                    'display': f"[{selected.error_code}]-{selected.c_desc}" if selected.error_code else selected.c_desc or 'N/A'                    
+                    'fault_category': selected.get_fault_category_display(),
+                    'machine_section': selected.machine_section or '',
+                    'manufacturer': selected.manufacturer.name if selected.manufacturer else '',
+                    'description': selected.fault_description,
+                    'fault_effect': selected.fault_effect or '',
+                    'restart_procedure': selected.restart_procedure or '',
+                    'image': selected.image.url if selected.image else '',
+                    'display': selected.display_label,
                 }
             elif issue.temporary_issue:
                 temporary = issue.temporary_issue

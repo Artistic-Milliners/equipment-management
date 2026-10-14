@@ -455,11 +455,11 @@
             </div>
 
             <div class="form-group full-width" style="margin-bottom: 1.5rem;">
-                <label class="form-label required" for="selected-issue">
+                <label class="form-label" for="selected-issue">
                     <i class="fas fa-list-check"></i> System Identified Issues
                 </label>
-                <select name="selected-issue" id="selected-issue" multiple required>
-                    <option value="{{ issue.id }}">{{ issue.selected_issue }}</option>
+                <select name="selected-issue" id="selected-issue" multiple>
+                    {% if issue.selected_issue %}<option value="{{ issue.selected_issue.id }}" selected>{{ issue.selected_issue.display_label }}</option>{% endif %}
                 </select>
             </div>
 
@@ -526,8 +526,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Eager Load the System Issues from API
     async function fetchIssues() {
         const equipment = "{{ issue.equipment.id }}";
-        const defaultIssueId = "{{ issue.id }}";
-        const issueUrl = `/api/issuelist/${equipment}/`;
+        const defaultIssueId = "{{ issue.selected_issue_id|default:'' }}";
+        const issueUrl = `/api/issuelist/${equipment}/?machine={{ issue.machine_id.id }}`;
         
         try {
             issueChoices.setChoices([{ value: '', label: 'Loading issues...', disabled: true }], 'value', 'label', false);
@@ -539,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const newOptions = data.issues.map(item => ({
                 value: String(item.id),
-                label: `[${item.error_code}] PRG: ${item.programmer_string} MACH: ${item.machine_string} ${item.c_desc}`,
+                label: item.label,
                 selected: String(item.id) === String(defaultIssueId)
             }));
 

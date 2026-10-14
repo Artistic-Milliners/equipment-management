@@ -315,34 +315,84 @@ class MachineSection(models.Model):
     def __str__(self):
         return self.section_name
 
-class IssueList(models.Model):
-    created_by = models.ForeignKey(
-        CustomUser,
-        on_delete=models.PROTECT,
-        related_name="created_issue_list_entries",
-        null=True,
-        blank=True,
-        help_text="Engineer who added this issue to the master list"
-    )
-    error_code = models.CharField(max_length = 35, null=True, default=None)
-    programmer_string = models.CharField(max_length=100, null=True, default=None)
-    machine_string = models.CharField(max_length=100, null=True, default=None)
-    c_desc = models.TextField(default="EMPTY",verbose_name="code description")
-    effect = models.TextField(max_length=250,blank=True,null=True)
-    machine_status = models.CharField(max_length=250, blank=True, null=True)
-    restart_procedure = models.TextField(max_length=500, blank=True, null=True)
-    flashes = models.IntegerField(blank=True, null=True)
-    image = models.ImageField(upload_to='images', blank=True, null=True)
-    equipment = models.ForeignKey(Equipment, on_delete=models.PROTECT, related_name="equipment")
+class FaultLibrary(models.Model):
+    """Master list of known faults per equipment type, offered to users when raising a complaint."""
+
+    CATEGORY_CHOICES = [
+        ('ELECTRICAL', 'Electrical'),
+        ('MECHANICAL', 'Mechanical'),
+    ]
+
+    equipment = models.ForeignKey(Equipment, on_delete=models.PROTECT, related_name='faults')
+    manufacturer = models.ForeignKey(Manufacturer, on_delete=models.PROTECT, null=True, blank=True,
+                                     related_name='faults',
+                                     help_text="Leave blank if the fault applies to all makers of this equipment")
+    fault_description = models.TextField()
+    machine_section = models.CharField(max_length=100, null=True, blank=True)
+    fault_category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    fault_effect = models.TextField(null=True, blank=True)
+    restart_procedure = models.TextField(null=True, blank=True)
+    image = models.ImageField(upload_to='fault_library/', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Fault'
+        verbose_name_plural = 'Fault Library'
+        ordering = ['equipment__name', 'fault_description']
 
     def __str__(self):
-        return f"Machine: {self.c_desc}"
+        return self.fault_description[:80]
+
+    @classmethod
+    def for_machine(cls, machine):
+        # Faults of the machine's equipment that are generic or specific to its manufacturer
+        faults = cls.objects.filter(equipment_id=machine.type_of_machine_id)
+        return faults.filter(models.Q(manufacturer__isnull=True) | models.Q(manufacturer_id=machine.manufacturer_id))
+
+    @property
+    def display_label(self):
+        parts = [f"[{self.get_fault_category_display()}]"]
+        if self.machine_section:
+            parts.append(f"{self.machine_section} ·")
+        parts.append(self.fault_description)
+        return ' '.join(parts)
+
+    def clean(self):
+        super().clean()
+        errors = {}
+
+        if self.fault_description is not None:
+            self.fault_description = self.fault_description.strip()
+            if not self.fault_description:
+                errors['fault_description'] = 'Fault description cannot be empty.'
+
+        if self.machine_section is not None:
+            self.machine_section = self.machine_section.strip() or None
+
+        if self.equipment_id:
+            if self.manufacturer_id and not self.equipment.manufacturers.filter(pk=self.manufacturer_id).exists():
+                errors['manufacturer'] = f'{self.manufacturer} is not a manufacturer of {self.equipment}.'
+
+            if self.machine_section and 'manufacturer' not in errors:
+                sections = MachineSection.objects.filter(machine__type_of_machine_id=self.equipment_id,
+                                                         section_name__iexact=self.machine_section)
+                if self.manufacturer_id:
+                    sections = sections.filter(machine__manufacturer_id=self.manufacturer_id)
+                section = sections.first()
+                if section is None:
+                    errors['machine_section'] = (f'"{self.machine_section}" is not a section of any '
+                                                 f'{self.manufacturer or ""} {self.equipment} machine.'.replace('  ', ' '))
+                else:
+                    # Store the name exactly as defined on the machine
+                    self.machine_section = section.section_name
+
+        if errors:
+            raise ValidationError(errors)
 
 
 class TemporaryIssue(models.Model):
     """
-    Temporary storage for user-reported issues not yet in the master IssueList.
-    Engineer reviews and can promote to IssueList if valid.
+    Temporary storage for user-reported issues not yet in the FaultLibrary.
+    Engineer reviews and can promote to FaultLibrary if valid.
     """
     user = models.ForeignKey(CustomUser, on_delete=models.PROTECT, related_name="temporary_issues")
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name="temp_issues")
@@ -354,10 +404,10 @@ class TemporaryIssue(models.Model):
     # Tracking fields
     created_at = models.DateTimeField(auto_now_add=True)
     reviewed = models.BooleanField(default=False, help_text="Has an engineer reviewed this?")
-    promoted_to_issuelist = models.BooleanField(default=False, help_text="Has this been added to master IssueList?")
-    promoted_issue = models.ForeignKey(IssueList, on_delete=models.SET_NULL, null=True, blank=True,
+    promoted_to_issuelist = models.BooleanField(default=False, help_text="Has this been added to the Fault Library?")
+    promoted_issue = models.ForeignKey(FaultLibrary, on_delete=models.SET_NULL, null=True, blank=True,
                                         related_name="promoted_from_temp",
-                                        help_text="Link to IssueList record if promoted")
+                                        help_text="Link to Fault Library record if promoted")
 
     # Engineer notes during review
     engineer_notes = models.TextField(blank=True, null=True, help_text="Engineer corrections/notes")
@@ -476,10 +526,10 @@ class MachineIssue(models.Model):
 
     error_department = models.ForeignKey( Department, on_delete=models.CASCADE)
 
-    # Issue selection: User can select from existing IssueList OR report new issue
-    selected_issue = models.ForeignKey(IssueList, on_delete=models.SET_NULL, null=True, blank=True,
+    # Issue selection: User can select from the FaultLibrary OR report new issue
+    selected_issue = models.ForeignKey(FaultLibrary, on_delete=models.SET_NULL, null=True, blank=True,
                                         related_name="machine_issues",
-                                        help_text="Issue selected from master list (if available)")
+                                        help_text="Fault selected from the Fault Library (if available)")
     
     temporary_issue = models.ForeignKey(TemporaryIssue, on_delete=models.SET_NULL, null=True, blank=True,
                                          related_name="machine_issues",
@@ -593,7 +643,7 @@ class MachineIssueReview(models.Model):
     
     reviewer = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='reviewer') 
     issue = models.OneToOneField(MachineIssue, on_delete=models.PROTECT, related_name='machineissue')
-    code = models.ForeignKey(IssueList, on_delete=models.PROTECT, blank=True, null=True)
+    code = models.ForeignKey(FaultLibrary, on_delete=models.PROTECT, blank=True, null=True)
     description_reviewer = models.TextField(blank=True, null=True)
     priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES, blank=True, null=True)
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, blank=True, null=True)

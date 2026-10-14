@@ -9,7 +9,7 @@ from core.models import (Contractor, CustomUser, MachineIssueReview, Employee,
                          Unit, MachineIssue, Spares, Equipment,
                          Machines, ImageModel, Department,
                          MachineIssueReview, IssueClosing, MachineSpares,
-                         IssueList, TemporaryIssue, MachineSection, QuickReviewComments)
+                         FaultLibrary, TemporaryIssue, MachineSection, QuickReviewComments)
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -137,12 +137,10 @@ class InitiateComplainView(View):
 
         # Handle issue selection
         if issue_type == 'existing' and selected_issue_id:
-            # User selected from existing IssueList
+            # User selected a fault from the Fault Library; it must apply to this machine
             try:
-                selected_issue = IssueList.objects.get(pk=selected_issue_id)
-                print(selected_issue)
-                issue.selected_issue = selected_issue
-            except IssueList.DoesNotExist:
+                issue.selected_issue = FaultLibrary.for_machine(machine).get(pk=selected_issue_id)
+            except (FaultLibrary.DoesNotExist, ValueError):
                 pass
 
         elif issue_type == 'other' and custom_issue_description:
@@ -596,19 +594,30 @@ class machineHoursAPIView(APIView):
 
 
 class IssueListAPIView(APIView):
-    """API endpoint to fetch IssueList based on equipment selection"""
+    """API endpoint to fetch Fault Library entries for an equipment, optionally narrowed to a machine's manufacturer"""
     permission_classes = []  # Allow unauthenticated access
 
     def get(self, request, equipment_pk):
         try:
-            # Get all issues for this equipment
-            issues = IssueList.objects.filter(equipment_id=equipment_pk).values(
-                'id', 'c_desc', 'error_code', 'programmer_string', 'machine_string', 'machine_status'
-            )
+            machine_id = request.GET.get('machine')
+            if machine_id:
+                machine = visible_machines(request.user).filter(pk=machine_id, type_of_machine_id=equipment_pk).first()
+                faults = FaultLibrary.for_machine(machine) if machine else FaultLibrary.objects.none()
+            else:
+                faults = FaultLibrary.objects.filter(equipment_id=equipment_pk)
+
+            issues = [{
+                'id': fault.pk,
+                'fault_description': fault.fault_description,
+                'fault_category': fault.get_fault_category_display(),
+                'machine_section': fault.machine_section or '',
+                'manufacturer': fault.manufacturer.name if fault.manufacturer else '',
+                'label': fault.display_label,
+            } for fault in faults.select_related('manufacturer')]
 
             return JsonResponse({
                 'success': True,
-                'issues': list(issues)
+                'issues': issues
             })
 
         except Exception as e:

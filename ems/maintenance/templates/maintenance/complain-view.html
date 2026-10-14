@@ -1692,8 +1692,9 @@
                     description: "{{ issue.temporary_issue.user_description|escapejs }}"
                 }{% elif issue.selected_issue %}{
                     type: "EXISTING",
-                    error_code: "{{ issue.selected_issue.error_code|default:'' }}",
-                    description: "{{ issue.selected_issue.c_desc|escapejs }}"
+                    fault_category: "{{ issue.selected_issue.get_fault_category_display|escapejs }}",
+                    machine_section: "{{ issue.selected_issue.machine_section|default:''|escapejs }}",
+                    description: "{{ issue.selected_issue.fault_description|escapejs }}"
                 }{% else %}null{% endif %}
             }{% if not forloop.last %},{% endif %}
             {% endfor %}
@@ -2086,14 +2087,25 @@
                 '<div class="tm-section-title"><i class="fas fa-exclamation-triangle"></i> Issue Details</div>';
 
             if (data.issue_info.type === 'EXISTING') {
-                html += '<div style="margin-bottom:0.5rem"><span class="tm-issue-badge tm-issue-badge--existing"><i class="fas fa-database"></i> Existing Issue</span></div>';
-                if (data.issue_info.error_code) {
-                    html += '<div class="tm-detail-grid" style="margin-bottom:0.5rem">' +
-                        '<div class="tm-detail-item"><span class="tm-detail-label">Error Code</span><span class="tm-detail-value" style="color:#1e40af; font-weight:700;">' + data.issue_info.error_code + '</span></div>' +
-                        (data.issue_info.programmer_string ? '<div class="tm-detail-item"><span class="tm-detail-label">Programmer String</span><span class="tm-detail-value">' + data.issue_info.programmer_string + '</span></div>' : '') +
-                    '</div>';
+                const info = data.issue_info;
+                const esc = (s) => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                const item = (label, value) => value ? '<div class="tm-detail-item"><span class="tm-detail-label">' + label + '</span><span class="tm-detail-value">' + esc(value) + '</span></div>' : '';
+                html += '<div style="margin-bottom:0.5rem"><span class="tm-issue-badge tm-issue-badge--existing"><i class="fas fa-database"></i> Fault Library</span></div>';
+                html += '<div class="tm-detail-grid" style="margin-bottom:0.5rem">' +
+                    item('Category', info.fault_category) +
+                    item('Machine Section', info.machine_section) +
+                    item('Manufacturer', info.manufacturer) +
+                '</div>';
+                html += '<div class="tm-detail-desc-box">' + (esc(info.description) || 'N/A') + '</div>';
+                if (info.fault_effect) {
+                    html += '<div class="tm-detail-label" style="margin-top:0.5rem">Fault Effect</div><div class="tm-detail-desc-box">' + esc(info.fault_effect) + '</div>';
                 }
-                html += '<div class="tm-detail-desc-box">' + (data.issue_info.description || 'N/A') + '</div>';
+                if (info.restart_procedure) {
+                    html += '<div class="tm-detail-label" style="margin-top:0.5rem">Restart Procedure</div><div class="tm-detail-desc-box" style="white-space:pre-line">' + esc(info.restart_procedure) + '</div>';
+                }
+                if (info.image) {
+                    html += '<div style="margin-top:0.5rem"><img src="' + esc(info.image) + '" alt="Fault image" style="max-width:100%; border-radius:8px"></div>';
+                }
             } else if (data.issue_info.type === 'NEW') {
                 html += '<div style="margin-bottom:0.5rem">' +
                     '<span class="tm-issue-badge tm-issue-badge--new"><i class="fas fa-plus-circle"></i> New Issue</span>' +

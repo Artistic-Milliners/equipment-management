@@ -1,7 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from core.models import (MachineIssue, Equipment, Machines, Spares, MachineSpares, ImageModel,
                         CustomUser, MachineIssueApproval, MachineIssueReview, Department, Employee,
-                        TemporaryIssue, IssueList, QuickReviewComments, WorkSession)
+                        TemporaryIssue, FaultLibrary, QuickReviewComments, WorkSession)
+from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
@@ -620,8 +621,15 @@ def temporary_issue_review_detail(request, pk):
         pk=pk
     )
 
-    # Get all issue lists for this equipment
-    issue_lists = IssueList.objects.filter(equipment=temp_issue.equipment)
+    # Faults that already apply to this machine (or the whole equipment if no machine was given)
+    machine = temp_issue.machine
+    if machine:
+        issue_lists = FaultLibrary.for_machine(machine)
+        machine_sections = list(machine.machine_section.order_by('section_name').values_list('section_name', flat=True))
+    else:
+        issue_lists = FaultLibrary.objects.filter(equipment=temp_issue.equipment)
+        machine_sections = []
+    form_errors = []
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -650,43 +658,43 @@ def temporary_issue_review_detail(request, pk):
             return redirect('maintenance:temp_issue_list')
 
         elif action == 'promote_new':
-            # Create new IssueList entry
-            c_desc = request.POST.get('c_desc')
-            error_code = request.POST.get('error_code', '')
-            machine_status = request.POST.get('machine_status', 'operational')
-
-            if not c_desc:
-                return render(request, 'user/error/404.html', {'error': 'Description is required'})
-
-            new_issue = IssueList.objects.create(
+            # Create a new Fault Library entry; manufacturer-specific only if the engineer ticks it
+            new_issue = FaultLibrary(
                 equipment=temp_issue.equipment,
-                c_desc=c_desc,
-                error_code=error_code,
-                machine_status=machine_status,
-                created_by=request.user  # Track who added this to master list
+                manufacturer=machine.manufacturer if machine and request.POST.get('maker_specific') else None,
+                fault_description=request.POST.get('fault_description', ''),
+                fault_category=request.POST.get('fault_category', ''),
+                machine_section=request.POST.get('machine_section') or None,
+                fault_effect=request.POST.get('fault_effect') or None,
+                restart_procedure=request.POST.get('restart_procedure') or None,
             )
+            try:
+                new_issue.full_clean()
+            except ValidationError as e:
+                form_errors = [f"{field.replace('_', ' ').capitalize()}: {msg}"
+                               for field, msgs in e.message_dict.items() for msg in msgs]
+            else:
+                new_issue.save()
 
-            temp_issue.reviewed = True
-            temp_issue.reviewed_by = engineer
-            temp_issue.promoted_to_issuelist = True
-            temp_issue.promoted_issue = new_issue
-            temp_issue.engineer_notes = request.POST.get('engineer_notes', '')
-            temp_issue.save()
+                temp_issue.reviewed = True
+                temp_issue.reviewed_by = engineer
+                temp_issue.promoted_to_issuelist = True
+                temp_issue.promoted_issue = new_issue
+                temp_issue.engineer_notes = request.POST.get('engineer_notes', '')
+                temp_issue.save()
 
-            print(f"✓ Created new IssueList entry (ID: {new_issue.pk})")
-            print(f"  Description: {c_desc}")
-            print(f"  Error Code: {error_code}")
-            print(f"{'='*60}\n")
-            return redirect('maintenance:temp_issue_list')
+                print(f"✓ Created new Fault Library entry (ID: {new_issue.pk})")
+                print(f"{'='*60}\n")
+                return redirect('maintenance:temp_issue_list')
 
         elif action == 'link_existing':
-            # Link to existing IssueList
+            # Link to an existing Fault Library entry
             existing_issue_id = request.POST.get('existing_issue_id')
 
             if not existing_issue_id:
                 return render(request, 'user/error/404.html', {'error': 'Please select an existing issue'})
 
-            existing_issue = IssueList.objects.get(pk=existing_issue_id)
+            existing_issue = get_object_or_404(issue_lists, pk=existing_issue_id)
 
             temp_issue.reviewed = True
             temp_issue.reviewed_by = engineer
@@ -695,18 +703,21 @@ def temporary_issue_review_detail(request, pk):
             temp_issue.engineer_notes = request.POST.get('engineer_notes', '')
             temp_issue.save()
 
-            print(f"✓ Linked to existing IssueList (ID: {existing_issue.pk})")
-            print(f"  Description: {existing_issue.c_desc}")
+            print(f"✓ Linked to existing Fault Library entry (ID: {existing_issue.pk})")
             print(f"{'='*60}\n")
             return redirect('maintenance:temp_issue_list')
 
         else:
             return render(request, 'user/error/404.html', {'error': 'Invalid action'})
 
-    # GET request - show review form
+    # GET request (or invalid new fault) - show review form
     context = {
         'temp_issue': temp_issue,
         'issue_lists': issue_lists,
+        'machine_sections': machine_sections,
+        'category_choices': FaultLibrary.CATEGORY_CHOICES,
+        'form_errors': form_errors,
+        'posted': request.POST if form_errors else {},
         'is_approver': is_approver,
         'is_engineer': is_engineer,
     }

@@ -344,25 +344,55 @@
                     <div class="option-description">
                         This is a valid new issue that should be added to the master list. Future users will be able to select it from the dropdown.
                     </div>
-                    <div class="option-content" id="content_promote_new">
+                    <div class="option-content{% if form_errors %} active{% endif %}" id="content_promote_new">
+                        {% if form_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form_errors %}<div>{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
                         <div class="form-group">
-                            <label for="c_desc" class="form-label required">Issue Description</label>
-                            <input type="text" name="c_desc" id="c_desc" class="form-input"
+                            <label for="fault_description" class="form-label required">Fault Description</label>
+                            <input type="text" name="fault_description" id="fault_description" class="form-input"
                                    placeholder="Enter a clear, concise description"
-                                   value="{{ temp_issue.user_description }}">
-                            <div class="form-help">This will appear in the issue selection dropdown</div>
+                                   value="{% if posted %}{{ posted.fault_description }}{% else %}{{ temp_issue.user_description }}{% endif %}">
+                            <div class="form-help">This will appear in the fault selection dropdown</div>
                         </div>
                         <div class="form-group">
-                            <label for="error_code" class="form-label">Error Code (Optional)</label>
-                            <input type="text" name="error_code" id="error_code" class="form-input"
-                                   placeholder="e.g., E01, ERR-MECH-001">
-                        </div>
-                        <div class="form-group">
-                            <label for="machine_status" class="form-label">Machine Status</label>
-                            <select name="machine_status" id="machine_status" class="form-select">
-                                <option value="operational">Operational</option>
-                                <option value="non-operational">Non-Operational</option>
+                            <label for="fault_category" class="form-label required">Fault Category</label>
+                            <select name="fault_category" id="fault_category" class="form-select">
+                                <option value="">-- Select category --</option>
+                                {% for value, label in category_choices %}
+                                <option value="{{ value }}" {% if posted.fault_category == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="machine_section" class="form-label">Machine Section (Optional)</label>
+                            <select name="machine_section" id="machine_section" class="form-select">
+                                <option value="">-- Not specific to a section --</option>
+                                {% for section in machine_sections %}
+                                <option value="{{ section }}" {% if posted.machine_section == section %}selected{% endif %}>{{ section }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if temp_issue.machine.manufacturer %}
+                        <div class="form-group">
+                            <label class="form-label">
+                                <input type="checkbox" name="maker_specific" value="1" {% if posted.maker_specific %}checked{% endif %}>
+                                Only for {{ temp_issue.machine.manufacturer.name }} machines
+                            </label>
+                            <div class="form-help">Leave unticked if this fault can happen on any {{ temp_issue.equipment.name }} machine</div>
+                        </div>
+                        {% endif %}
+                        <div class="form-group">
+                            <label for="fault_effect" class="form-label">Fault Effect (Optional)</label>
+                            <textarea name="fault_effect" id="fault_effect" class="form-textarea"
+                                      placeholder="What happens to the machine or production">{{ posted.fault_effect }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="restart_procedure" class="form-label">Restart Procedure (Optional)</label>
+                            <textarea name="restart_procedure" id="restart_procedure" class="form-textarea"
+                                      placeholder="Steps to get the machine running again">{{ posted.restart_procedure }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -382,9 +412,7 @@
                             <select name="existing_issue_id" id="existing_issue_id" class="form-select">
                                 <option value="">-- Select an existing issue --</option>
                                 {% for issue in issue_lists %}
-                                <option value="{{ issue.id }}">
-                                    {{ issue.c_desc }} {% if issue.error_code %}({{ issue.error_code }}){% endif %}
-                                </option>
+                                <option value="{{ issue.id }}">{{ issue.display_label }}</option>
                                 {% endfor %}
                             </select>
                             <div class="form-help">This temporary issue will be linked to the selected issue</div>
@@ -471,11 +499,17 @@
 
         // Validate based on action
         if (action.value === 'promote_new') {
-            const desc = document.getElementById('c_desc').value.trim();
+            const desc = document.getElementById('fault_description').value.trim();
             if (!desc) {
                 e.preventDefault();
-                alert('Please enter a description for the new issue');
-                document.getElementById('c_desc').focus();
+                alert('Please enter a description for the new fault');
+                document.getElementById('fault_description').focus();
+                return false;
+            }
+            if (!document.getElementById('fault_category').value) {
+                e.preventDefault();
+                alert('Please select a fault category');
+                document.getElementById('fault_category').focus();
                 return false;
             }
         } else if (action.value === 'link_existing') {
@@ -493,5 +527,13 @@
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
     });
+
+    {% if form_errors %}
+    // Re-open the "Create New Issue Type" option after a failed save
+    document.getElementById('action_promote_new').checked = true;
+    document.getElementById('action_promote_new').closest('.action-option').classList.add('active');
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('engineer_notes').value = "{{ posted.engineer_notes|escapejs }}";
+    {% endif %}
 </script>
 {% endblock main-body %}

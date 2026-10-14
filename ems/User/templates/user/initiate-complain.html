@@ -1025,31 +1025,17 @@
         } else if (issueList.value) {
             const issueText = issueList.options[issueList.selectedIndex]?.text || '-';
 
-            // Format the display with badges and separators
-            let formattedText = issueText;
-
-            // Highlight error code in brackets with a badge style
-            formattedText = formattedText.replace(
-                /\[([^\]]+)\]/,
-                '<span style="background: #dbeafe; color: #1e40af; padding: 0.125rem 0.5rem; border-radius: 4px; font-weight: 600; margin-right: 0.5rem;">$1</span>'
-            );
-
-            // Highlight PRG: with a light green badge
-            formattedText = formattedText.replace(
-                /PRG: ([^•]+)/,
-                '<span style="background: #dcfce7; color: #166534; padding: 0.125rem 0.5rem; border-radius: 4px; font-weight: 600; margin-right: 0.5rem;">PRG: $1</span>'
-            );
-
-            // Highlight MACH: with a light orange badge
-            formattedText = formattedText.replace(
-                /MACH: ([^•]+)/,
-                '<span style="background: #ffedd5; color: #9a3412; padding: 0.125rem 0.5rem; border-radius: 4px; font-weight: 600; margin-right: 0.5rem;">MACH: $1</span>'
-            );
-
-            // Replace bullet separators with styled separators
-            formattedText = formattedText.replace(/•/g, '<span style="color: #cbd5e1; margin: 0 0.25rem;">•</span>');
-
-            issueElement.innerHTML = formattedText;
+            // Show the "[Category]" prefix as a badge, the rest as plain text
+            const match = issueText.match(/^\[([^\]]+)\]\s*(.*)$/);
+            issueElement.textContent = '';
+            if (match) {
+                const badge = document.createElement('span');
+                badge.style.cssText = 'background: #dbeafe; color: #1e40af; padding: 0.125rem 0.5rem; border-radius: 4px; font-weight: 600; margin-right: 0.5rem;';
+                badge.textContent = match[1];
+                issueElement.append(badge, match[2]);
+            } else {
+                issueElement.textContent = issueText;
+            }
         } else {
             issueElement.textContent = 'Not specified';
         }
@@ -1118,8 +1104,17 @@
             codeSelect.innerHTML = '<option value="">Error loading machines</option>';
         }
 
-        // Fetch issue list for this equipment
-        const issueUrl = `/api/issuelist/${equipment}/`;
+        // Fetch faults for this equipment (narrowed to the machine's manufacturer once a machine is picked)
+        await fetchIssueList(equipment);
+    }
+
+    // Fetch Fault Library entries for the equipment, optionally for a specific machine
+    async function fetchIssueList(equipment, machineId) {
+        const issueSelect = document.querySelector('#issue-list');
+        let issueUrl = `/api/issuelist/${equipment}/`;
+        if (machineId) {
+            issueUrl += `?machine=${machineId}`;
+        }
         try {
             const response = await fetch(issueUrl);
             const data = await response.json();
@@ -1129,6 +1124,7 @@
             }
 
             populateIssueList(data.issues, issueSelect);
+            toggleCustomIssue();
         } catch (error) {
             console.error("Error fetching issue list:", error);
             issueSelect.innerHTML = '<option value="">Error loading issues</option>';
@@ -1146,6 +1142,9 @@
             sectionSelect.innerHTML = '<option value="">-- Select Machine First --</option>';
             return;
         }
+
+        // Show only faults that apply to this machine's manufacturer
+        fetchIssueList(document.querySelector('#equipment').value, machineId);
 
         // Fetch machine hours
         const hoursUrl = `/machine-hours/${machineId}`;
@@ -1231,31 +1230,8 @@
             const option = document.createElement('option');
             option.value = issue.id;
 
-            // Build display text: [ERROR_CODE] • PRG: programmer_string • MACH: machine_string • Description
-            let displayParts = [];
-
-            // Add error code as badge
-            if (issue.error_code) {
-                displayParts.push(`[${issue.error_code}]`);
-            }
-
-            // Add programmer string with prefix
-            if (issue.programmer_string) {
-                displayParts.push(`PRG: ${issue.programmer_string}`);
-            }
-
-            // Add machine string with prefix
-            if (issue.machine_string) {
-                displayParts.push(`MACH: ${issue.machine_string}`);
-            }
-
-            // Add description
-            if (issue.c_desc) {
-                displayParts.push(issue.c_desc);
-            }
-
-            // Join all parts with bullet separator
-            option.text = displayParts.length > 0 ? displayParts.join(' • ') : 'Unknown Issue';
+            // Display text: [Category] Section · Description
+            option.text = issue.label || issue.fault_description || 'Unknown Issue';
 
             option.setAttribute('data-type', 'existing');
             element.append(option);

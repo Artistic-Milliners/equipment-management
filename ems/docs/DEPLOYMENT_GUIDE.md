@@ -188,12 +188,13 @@ dc exec web python manage.py shell -c "from core.models import Unit; Unit.object
 ### 7.3 Load fixtures (order matters)
 
 ```bash
-for f in Department Contractor Designation Manufacturer Equipment Machines Spares MachineSpares IssueList; do
+for f in Department Contractor Designation Manufacturer Equipment Machines Spares MachineSpares; do
   echo "Loading $f..." && dc exec -T web python manage.py loaddata $f.json || break
 done
 ```
 
 > `MachineSpares.json` holds the machine ↔ spare links and must load after both `Machines` and `Spares`.
+> The Fault Library has no fixture; faults are entered in Django admin (**Core → Fault Library**).
 
 ### 7.4 Run setup and permission commands (order matters)
 

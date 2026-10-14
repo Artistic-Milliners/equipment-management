@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
 from .models import (CustomUser, Department, Designation, Contractor, Manufacturer,
-                     IssueList, TemporaryIssue, Employee, Machines, Spares, MachineIssue, Equipment,
+                     FaultLibrary, TemporaryIssue, Employee, Machines, Spares, MachineIssue, Equipment,
                      SpareTransaction, IssueClosing, Unit, WorkSession, MachineSection)
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -68,12 +68,33 @@ class ManufacturerCreationForm(forms.ModelForm):
         model = Manufacturer
         fields = "__all__"
 
-class IssueListCreationForm(forms.ModelForm):
-
+class FaultLibraryForm(forms.ModelForm):
+    # Section names come from MachineSection, grouped by equipment; the model's clean() checks the combination
+    machine_section = forms.ChoiceField(required=False)
 
     class Meta:
-        model = IssueList
-        fields = "__all__"
+        model = FaultLibrary
+        fields = ['equipment', 'manufacturer', 'fault_category', 'machine_section',
+                  'fault_description', 'fault_effect', 'restart_procedure', 'image']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        grouped = {}
+        rows = (MachineSection.objects.filter(machine__isnull=False)
+                .values_list('machine__type_of_machine__name', 'section_name')
+                .order_by('machine__type_of_machine__name', 'section_name').distinct())
+        for equipment_name, section_name in rows:
+            names = grouped.setdefault(equipment_name, [])
+            if section_name.lower() not in [n.lower() for n in names]:
+                names.append(section_name)
+
+        choices = [('', '---------')]
+        current = self.instance.machine_section
+        if current and not any(current.lower() == n.lower() for names in grouped.values() for n in names):
+            choices.append((current, f'{current} (no longer on any machine)'))
+        choices += [(equipment, [(n, n) for n in names]) for equipment, names in grouped.items()]
+        self.fields['machine_section'].choices = choices
+        self.fields['machine_section'].help_text = 'Optional. Must be a section of a machine of the selected equipment.'
 
 class SparesCreationForm(forms.ModelForm):
     model = Spares
@@ -218,19 +239,17 @@ class SpareTransactionAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Don't allow deletion of transaction history
         return False
-@admin.register(IssueList)
-class IssuelistCreation(admin.ModelAdmin):
-    form = IssueListCreationForm
-    search_fields = ['equipment__name', 'c_desc']
-    list_display = ['equipment', 'programmer_string','machine_string','c_desc', 'error_code', 'created_by', 'image']
-    list_filter = ['equipment', 'created_by']
-    readonly_fields = ['created_by']
+@admin.register(FaultLibrary)
+class FaultLibraryAdmin(admin.ModelAdmin):
+    form = FaultLibraryForm
+    list_display = ['fault_description_short', 'equipment', 'manufacturer', 'machine_section', 'fault_category']
+    list_filter = ['equipment', 'manufacturer', 'fault_category']
+    search_fields = ['fault_description', 'machine_section', 'equipment__name']
+    list_select_related = ['equipment', 'manufacturer']
 
-    def save_model(self, request, obj, form, change):
-        # Set created_by when creating through admin
-        if not change and not obj.created_by:
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
+    def fault_description_short(self, obj):
+        return obj.fault_description[:60] + '...' if len(obj.fault_description) > 60 else obj.fault_description
+    fault_description_short.short_description = 'Fault'
 
 @admin.register(TemporaryIssue)
 class TemporaryIssueAdmin(admin.ModelAdmin):

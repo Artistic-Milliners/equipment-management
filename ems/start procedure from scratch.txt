@@ -9,7 +9,7 @@ winpty docker --context maximo compose -f docker-compose.prod.yml exec web pytho
 winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata Equipment.json
 winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata Machines.json
 winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata Spares.json
-winpty docker --context maximo compose -f docker-compose.prod.yml exec web python manage.py loaddata IssueList.json
+(Fault Library has no fixture - add faults in Django admin)
 
 
 run management command in this order
