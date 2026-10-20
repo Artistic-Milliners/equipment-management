@@ -8,6 +8,11 @@ from .models import (CustomUser, Department, Designation, Contractor, Manufactur
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django import forms
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from django.db import transaction
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from .forms import UserCreationForm
 # Register your models here.
 
@@ -127,6 +132,75 @@ class MachineSectionForm(forms.ModelForm):
             if duplicates.exists():
                 raise forms.ValidationError(f'"{section_name}" already exists for {machine}.')
         return cleaned_data
+
+
+class MachineSectionBulkForm(forms.Form):
+    machine = forms.ModelChoiceField(
+        queryset=Machines.objects.select_related('type_of_machine').order_by('type_of_machine__name', 'name'))
+
+
+class SectionNameForm(forms.Form):
+    section_name = forms.CharField(max_length=100, required=False, label='Section name')
+
+
+class BaseSectionNameFormSet(forms.BaseFormSet):
+    """Section names for one machine: blank rows are ignored, duplicates rejected."""
+
+    def __init__(self, *args, machine=None, **kwargs):
+        self.machine = machine
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        if any(self.errors):
+            return
+        existing = set()
+        if self.machine:
+            existing = {name.lower() for name in
+                        MachineSection.objects.filter(machine=self.machine).values_list('section_name', flat=True)}
+        seen = set()
+        for form in self.forms:
+            name = (form.cleaned_data.get('section_name') or '').strip()
+            form.cleaned_data['section_name'] = name
+            if not name:
+                continue
+            if name.lower() in seen:
+                form.add_error('section_name', f'"{name}" is entered more than once.')
+            elif name.lower() in existing:
+                form.add_error('section_name', f'"{name}" already exists for {self.machine}.')
+            seen.add(name.lower())
+        if not seen:
+            raise forms.ValidationError('Enter at least one section name.')
+
+    @property
+    def section_names(self):
+        return [f.cleaned_data['section_name'] for f in self.forms if f.cleaned_data.get('section_name')]
+
+
+SectionNameFormSet = forms.formset_factory(SectionNameForm, formset=BaseSectionNameFormSet, extra=3)
+
+
+class MachineSectionInlineFormSet(forms.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        seen = set()
+        for form in self.forms:
+            if not hasattr(form, 'cleaned_data') or form.cleaned_data.get('DELETE'):
+                continue
+            name = (form.cleaned_data.get('section_name') or '').strip()
+            if not name:
+                continue
+            if name.lower() in seen:
+                form.add_error('section_name', f'"{name}" is entered more than once.')
+            seen.add(name.lower())
+            form.cleaned_data['section_name'] = name
+            form.instance.section_name = name
+
+
+class MachineSectionInline(admin.TabularInline):
+    model = MachineSection
+    formset = MachineSectionInlineFormSet
+    fields = ['section_name']
+    extra = 1
 
 class EmployeeCreationForm(forms.ModelForm):
     class Meta:
@@ -292,6 +366,7 @@ class Machine(admin.ModelAdmin):
     list_filter = ['type_of_machine', 'manufacturer', 'Department']
     search_fields = ['name', 'model']
     list_select_related = ['type_of_machine', 'manufacturer', 'Department']
+    inlines = [MachineSectionInline]
 
 @admin.register(MachineSection)
 class MachineSectionAdmin(admin.ModelAdmin):
@@ -301,6 +376,39 @@ class MachineSectionAdmin(admin.ModelAdmin):
     search_fields = ['section_name', 'machine__name']
     list_select_related = ['machine__type_of_machine']
     ordering = ['machine__name', 'section_name']
+
+    def add_view(self, request, form_url='', extra_context=None):
+        # Add many sections to one machine at once instead of the default one-object form
+        if not self.has_add_permission(request):
+            raise PermissionDenied
+
+        if request.method == 'POST':
+            machine_form = MachineSectionBulkForm(request.POST)
+            machine = machine_form.cleaned_data['machine'] if machine_form.is_valid() else None
+            formset = SectionNameFormSet(request.POST, machine=machine)
+            if machine and formset.is_valid():
+                names = formset.section_names
+                with transaction.atomic():
+                    MachineSection.objects.bulk_create(
+                        [MachineSection(machine=machine, section_name=name) for name in names])
+                self.message_user(request, f'Added {len(names)} section{"s" if len(names) != 1 else ""} '
+                                           f'to {machine}: {", ".join(names)}.', messages.SUCCESS)
+                if '_addanother' in request.POST:
+                    return redirect(f"{reverse('admin:core_machinesection_add')}?machine={machine.pk}")
+                return redirect(f"{reverse('admin:core_machinesection_changelist')}?machine__id__exact={machine.pk}")
+        else:
+            machine_form = MachineSectionBulkForm(initial={'machine': request.GET.get('machine')})
+            formset = SectionNameFormSet()
+
+        context = {
+            **self.admin_site.each_context(request),
+            'title': 'Add machine sections',
+            'opts': self.model._meta,
+            'machine_form': machine_form,
+            'formset': formset,
+            **(extra_context or {}),
+        }
+        return render(request, 'admin/core/machinesection/bulk_add.html', context)
 
     def equipment(self, obj):
         return obj.machine.type_of_machine if obj.machine else '-'

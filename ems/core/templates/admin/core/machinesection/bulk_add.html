@@ -1,0 +1,135 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+<style>
+    .section-table { width: 100%; max-width: 640px; margin-top: 8px; }
+    .section-table td { vertical-align: top; padding: 6px 8px; }
+    .section-table input[type="text"] { width: 100%; box-sizing: border-box; }
+    .section-table .row-num { width: 2em; color: var(--body-quiet-color); padding-top: 12px; }
+    .section-table .row-remove { width: 2em; text-align: center; }
+    .remove-row { background: none; border: 0; color: var(--delete-button-bg, #ba2121); font-size: 18px; cursor: pointer; line-height: 1; }
+    .add-row-btn { margin: 10px 0 0 8px; background: none; border: 0; color: var(--link-fg); cursor: pointer; font-size: 14px; padding: 0; }
+    .add-row-btn::before { content: "+ "; font-weight: bold; }
+    .section-table .errorlist { margin: 4px 0 0; }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+    &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form method="post" id="bulk-section-form" novalidate>
+        {% csrf_token %}
+
+        {% if formset.non_form_errors or machine_form.non_field_errors %}
+        <p class="errornote">{{ formset.non_form_errors|join:" " }}{{ machine_form.non_field_errors|join:" " }}</p>
+        {% endif %}
+
+        <fieldset class="module aligned">
+            <div class="form-row{% if machine_form.machine.errors %} errors{% endif %}">
+                {{ machine_form.machine.errors }}
+                <div class="flex-container">
+                    <label class="required" for="{{ machine_form.machine.id_for_label }}">Machine:</label>
+                    {{ machine_form.machine }}
+                </div>
+                <div class="help">All sections below are added to this machine.</div>
+            </div>
+        </fieldset>
+
+        <fieldset class="module">
+            <h2>Sections</h2>
+            {{ formset.management_form }}
+            <table class="section-table">
+                <tbody id="section-rows">
+                    {% for form in formset %}
+                    <tr class="section-row">
+                        <td class="row-num">{{ forloop.counter }}.</td>
+                        <td>{{ form.section_name }}{{ form.section_name.errors }}</td>
+                        <td class="row-remove"><button type="button" class="remove-row" title="Remove this row">&times;</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="button" class="add-row-btn" id="add-section-row">Add another section</button>
+        </fieldset>
+
+        <template id="empty-section-row">
+            <tr class="section-row">
+                <td class="row-num"></td>
+                <td>{{ formset.empty_form.section_name }}</td>
+                <td class="row-remove"><button type="button" class="remove-row" title="Remove this row">&times;</button></td>
+            </tr>
+        </template>
+
+        <div class="submit-row">
+            <input type="submit" value="{% translate 'Save' %}" class="default" name="_save">
+            <input type="submit" value="{% translate 'Save and add another' %}" name="_addanother">
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    const rows = document.getElementById('section-rows');
+    const total = document.getElementById('id_{{ formset.prefix }}-TOTAL_FORMS');
+    const template = document.getElementById('empty-section-row');
+    const prefix = '{{ formset.prefix }}';
+
+    // Re-number rows and their field names so the formset indexes stay 0..n-1
+    function renumber() {
+        const all = rows.querySelectorAll('.section-row');
+        all.forEach(function (row, i) {
+            row.querySelector('.row-num').textContent = (i + 1) + '.';
+            row.querySelectorAll('input').forEach(function (input) {
+                input.name = input.name.replace(new RegExp(prefix + '-(\\d+|__prefix__)-'), prefix + '-' + i + '-');
+                input.id = input.id.replace(new RegExp(prefix + '-(\\d+|__prefix__)-'), prefix + '-' + i + '-');
+            });
+        });
+        total.value = all.length;
+    }
+
+    function addRow() {
+        rows.appendChild(template.content.cloneNode(true));
+        renumber();
+        const inputs = rows.querySelectorAll('input[type="text"]');
+        inputs[inputs.length - 1].focus();
+    }
+
+    document.getElementById('add-section-row').addEventListener('click', addRow);
+
+    rows.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('remove-row')) return;
+        const row = e.target.closest('.section-row');
+        if (rows.querySelectorAll('.section-row').length > 1) {
+            row.remove();
+            renumber();
+        } else {
+            row.querySelector('input').value = '';
+        }
+    });
+
+    // Enter in the last row adds a new row instead of submitting
+    rows.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+        e.preventDefault();
+        const inputs = rows.querySelectorAll('input[type="text"]');
+        const index = Array.prototype.indexOf.call(inputs, e.target);
+        if (index === inputs.length - 1) {
+            addRow();
+        } else {
+            inputs[index + 1].focus();
+        }
+    });
+})();
+</script>
+{% endblock %}
