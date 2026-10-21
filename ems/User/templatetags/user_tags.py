@@ -17,6 +17,18 @@ def has_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
 
 
+@register.filter(name='get_item')
+def get_item(mapping, key):
+    """
+    Look up a key that isn't a valid template variable name (e.g. a form field like "machine-hours")
+    Usage in template: {{ posted|get_item:"machine-hours" }}
+    Returns '' when the mapping is empty/None or the key is missing.
+    """
+    if not mapping:
+        return ''
+    return mapping.get(key, '')
+
+
 @register.filter(name='is_inventory_controller')
 def is_inventory_controller(user):
     """

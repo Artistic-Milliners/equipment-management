@@ -685,9 +685,24 @@ class IssueClosing(models.Model):
 
     ]
 
+    RESOLUTION_IN_HOUSE = 'IN_HOUSE'
+    RESOLUTION_OUTSOURCED = 'OUTSOURCED'
+    RESOLUTION_CHOICES = [
+        (RESOLUTION_IN_HOUSE, 'In-House'),
+        (RESOLUTION_OUTSOURCED, 'Outsourced'),
+    ]
+
+    EQUIPMENT_STATUS_CHOICES = [
+        ('on', 'Operational'),
+        ('off', 'Non-Operational'),
+    ]
+
     issueReview = models.OneToOneField(MachineIssueReview, on_delete=models.DO_NOTHING)
     date_ended = models.DateTimeField(auto_now=True)
+    resolution_type = models.CharField(max_length=20, choices=RESOLUTION_CHOICES, default=RESOLUTION_OUTSOURCED)
     contractor = models.ForeignKey(Contractor, related_name='resolved_issues', on_delete=models.DO_NOTHING, blank=True, null=True)
+    resolved_department = models.ForeignKey(Department, related_name='resolved_closings', on_delete=models.PROTECT,
+                                            blank=True, null=True, help_text="Department that resolved an in-house repair")
     machineHours = models.IntegerField()
     supervisor = models.CharField(max_length=50, null=True, blank=True)
     technician = models.CharField(max_length=50, null=True, blank=True)
@@ -696,7 +711,7 @@ class IssueClosing(models.Model):
     remarks = models.TextField(default="EMPTY") 
     image = models.ManyToManyField(ImageModel, related_name="closingImages")
     installed_spares = models.ManyToManyField(Spares, related_name="used_in_repairs", blank=True, help_text="Spares installed during repair")
-    equipment_status = models.CharField(max_length=10)
+    equipment_status = models.CharField(max_length=10, choices=EQUIPMENT_STATUS_CHOICES)
     status = models.CharField(max_length=50, default=STATUS_CHOICES[0][0])
     
     def totalDays(self):

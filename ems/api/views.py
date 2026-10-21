@@ -190,7 +190,10 @@ class TicketDetailAPIView(APIView):
                             'solution': closing.solutionDescription or '',
                             'duration': closing.duration or 0,
                             'remarks': closing.remarks or '',
-                            'equipment_status': closing.equipment_status or '',
+                            'equipment_status': closing.get_equipment_status_display() if closing.equipment_status else '',
+                            'resolution_type': closing.get_resolution_type_display(),
+                            'resolved_by': (closing.contractor.contractor if closing.contractor
+                                            else closing.resolved_department.name if closing.resolved_department else ''),
                         }
             except Exception as e:
                 print(f"No closing data: {e}")

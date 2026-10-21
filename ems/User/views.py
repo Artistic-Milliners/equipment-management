@@ -37,6 +37,7 @@ from django.db.models import Prefetch
 from django.http import Http404
 from core.access import visible_machines
 import logging
+from decimal import Decimal, InvalidOperation
 
 # Create your views here.
 
@@ -298,93 +299,158 @@ class ComplainClosingView(LoginRequiredMixin, View):
     
     """
 
+    # Tickets reach the closing form after the operator confirms the fix, or after approval of a detailed review
+    CLOSABLE_STATUSES = [MachineIssue.STATUS_AWAITING_DOCUMENTATION, MachineIssue.STATUS_APPROVED]
+    IN_HOUSE_DEPARTMENT_TYPES = ['MAINTENANCE', 'SERVICES']
+    NAME_MAX_LENGTH = 50
+
     def get(self, request, pk):
         """Display the closing form"""
-        issue = get_object_or_404(MachineIssue, pk=pk)
+        issue = get_object_or_404(MachineIssue.objects.select_related('machine_id', 'equipment'), pk=pk)
+        blocked = self._check_access(request, issue)
+        if blocked:
+            return blocked
+        return self._render_form(request, issue)
 
-        # Authorization check
-        if not self._can_close(request.user, issue):
+    def post(self, request, pk):
+        """Validate and process the closing form with an atomic transaction"""
+        issue = get_object_or_404(MachineIssue.objects.select_related('machine_id', 'equipment'), pk=pk)
+        blocked = self._check_access(request, issue)
+        if blocked:
+            return blocked
+
+        data, errors = self._validate(request, issue)
+        if errors:
+            return self._render_form(request, issue, errors=errors)
+
+        try:
+            with transaction.atomic():
+                closing = self._create_closing_record(issue, data)
+                image_errors = self._save_images(request, closing)
+                self._save_spares(request, closing)
+                self._close_issue(issue, data)
+        except Exception as e:
+            logger.exception(f"Failed to close issue {pk}")
+            return self._render_form(request, issue, errors=[f"Could not close the complaint: {e}"])
+
+        if image_errors:
+            messages.warning(request, f"Closed successfully, but some images failed: {image_errors}")
+        else:
+            messages.success(request, f"Complaint {issue.ticket_num} closed successfully.")
+        logger.info(f"Issue {issue.ticket_num} closed by {request.user.username}")
+        return redirect("User:complain_closing_list")
+
+    def _check_access(self, request, issue):
+        """Return a redirect if this user may not close this issue now, else None"""
+        if not self._can_close(request.user):
             messages.error(request, "You are not authorized to close this complaint.")
             return redirect('maintenance:complain_list')
-
-        # Ensure review exists
-        review = getattr(issue, 'machineissue', None)
-        if not review:
+        if issue.status not in self.CLOSABLE_STATUSES:
+            messages.error(request, f"Complaint {issue.ticket_num} cannot be closed while it is "
+                                    f"'{issue.get_status_display() or issue.status}'.")
+            return redirect('maintenance:complain_list')
+        if not getattr(issue, 'machineissue', None):
             messages.info(request, f'Complete the review form before closing {issue.ticket_num}')
-            return redirect('User:review_complain', pk=pk)
+            return redirect('User:review_complain', pk=issue.pk)
+        return None
+
+    def _can_close(self, user):
+        """Only engineers (same rule as the engineer ticket views) may close complaints"""
+        if not hasattr(user, 'employee'):
+            return False
+        return user.has_perm('core.can_review_complaint') or user.groups.filter(name='Engineers').exists()
+
+    def _in_house_departments(self):
+        return Department.objects.filter(dpt_type__in=self.IN_HOUSE_DEPARTMENT_TYPES).order_by('name')
+
+    def _render_form(self, request, issue, errors=None):
+        review = issue.machineissue
+        machine_spare_ids = set(MachineSpares.objects.filter(machine=issue.machine_id).values_list('spare_id', flat=True))
+        # Spares linked to this machine first, then all others
+        spares = sorted(Spares.objects.only('id', 'name'), key=lambda s: (s.pk not in machine_spare_ids, s.name.lower()))
+
+        worked_hours = issue.work_sessions.aggregate(total=Sum('duration_hours'))['total']
+        posted = request.POST if errors else None
 
         context = {
             'issue': issue,
             'review': review,
-            'contractors': Contractor.objects.all(),
-            'spares': MachineSpares.objects.filter(machine=issue.machine_id),
+            'contractors': Contractor.objects.order_by('contractor'),
+            'departments': self._in_house_departments(),
+            'spares': [{'id': s.pk, 'name': s.name, 'linked': s.pk in machine_spare_ids} for s in spares],
+            'selected_spares': [int(x) for x in posted.getlist('states[]') if x.isdigit()] if posted else [],
+            'errors': errors or [],
+            'posted': posted,
+            'default_duration': round(worked_hours, 1) if worked_hours else '',
+            'name_max_length': self.NAME_MAX_LENGTH,
         }
         return render(request, "user/complain_closing.html", context)
 
-    def post(self, request, pk):
-        
-        """Process the closing form with atomic transaction"""
-        issue = get_object_or_404(MachineIssue, pk=pk)
-
-        # Authorization check
-        if not self._can_close(request.user, issue):
-            messages.error(request, "You are not authorized to close this complaint.")
-            return redirect('maintenance:complain_list')
+    def _validate(self, request, issue):
+        """Return (cleaned data, list of error messages)"""
+        post = request.POST
+        errors = []
+        data = {}
 
         try:
-            with transaction.atomic():
-                # Create closing record
-                closing = self._create_closing_record(request, issue)
+            data['machine_hours'] = int(post.get('machine-hours', ''))
+            if data['machine_hours'] < 0:
+                errors.append('Current machine hours cannot be negative.')
+            elif issue.machine_hours is not None and data['machine_hours'] < issue.machine_hours:
+                errors.append(f'Current machine hours cannot be lower than the hours at failure ({issue.machine_hours}).')
+        except ValueError:
+            errors.append('Enter the current machine hours as a whole number.')
 
-                # Save images (collect errors but don't fail)
-                image_errors = self._save_images(request, closing)
-
-                # Save spares
-                self._save_spares(request, closing)
-
-                # Update issue status
-                self._close_issue(issue)
-
-                # User feedback
-                if image_errors:
-                    messages.warning(request, f"Closed successfully, but some images failed: {image_errors}")
-                else:
-                    messages.success(request, f"Complaint {issue.ticket_num} closed successfully.")
-
-                logger.info(f"Issue {issue.ticket_num} closed by {request.user.username}")
-                return redirect("User:complain_closing_list")
-
-        except Exception as e:
-            logger.exception(f"Failed to close issue {pk}")
-            messages.error(request, f"Failed to close complaint: {str(e)}")
-            return redirect('User:complain_closing', pk=pk)
-
-    def _can_close(self, user, issue):
-        """Check if user is authorized to close this issue"""
         try:
-            emp = user.employee
-            is_engineer = user.groups.filter(name="Engineer").exists()
-            return not is_engineer or emp.department == issue.error_department
-        except Employee.DoesNotExist:
-            return False
+            data['duration'] = Decimal(post.get('duration', '').strip())
+            if data['duration'] < 0:
+                errors.append('Repair duration cannot be negative.')
+        except (InvalidOperation, ValueError):
+            errors.append('Enter the repair duration in hours (e.g. 1.5).')
 
-    def _create_closing_record(self, request, issue):
+        data['equipment_status'] = post.get('equipment-status')
+        if data['equipment_status'] not in dict(IssueClosing.EQUIPMENT_STATUS_CHOICES):
+            errors.append('Select the equipment status.')
+
+        data['resolution_type'] = post.get('resolved-by-type')
+        data['contractor'] = data['department'] = None
+        if data['resolution_type'] == IssueClosing.RESOLUTION_OUTSOURCED:
+            data['contractor'] = Contractor.objects.filter(pk=post.get('contractor') or None).first()
+            if not data['contractor']:
+                errors.append('Select the service provider for an outsourced repair.')
+        elif data['resolution_type'] == IssueClosing.RESOLUTION_IN_HOUSE:
+            data['department'] = self._in_house_departments().filter(pk=post.get('department') or None).first()
+            if not data['department']:
+                errors.append('Select the department that did the in-house repair.')
+        else:
+            errors.append('Select the resolution type.')
+
+        for field, label in (('technician', 'Technician name'), ('supervisor', 'Supervisor name')):
+            data[field] = post.get(field, '').strip()
+            if len(data[field]) > self.NAME_MAX_LENGTH:
+                errors.append(f'{label} must be at most {self.NAME_MAX_LENGTH} characters.')
+
+        data['solution'] = post.get('solution-description', '').strip()
+        if not data['solution']:
+            errors.append('Describe the solution implemented.')
+        data['remarks'] = post.get('additional-remarks', '').strip()
+
+        return data, errors
+
+    def _create_closing_record(self, issue, data):
         """Create the IssueClosing record"""
-        contractor = None
-        contractor_id = request.POST.get("resolvedby")
-        if contractor_id:
-            contractor = Contractor.objects.filter(pk=contractor_id).first()
-
         return IssueClosing.objects.create(
             issueReview=issue.machineissue,
-            contractor=contractor,
-            machineHours=request.POST["machine-hours"],
-            supervisor=request.POST["supervisor"],
-            technician=request.POST["technician"],
-            solutionDescription=request.POST["solution-description"],
-            duration=request.POST["duration"],
-            remarks=request.POST["additional-remarks"],
-            equipment_status=request.POST["equipment-status"],
+            resolution_type=data['resolution_type'],
+            contractor=data['contractor'],
+            resolved_department=data['department'],
+            machineHours=data['machine_hours'],
+            supervisor=data['supervisor'],
+            technician=data['technician'],
+            solutionDescription=data['solution'],
+            duration=data['duration'],
+            remarks=data['remarks'],
+            equipment_status=data['equipment_status'],
             status='CLOSED'
         )
 
@@ -407,9 +473,15 @@ class ComplainClosingView(LoginRequiredMixin, View):
             if spare:
                 closing.installed_spares.add(spare)
 
-    def _close_issue(self, issue):
-        """Update issue status and timestamps"""
+    def _close_issue(self, issue, data):
+        """Update issue status, timestamps, operational status and the machine's hour meter"""
         issue.closure_timestamp = timezone.now()
+        issue.operational_status = 'OPERATIONAL' if data['equipment_status'] == 'on' else 'NON_OPERATIONAL'
+
+        machine = issue.machine_id
+        if machine and (machine.machine_hours is None or data['machine_hours'] > machine.machine_hours):
+            machine.machine_hours = data['machine_hours']
+            machine.save(update_fields=['machine_hours'])
 
         if issue.documentation_timestamp:
             diff = issue.closure_timestamp - issue.documentation_timestamp
@@ -437,7 +509,8 @@ class ClosedComplainListView(ListView):
             'issueReview__issue__error_department',
             'issueReview__reviewer',
             'issueReview__assignDepartment',
-            'contractor'
+            'contractor',
+            'resolved_department'
         ).prefetch_related(
             'installed_spares',
             'image',

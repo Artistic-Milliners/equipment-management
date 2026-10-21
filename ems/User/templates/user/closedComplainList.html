@@ -803,7 +803,7 @@
                             {% else %}
                                 <div class="info-pill">
                                     <i class="fas fa-home"></i>
-                                    In-House
+                                    In-House{% if complain.resolved_department %}: {{ complain.resolved_department.name|truncatechars:20 }}{% endif %}
                                 </div>
                             {% endif %}
                             {% if complain.technician %}

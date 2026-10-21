@@ -446,8 +446,9 @@ class WorkSessionAdmin(admin.ModelAdmin):
 
 @admin.register(IssueClosing)
 class IssueClosingAdmin(admin.ModelAdmin):
-    list_display = ['id', 'issueReview', 'contractor', 'technician', 'equipment_status', 'status', 'date_ended']
-    list_filter = ['status', 'equipment_status', 'contractor', 'date_ended']
+    list_display = ['id', 'issueReview', 'resolution_type', 'contractor', 'resolved_department', 'technician',
+                    'equipment_status', 'status', 'date_ended']
+    list_filter = ['status', 'resolution_type', 'equipment_status', 'contractor', 'resolved_department', 'date_ended']
     search_fields = ['issueReview__issue__ticket_num', 'technician', 'supervisor', 'solutionDescription']
     readonly_fields = ['date_ended']
     filter_horizontal = ['installed_spares', 'image']
@@ -457,7 +458,8 @@ class IssueClosingAdmin(admin.ModelAdmin):
             'fields': ('issueReview', 'status')
         }),
         ('Resolution Details', {
-            'fields': ('contractor', 'technician', 'supervisor', 'solutionDescription', 'remarks')
+            'fields': ('resolution_type', 'contractor', 'resolved_department', 'technician', 'supervisor',
+                       'solutionDescription', 'remarks')
         }),
         ('Machine Details', {
             'fields': ('machineHours', 'duration', 'equipment_status')

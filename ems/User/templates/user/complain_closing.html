@@ -1,6 +1,6 @@
 {% extends "index.html" %}
 {% load static %}
-{% load app_filters %}
+{% load app_filters user_tags %}
 
 {% block page-title %}Close Complaint - #{{ issue.ticket_num }}{% endblock page-title %}
 {% block main-body %}
@@ -544,6 +544,25 @@
             flex-direction: column;
         }
     }
+    .closing-errors {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .closing-errors ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+    .spare-linked-badge {
+        margin-left: auto;
+        font-size: 0.7rem;
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.1rem 0.45rem;
+        border-radius: 4px;
+        white-space: nowrap;
+    }
+    .form-hint { display: block; margin-top: 0.35rem; font-size: 0.8rem; color: #64748b; }
 </style>
 
 <div class="closing-container">
@@ -552,7 +571,7 @@
         <i class="fas fa-arrow-left"></i>
         Back to Complaint Details
     </a>
-    
+
     <!-- Closing Header -->
     <div class="closing-header">
         <div class="closing-title">
@@ -571,20 +590,23 @@
             </div>
             <div class="meta-item">
                 <i class="fas fa-cogs"></i>
-                <span>{{ issue.equipment.name|default:issue.machine_id.name }}</span>
+                <span>{{ issue.machine_id.name }}{% if issue.equipment %} ({{ issue.equipment.name }}){% endif %}</span>
             </div>
         </div>
     </div>
-    
+
+    {% if errors %}
+    <div class="closing-errors" role="alert">
+        <strong><i class="fas fa-exclamation-circle me-1"></i> Please fix the following before closing:</strong>
+        <ul>
+            {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     <form action="{% url 'User:complain_closing' pk=issue.pk %}" method="post" enctype="multipart/form-data" id="closing-form">
         {% csrf_token %}
-            
-        <!-- Hidden fields for basic info -->
-        <input type="hidden" id="date" name="date" value="">
-        <input type="hidden" id="complain" name="complain" value="{{ issue.ticket_num }}">
-        <input type="hidden" id="generated_by" name="generated_by" value="{{ issue.user.name|title }}">
-        <input type="hidden" name="initial-machine-hours" value="{{ issue.machine_hours }}">
-        
+
         <div class="form-grid">
             <!-- Machine Information -->
             <div class="form-section">
@@ -592,74 +614,80 @@
                     <i class="fas fa-cogs"></i>
                     Machine Information
                 </h3>
-                
+
                 <div class="form-group">
                     <label class="form-label" for="final-machine-hours">
                         <i class="fas fa-clock me-1"></i>
                         Current Machine Hours
                     </label>
-                    <input type="number" class="form-control" id="final-machine-hours" name="machine-hours" placeholder="Enter current machine hours" required>
+                    <input type="number" class="form-control" id="final-machine-hours" name="machine-hours"
+                           placeholder="Enter current machine hours" required step="1"
+                           min="{{ issue.machine_hours|default:0 }}"
+                           value="{% if posted %}{{ posted|get_item:'machine-hours' }}{% endif %}">
+                    {% if issue.machine_hours is not None %}
+                    <small class="form-hint">Hours at failure: {{ issue.machine_hours }}. Can stay the same if the machine was stopped during repair.</small>
+                    {% endif %}
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label" for="duration">
                         <i class="fas fa-hourglass-half me-1"></i>
                         Repair Duration (Hours)
                     </label>
-                    <input type="number" class="form-control" id="duration" name="duration" placeholder="Enter repair duration in hours" step="0.1">
+                    <input type="number" class="form-control" id="duration" name="duration"
+                           placeholder="Enter repair duration in hours" step="0.1" min="0" required
+                           value="{% if posted %}{{ posted.duration }}{% else %}{{ default_duration }}{% endif %}">
+                    {% if default_duration and not posted %}
+                    <small class="form-hint">Pre-filled from the recorded work time; adjust if needed.</small>
+                    {% endif %}
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label" for="equipment-status">
                         <i class="fas fa-power-off me-1"></i>
                         Equipment Status
                     </label>
                     <select class="form-select" name="equipment-status" id="equipment-status">
-                        <option value="on">Operational</option>
-                        <option value="off">Non-Operational</option>
+                        <option value="on" {% if posted|get_item:'equipment-status' == 'on' %}selected{% endif %}>Operational</option>
+                        <option value="off" {% if posted|get_item:'equipment-status' == 'off' %}selected{% endif %}>Non-Operational</option>
                     </select>
                 </div>
             </div>
-            
+
             <!-- Parts Information -->
             <div class="form-section">
                 <h3 class="section-title">
                     <i class="fas fa-puzzle-piece"></i>
                     Parts Information
                 </h3>
-                
+
                 <div class="form-group">
                     <label class="form-label">Malfunction Parts</label>
                     <div class="malfunction-parts">
-                        {% if issue.machineissue.malfunction_part.all %}
-                            {% for part in issue.machineissue.malfunction_part.all %}
-                                <span class="part-item">{{ part.name }}</span>
-                            {% endfor %}
-            {% else %}
+                        {% for part in review.malfunction_part.all %}
+                            <span class="part-item">{{ part.name }}</span>
+                        {% empty %}
                             <span class="text-muted">No malfunction parts identified</span>
-                        {% endif %}
+                        {% endfor %}
                     </div>
                 </div>
-                
+
                 <div class="form-group">
-                    <label class="form-label" for="spares-select">
+                    <label class="form-label" for="spares-search">
                         <i class="fas fa-tools me-1"></i>
                         Spares Installed
                     </label>
-                    
-                    <!-- Modern Spares Selection Interface -->
+
                     <div class="modern-spares-selector">
-                        <!-- Search Box -->
                         <div class="spares-search-container">
                             <div class="spares-search-input-group">
-                                <input type="text" id="spares-search" class="spares-search-input" placeholder="Type to search spares...">
+                                <input type="text" id="spares-search" class="spares-search-input" placeholder="Type to search spares..." autocomplete="off">
                                 <button type="button" class="spares-search-btn" id="spares-search-btn">
                                     <i class="fas fa-search"></i>
                                 </button>
                             </div>
                         </div>
-                        
-                        <!-- Search Results Dropdown -->
+
                         <div class="spares-search-results" id="spares-search-results" style="display: none;">
                             <div class="spares-results-header">
                                 <span class="spares-results-count">0 spares found</span>
@@ -667,123 +695,121 @@
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
-                            <div class="spares-results-list" id="spares-results-list">
-                                <!-- Results will be populated here -->
-                            </div>
+                            <div class="spares-results-list" id="spares-results-list"></div>
                         </div>
-                        
-                        <!-- Selected Spares Display -->
+
                         <div class="spares-selected-items" id="spares-selected-items">
                             <div class="spares-selected-header">
                                 <span class="spares-selected-count">Selected Spares (0)</span>
                             </div>
-                            <div class="spares-selected-list" id="spares-selected-list">
-                                <div class="spares-no-selection">
-                                    <i class="fas fa-info-circle"></i>
-                                    No spares selected yet
-                                </div>
-                            </div>
+                            <div class="spares-selected-list" id="spares-selected-list"></div>
                         </div>
                     </div>
-                    
-                    <!-- Hidden select with all available spares for JavaScript -->
+                    <small class="form-hint">Spares linked to this machine are listed first.</small>
+
+                    <!-- All spares for the search (machine-linked first) -->
                     <select id="all-spares-options" style="display: none;">
                         {% for spare in spares %}
-                            <option value="{{spare.spare.id}}">{{ spare.spare.name }}</option>
+                            <option value="{{ spare.id }}" data-linked="{{ spare.linked|yesno:'1,0' }}"
+                                    {% if spare.id in selected_spares %}data-selected="1"{% endif %}>{{ spare.name }}</option>
                         {% endfor %}
                     </select>
-                    
-                    <!-- Hidden select for form submission -->
-                    <select name="states[]" id="spares-select" multiple style="display: none;">
-                        <!-- Will be populated with selected values by JavaScript -->
-                    </select>
+
+                    <!-- Submitted values, filled by JavaScript -->
+                    <select name="states[]" id="spares-select" multiple style="display: none;"></select>
                 </div>
             </div>
-            
+
             <!-- Resolution Details -->
             <div class="form-section">
                 <h3 class="section-title">
                     <i class="fas fa-user-tie"></i>
                     Resolution Details
                 </h3>
-                
+
+                {% with resolution=posted|get_item:'resolved-by-type' %}
                 <div class="form-group">
                     <label class="form-label" for="resolved-by-type">
                         <i class="fas fa-wrench me-1"></i>
                         Resolution Type
                     </label>
                     <select class="form-select" name="resolved-by-type" id="resolved-by-type" onchange="changeOptions()">
-                        <option value="InHouse">In-House</option>
-                        <option value="OutSource" selected>Outsourced</option>
+                        <option value="IN_HOUSE" {% if resolution == 'IN_HOUSE' %}selected{% endif %}>In-House</option>
+                        <option value="OUTSOURCED" {% if resolution != 'IN_HOUSE' %}selected{% endif %}>Outsourced</option>
                     </select>
-        </div>    
-        
+                </div>
+                {% endwith %}
+
                 <div class="form-group" id="service-provider-group">
-                    <label class="form-label" id="resolvedLabel" for="service-provider">
+                    <label class="form-label" for="service-provider">
                         <i class="fas fa-building me-1"></i>
                         Service Provider
                     </label>
-                    <select class="form-select" name="resolvedby" id="service-provider">
+                    <select class="form-select" name="contractor" id="service-provider">
                         <option value="">-- Select Service Provider --</option>
                         {% for contractor in contractors %}
-                            <option value="{{contractor.id}}">{{contractor.contractor}}</option>
-            {% endfor %}
-        </select>
+                            <option value="{{ contractor.id }}" {% if posted|get_item:'contractor' == contractor.id|stringformat:'s' %}selected{% endif %}>{{ contractor.contractor }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-                
+
                 <div class="form-group hidden-field" id="department-group">
                     <label class="form-label" for="department-select">
                         <i class="fas fa-building me-1"></i>
                         Department
                     </label>
-                    <select class="form-select" name="resolvedby" id="department-select">
+                    <select class="form-select" name="department" id="department-select">
                         <option value="">-- Select Department --</option>
-                        {% if issue.machineissue.assignDepartment %}
-                            <option value="{{issue.machineissue.assignDepartment.id}}">{{issue.machineissue.assignDepartment.name}}</option>
-                        {% endif %}
+                        {% for department in departments %}
+                            <option value="{{ department.id }}"
+                                {% if posted %}{% if posted|get_item:'department' == department.id|stringformat:'s' %}selected{% endif %}
+                                {% elif review.assignDepartment_id == department.id %}selected{% endif %}>{{ department.name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label" for="technician">
                         <i class="fas fa-user-hard-hat me-1"></i>
                         Technician Name
                     </label>
-                    <input type="text" class="form-control" id="technician" name="technician" placeholder="Enter technician name">
+                    <input type="text" class="form-control" id="technician" name="technician" placeholder="Enter technician name"
+                           maxlength="{{ name_max_length }}" value="{{ posted|get_item:'technician'|default:'' }}">
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label" for="supervisor">
                         <i class="fas fa-user-tie me-1"></i>
                         Supervisor Name
                     </label>
-                    <input type="text" class="form-control" id="supervisor" name="supervisor" placeholder="Enter supervisor name">
+                    <input type="text" class="form-control" id="supervisor" name="supervisor" placeholder="Enter supervisor name"
+                           maxlength="{{ name_max_length }}" value="{{ posted|get_item:'supervisor'|default:'' }}">
                 </div>
             </div>
-            
+
             <!-- Solution Details -->
             <div class="form-section">
                 <h3 class="section-title">
                     <i class="fas fa-lightbulb"></i>
                     Solution Details
                 </h3>
-                
+
                 <div class="form-group">
                     <label class="form-label" for="solution-description">
                         <i class="fas fa-file-alt me-1"></i>
                         Solution Description
                     </label>
-                    <textarea name="solution-description" id="solution-description" class="form-control textarea" placeholder="Describe the solution implemented..." required></textarea>
+                    <textarea name="solution-description" id="solution-description" class="form-control textarea" placeholder="Describe the solution implemented..." required>{{ posted|get_item:'solution-description'|default:'' }}</textarea>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label" for="additional-remarks">
                         <i class="fas fa-comment me-1"></i>
                         Additional Remarks
                     </label>
-                    <textarea name="additional-remarks" id="additional-remarks" class="form-control textarea" placeholder="Any additional notes or observations..."></textarea>
+                    <textarea name="additional-remarks" id="additional-remarks" class="form-control textarea" placeholder="Any additional notes or observations...">{{ posted|get_item:'additional-remarks'|default:'' }}</textarea>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label" for="image">
                         <i class="fas fa-images me-1"></i>
@@ -794,29 +820,25 @@
                         <label for="image" class="file-upload-label">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <span>Click to upload images or drag and drop</span>
-                            <small>Upload repair photos, documentation, or alarm history</small>
+                            <small>{% if errors %}Please re-attach your images. {% endif %}Upload repair photos, documentation, or alarm history</small>
                         </label>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Action Section -->
         <div class="action-section">
             <h3 class="section-title">
                 <i class="fas fa-gavel"></i>
                 Final Action
             </h3>
-            <p class="text-muted mb-4">Choose how to close this complaint. Temporary closure allows for follow-up, while permanent closure marks the issue as fully resolved.</p>
-            
+            <p class="text-muted mb-4">Closing marks the complaint as fully resolved and records this documentation.</p>
+
             <div class="action-buttons">
-                {% comment %} <button type="submit" class="btn-temp-close" name="temp-close" id="temp-close">
-                    <i class="fas fa-pause"></i>
-                    Temp Close
-                </button> {% endcomment %}
                 <button type="submit" class="btn-close" name="close-complain" id="close-complain">
                     <i class="fas fa-check-circle"></i>
-                    Close 
+                    Close
                 </button>
             </div>
         </div>
@@ -824,258 +846,147 @@
 </div>
 
 <script>
-    // Set current date
+    function escapeHtml(text) {
+        return String(text).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+    }
+
+    // Show the current date in the header
     document.addEventListener('DOMContentLoaded', function() {
-        const dateField = document.getElementById('date');
-        const currentDate = new Date();
-        const formattedDate = currentDate.toISOString().substring(0, 16);
-        dateField.value = formattedDate;
-        
-        // Update display date
-        document.getElementById('current-date').textContent = currentDate.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
     });
 
-    // Modern Spares Selector JavaScript
+    // Spares selector
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Spares selector script loaded');
-        
-        // Get all available spares from the hidden select with all options
-        const allSpares = [];
-        const allSparesSelect = document.getElementById('all-spares-options');
-        if (allSparesSelect) {
-            console.log('Found all-spares-options select');
-            for (let i = 0; i < allSparesSelect.options.length; i++) {
-                const option = allSparesSelect.options[i];
-                if (option.value) {
-                    allSpares.push({
-                        id: option.value,
-                        text: option.text
-                    });
-                }
-            }
-        } else {
-            console.error('all-spares-options select not found!');
-        }
-        
-        console.log('Loaded spares:', allSpares);
-        
-        let selectedSpares = [];
-        
-        // Search functionality
-        document.getElementById('spares-search').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            console.log('Spares search input:', searchTerm);
-            if (searchTerm.length >= 1) {
-                searchSpares(searchTerm);
-            } else {
-                hideSparesResults();
-            }
+        const allSpares = Array.from(document.getElementById('all-spares-options').options).map(option => ({
+            id: option.value,
+            text: option.text,
+            linked: option.dataset.linked === '1',
+            preselected: option.dataset.selected === '1',
+        }));
+        let selectedSpares = allSpares.filter(spare => spare.preselected);
+
+        const searchInput = document.getElementById('spares-search');
+        const resultsBox = document.getElementById('spares-search-results');
+        const resultsList = document.getElementById('spares-results-list');
+
+        searchInput.addEventListener('input', function() {
+            searchSpares(this.value.toLowerCase());
         });
-        
-        // Search button click
+        searchInput.addEventListener('focus', function() {
+            searchSpares(this.value.toLowerCase());
+        });
         document.getElementById('spares-search-btn').addEventListener('click', function() {
-            const searchTerm = document.getElementById('spares-search').value.toLowerCase();
-            if (searchTerm.length >= 1) {
-                searchSpares(searchTerm);
-            } else {
-                // Show all spares if no search term
-                searchSpares('');
-            }
+            searchSpares(searchInput.value.toLowerCase());
         });
-        
-        // Show all spares when search box is focused
-        document.getElementById('spares-search').addEventListener('focus', function() {
-            console.log('Spares search box focused');
-            if (this.value.length === 0) {
-                // Show all spares
-                searchSpares('');
-            }
-        });
-        
-        // Close results
-        document.getElementById('spares-close-results').addEventListener('click', function() {
-            hideSparesResults();
-        });
-        
-        // Click outside to close results
+        document.getElementById('spares-close-results').addEventListener('click', hideSparesResults);
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.modern-spares-selector')) {
                 hideSparesResults();
             }
         });
-        
+
         function searchSpares(searchTerm) {
-            console.log('=== SEARCH SPARES FUNCTION CALLED ===');
-            console.log('Search term:', searchTerm);
-            console.log('All spares:', allSpares);
-            console.log('All spares count:', allSpares.length);
-            
-            const filteredSpares = allSpares.filter(spare => 
-                spare.text.toLowerCase().includes(searchTerm)
-            );
-            
-            console.log('Filtered spares:', filteredSpares);
-            console.log('Filtered count:', filteredSpares.length);
-            
-            const resultsList = document.getElementById('spares-results-list');
-            if (!resultsList) {
-                console.error('Results list element not found!');
-                return;
-            }
-            
+            const filtered = allSpares.filter(spare => spare.text.toLowerCase().includes(searchTerm));
             resultsList.innerHTML = '';
-            
-            if (filteredSpares.length === 0) {
-                resultsList.innerHTML = '<div class="spares-no-results">No spares found matching "' + searchTerm + '"</div>';
+
+            if (filtered.length === 0) {
+                resultsList.innerHTML = '<div class="spares-no-results">No spares found matching "' + escapeHtml(searchTerm) + '"</div>';
             } else {
-                filteredSpares.forEach(spare => {
+                filtered.forEach(spare => {
                     const isSelected = selectedSpares.some(selected => selected.id === spare.id);
                     const item = document.createElement('div');
                     item.className = 'spares-result-item';
-                    item.setAttribute('data-id', spare.id);
-                    item.setAttribute('data-text', spare.text);
-                    item.innerHTML = '<i class="fas fa-tools"></i><span>' + spare.text + '</span>' + 
-                        (isSelected ? '<i class="fas fa-check text-success ms-auto"></i>' : '');
+                    item.dataset.id = spare.id;
+                    item.innerHTML = '<i class="fas fa-tools"></i><span>' + escapeHtml(spare.text) + '</span>' +
+                        (spare.linked ? '<span class="spare-linked-badge">This machine</span>' : '') +
+                        (isSelected ? '<i class="fas fa-check text-success ms-2"></i>' : '');
                     resultsList.appendChild(item);
                 });
             }
-            
-            const resultsCount = document.querySelector('.spares-results-count');
-            if (resultsCount) {
-                resultsCount.textContent = filteredSpares.length + ' spares found';
-            }
-            
-            // Show the results
-            const searchResults = document.getElementById('spares-search-results');
-            if (searchResults) {
-                searchResults.style.display = 'block';
-                console.log('Search results display set to block');
-                console.log('Search results element:', searchResults);
-                console.log('Search results computed display:', window.getComputedStyle(searchResults).display);
-                console.log('Search results position:', searchResults.getBoundingClientRect());
-            } else {
-                console.error('Search results element not found!');
-            }
+
+            document.querySelector('.spares-results-count').textContent = filtered.length + ' spares found';
+            resultsBox.style.display = 'block';
         }
-        
+
         function hideSparesResults() {
-            document.getElementById('spares-search-results').style.display = 'none';
+            resultsBox.style.display = 'none';
         }
-        
-        // Add spare to selection
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.spares-result-item')) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const item = e.target.closest('.spares-result-item');
-                const spareId = item.getAttribute('data-id');
-                const spareText = item.getAttribute('data-text');
-                
-                console.log('Clicked spare:', spareId, spareText);
-                
-                // Check if already selected
-                if (!selectedSpares.some(spare => spare.id === spareId)) {
-                    selectedSpares.push({ id: spareId, text: spareText });
-                    console.log('Added to selection:', selectedSpares);
-                    updateSparesSelectedDisplay();
-                    updateSparesHiddenSelect();
-                    hideSparesResults();
-                } else {
-                    console.log('Spare already selected');
-                }
+
+        // Add a spare from the results
+        resultsList.addEventListener('click', function(e) {
+            const item = e.target.closest('.spares-result-item');
+            if (!item) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const spare = allSpares.find(s => s.id === item.dataset.id);
+            if (spare && !selectedSpares.some(s => s.id === spare.id)) {
+                selectedSpares.push(spare);
+                renderSelected();
             }
+            hideSparesResults();
         });
-        
-        // Remove spare from selection
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.spares-remove-item')) {
-                const spareId = e.target.closest('.spares-remove-item').getAttribute('data-id');
-                selectedSpares = selectedSpares.filter(spare => spare.id !== spareId);
-                updateSparesSelectedDisplay();
-                updateSparesHiddenSelect();
-            }
+
+        // Remove a selected spare
+        document.getElementById('spares-selected-list').addEventListener('click', function(e) {
+            const button = e.target.closest('.spares-remove-item');
+            if (!button) return;
+            selectedSpares = selectedSpares.filter(spare => spare.id !== button.dataset.id);
+            renderSelected();
         });
-        
-        function updateSparesSelectedDisplay() {
+
+        function renderSelected() {
             const selectedList = document.getElementById('spares-selected-list');
+            const hiddenSelect = document.getElementById('spares-select');
             selectedList.innerHTML = '';
-            
+            hiddenSelect.innerHTML = '';
+
             if (selectedSpares.length === 0) {
                 selectedList.innerHTML = '<div class="spares-no-selection"><i class="fas fa-info-circle"></i>No spares selected yet</div>';
-            } else {
-                selectedSpares.forEach(spare => {
-                    const item = document.createElement('div');
-                    item.className = 'spares-selected-item';
-                    item.innerHTML = '<div><i class="fas fa-tools"></i>' + spare.text + '</div>' +
-                        '<button type="button" class="spares-remove-item" data-id="' + spare.id + '">' +
-                        '<i class="fas fa-times"></i>' +
-                        '</button>';
-                    selectedList.appendChild(item);
-                });
             }
-            
-            document.querySelector('.spares-selected-count').textContent = 'Selected Spares (' + selectedSpares.length + ')';
-        }
-        
-        function updateSparesHiddenSelect() {
-            const hiddenSelect = document.getElementById('spares-select');
-            hiddenSelect.innerHTML = '';
-            
             selectedSpares.forEach(spare => {
+                const item = document.createElement('div');
+                item.className = 'spares-selected-item';
+                item.innerHTML = '<div><i class="fas fa-tools"></i>' + escapeHtml(spare.text) + '</div>' +
+                    '<button type="button" class="spares-remove-item" data-id="' + escapeHtml(spare.id) + '">' +
+                    '<i class="fas fa-times"></i></button>';
+                selectedList.appendChild(item);
+
                 const option = document.createElement('option');
                 option.value = spare.id;
-                option.text = spare.text;
                 option.selected = true;
                 hiddenSelect.appendChild(option);
             });
+
+            document.querySelector('.spares-selected-count').textContent = 'Selected Spares (' + selectedSpares.length + ')';
         }
-        
-        // Initialize display
-        updateSparesSelectedDisplay();
-        
-        // Log available spares count
-        console.log('Total spares available:', allSpares.length);
+
+        renderSelected();
     });
 
+    // Show the contractor or the department dropdown depending on the resolution type
     function changeOptions() {
-        const selectedValue = document.querySelector("#resolved-by-type");
-        const serviceProviderGroup = document.querySelector('#service-provider-group');
-        const departmentGroup = document.querySelector('#department-group');
-        
-        if (selectedValue.value === 'InHouse') {
-            // Hide contractor dropdown, show department dropdown
-            serviceProviderGroup.classList.add('hidden-field');
-            departmentGroup.classList.remove('hidden-field');
-            // Disable contractor select so it doesn't submit
-            document.querySelector('#service-provider').disabled = true;
-            document.querySelector('#department-select').disabled = false;
-        } else {
-            // Show contractor dropdown, hide department dropdown
-            serviceProviderGroup.classList.remove('hidden-field');
-            departmentGroup.classList.add('hidden-field');
-            // Disable department select so it doesn't submit
-            document.querySelector('#service-provider').disabled = false;
-            document.querySelector('#department-select').disabled = true;
-        }
+        const inHouse = document.querySelector('#resolved-by-type').value === 'IN_HOUSE';
+        const contractorSelect = document.querySelector('#service-provider');
+        const departmentSelect = document.querySelector('#department-select');
+
+        document.querySelector('#service-provider-group').classList.toggle('hidden-field', inHouse);
+        document.querySelector('#department-group').classList.toggle('hidden-field', !inHouse);
+        contractorSelect.disabled = inHouse;
+        departmentSelect.disabled = !inHouse;
+        contractorSelect.required = !inHouse;
+        departmentSelect.required = inHouse;
     }
-    
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        changeOptions(); // Set initial state
-    });
+
+    document.addEventListener('DOMContentLoaded', changeOptions);
 
     // File upload preview
     document.getElementById('image').addEventListener('change', function(e) {
         const files = e.target.files;
         const label = document.querySelector('.file-upload-label');
-        
+
         if (files.length > 0) {
             label.innerHTML = `
                 <i class="fas fa-check-circle text-success"></i>
@@ -1085,21 +996,18 @@
         }
     });
 
-    // Form validation
+    // Form validation (the server checks the same rules)
     document.getElementById('closing-form').addEventListener('submit', function(e) {
-        const currentHours = document.getElementById('final-machine-hours').value;
-        const initialHours = '{{ issue.machine_hours }}';
-        
-        if (parseInt(currentHours) <= parseInt(initialHours)) {
+        const currentHours = parseInt(document.getElementById('final-machine-hours').value, 10);
+        const initialHours = parseInt('{{ issue.machine_hours|default_if_none:"" }}', 10);
+
+        if (!isNaN(initialHours) && currentHours < initialHours) {
             e.preventDefault();
-            alert('Current machine hours must be greater than initial failure hours.');
+            alert('Current machine hours cannot be lower than the hours at failure (' + initialHours + ').');
             return false;
         }
-        
-        const action = e.submitter.name;
-        const actionText = action === 'temp-close' ? 'temporarily close' : 'permanently close';
-        
-        if (!confirm(`Are you sure you want to ${actionText} this complaint?`)) {
+
+        if (!confirm('Are you sure you want to close this complaint?')) {
             e.preventDefault();
             return false;
         }

@@ -661,7 +661,7 @@
                         </div>
                         <div class="doc-item">
                             <span class="doc-label">Equipment Status</span>
-                            <span class="doc-value">{{ issue.machineissue.issueclosing.equipment_status|default:"N/A" }}</span>
+                            <span class="doc-value">{{ issue.machineissue.issueclosing.get_equipment_status_display|default:"N/A" }}</span>
                         </div>
                         <div class="doc-item">
                             <span class="doc-label">Machine Hours at Closure</span>
@@ -671,6 +671,11 @@
                         <div class="doc-item">
                             <span class="doc-label">Contractor</span>
                             <span class="doc-value">{{ issue.machineissue.issueclosing.contractor.contractor }}</span>
+                        </div>
+                        {% elif issue.machineissue.issueclosing.resolved_department %}
+                        <div class="doc-item">
+                            <span class="doc-label">Resolved In-House By</span>
+                            <span class="doc-value">{{ issue.machineissue.issueclosing.resolved_department.name }}</span>
                         </div>
                         {% endif %}
                         <div class="doc-item">
