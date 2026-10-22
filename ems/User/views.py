@@ -184,6 +184,21 @@ def can_view_issue(user, issue):
     return department is not None and issue.machine_id is not None and issue.machine_id.Department_id == department
 
 
+def can_confirm_issue(user, issue):
+    """The reporter, or anyone in the department that owns the machine, can confirm or reject the engineer's fix"""
+    employee = getattr(user, 'employee', None)
+    if employee is None:
+        return False
+    if issue.user_id == employee.pk:
+        return True
+    return (employee.department_id is not None and issue.machine_id is not None
+            and issue.machine_id.Department_id == employee.department_id)
+
+
+def is_engineer_user(user):
+    return user.has_perm('core.can_review_complaint') or user.groups.filter(name='Engineers').exists()
+
+
 class ComplainTrackingView(LoginRequiredMixin, View):
     login_url = 'User:login'
 
@@ -198,6 +213,8 @@ class ComplainTrackingView(LoginRequiredMixin, View):
             'work_sessions': issue.work_sessions.select_related('engineer').order_by('started_at'),
             'quick_review_comments': issue.quick_review_comments.select_related('commenter__user').order_by('created_at'),
             'feedback_error': request.session.pop(f'feedback_error_{issue.pk}', None),
+            'can_confirm': issue.status == MachineIssue.STATUS_USER_FEEDBACK and can_confirm_issue(request.user, issue),
+            'is_engineer_view': is_engineer_user(request.user),
         }
         return render(request, 'user/complain-tracking.html', context)
     
@@ -349,6 +366,7 @@ class ComplainClosingView(LoginRequiredMixin, View):
 
         try:
             with transaction.atomic():
+                self._get_or_create_review(request, issue)
                 closing = self._create_closing_record(issue, data)
                 image_errors = self._save_images(request, closing)
                 self._save_spares(request, closing)
@@ -373,10 +391,28 @@ class ComplainClosingView(LoginRequiredMixin, View):
             messages.error(request, f"Complaint {issue.ticket_num} cannot be closed while it is "
                                     f"'{issue.get_status_display() or issue.status}'.")
             return redirect('maintenance:complain_list')
-        if not getattr(issue, 'machineissue', None):
+        # A ticket resolved through Quick Review and confirmed by the user has no detailed review; it is
+        # documented and closed directly here (the review record is created on save). Only the approval
+        # route needs an existing review.
+        if issue.status == MachineIssue.STATUS_APPROVED and not getattr(issue, 'machineissue', None):
             messages.info(request, f'Complete the review form before closing {issue.ticket_num}')
             return redirect('User:review_complain', pk=issue.pk)
         return None
+
+    def _get_or_create_review(self, request, issue):
+        """IssueClosing needs a MachineIssueReview; create a minimal one for quick-review tickets"""
+        review = getattr(issue, 'machineissue', None)
+        if review:
+            return review
+        last_comment = (issue.quick_review_comments.filter(commenter__user=request.user)
+                        .order_by('-created_at').values_list('comment', flat=True).first())
+        review = MachineIssueReview.objects.create(
+            issue=issue,
+            reviewer=request.user.employee,
+            description_reviewer=last_comment or 'Resolved through quick review; confirmed by the user.',
+        )
+        issue.machineissue = review
+        return review
 
     def _can_close(self, user):
         """Only engineers (same rule as the engineer ticket views) may close complaints"""
@@ -388,7 +424,7 @@ class ComplainClosingView(LoginRequiredMixin, View):
         return Department.objects.filter(dpt_type__in=self.IN_HOUSE_DEPARTMENT_TYPES).order_by('name')
 
     def _render_form(self, request, issue, errors=None):
-        review = issue.machineissue
+        review = getattr(issue, 'machineissue', None)
         machine_spare_ids = set(MachineSpares.objects.filter(machine=issue.machine_id).values_list('spare_id', flat=True))
         # Spares linked to this machine first, then all others
         spares = sorted(Spares.objects.only('id', 'name'), key=lambda s: (s.pk not in machine_spare_ids, s.name.lower()))
@@ -506,6 +542,13 @@ class ComplainClosingView(LoginRequiredMixin, View):
         if machine and (machine.machine_hours is None or data['machine_hours'] > machine.machine_hours):
             machine.machine_hours = data['machine_hours']
             machine.save(update_fields=['machine_hours'])
+
+        # Quick-review tickets are documented by this form itself
+        if not issue.documentation_timestamp:
+            issue.documentation_timestamp = issue.closure_timestamp
+            if issue.user_confirmation_timestamp:
+                diff = issue.documentation_timestamp - issue.user_confirmation_timestamp
+                issue.documentation_hours = diff.total_seconds() / 3600
 
         if issue.documentation_timestamp:
             diff = issue.closure_timestamp - issue.documentation_timestamp
@@ -1099,19 +1142,20 @@ def spare_issue(request, pk):
 @login_required(login_url='User:login')
 def user_close_complaint(request, pk):
     """
-    The user who raised the complaint answers the engineer's fix while the status is 'User Feedback':
-    - RESOLVED   -> AWAITING_DOCUMENTATION (engineer completes the closing documentation)
-    - NOT_FIXED  -> PENDING (reopened for the engineer, feedback required)
+    The reporter (or their department) answers the engineer's fix while the status is 'User Feedback':
+    - RESOLVED   "Work Completed"          -> AWAITING_DOCUMENTATION: shown as Closed to users; the engineer
+                                              still completes the closing documentation
+    - NOT_FIXED  "Problem Still Persists"  -> PENDING: back to the engineer for rework (feedback required)
     """
     if request.method != 'POST':
         return redirect('User:complain_track', pk=pk)
 
-    issue = get_object_or_404(MachineIssue.objects.select_related('user__user'), pk=pk)
+    issue = get_object_or_404(MachineIssue.objects.select_related('user__user', 'machine_id'), pk=pk)
     employee = getattr(request.user, 'employee', None)
 
-    if employee is None or issue.user_id != employee.pk:
+    if not can_confirm_issue(request.user, issue):
         return render(request, 'user/error/404.html', {
-            'error': 'Only the person who raised this complaint can confirm or reopen it.'
+            'error': "Only the person who raised this complaint or their department can confirm or reopen it."
         }, status=403)
 
     if issue.status != MachineIssue.STATUS_USER_FEEDBACK:

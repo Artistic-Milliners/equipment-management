@@ -1466,6 +1466,29 @@
         </a>
     </div>
 
+    <!-- Active / Closed tabs -->
+    <style>
+        .tm-tabs { display: flex; gap: 0.5rem; margin: 0 0 1rem; border-bottom: 2px solid #e2e8f0; }
+        .tm-tab {
+            display: inline-flex; align-items: center; gap: 0.45rem;
+            padding: 0.6rem 1rem; margin-bottom: -2px;
+            color: #64748b; font-weight: 600; text-decoration: none;
+            border-bottom: 2px solid transparent;
+        }
+        .tm-tab:hover { color: #0f172a; }
+        .tm-tab.is-on { color: #2563eb; border-bottom-color: #2563eb; }
+        .tm-tab-count { background: #f1f5f9; color: #475569; border-radius: 999px; padding: 0 0.5rem; font-size: 0.75rem; }
+        .tm-tab.is-on .tm-tab-count { background: #dbeafe; color: #1d4ed8; }
+    </style>
+    <nav class="tm-tabs" aria-label="Ticket tabs">
+        <a href="?tab=active" class="tm-tab {% if tab != 'closed' %}is-on{% endif %}" {% if tab != 'closed' %}aria-current="page"{% endif %}>
+            <i class="fas fa-tools"></i> Active <span class="tm-tab-count">{{ active_count }}</span>
+        </a>
+        <a href="?tab=closed" class="tm-tab {% if tab == 'closed' %}is-on{% endif %}" {% if tab == 'closed' %}aria-current="page"{% endif %}>
+            <i class="fas fa-check-double"></i> Closed / Completed <span class="tm-tab-count">{{ closed_count }}</span>
+        </a>
+    </nav>
+
     <!-- Stats Row -->
     <div class="tm-stats">
         <div class="tm-stat-card tm-stat--total">
@@ -1647,7 +1670,8 @@
         'REVIEWED': 'Reviewed',
         'APPROVED': 'Approved',
         'REJECTED': 'Rejected',
-        'AWAITING_DOCUMENTATION': 'Awaiting Docs',
+        // Users see a confirmed ticket as closed; engineers still have to document it
+        'AWAITING_DOCUMENTATION': USER_ROLE.isEngineer ? 'Awaiting Docs' : 'Closed',
         'UNDER_OBSERVATION': 'Observation',
         'RESOLVED': 'Resolved',
         'CLOSED': 'Closed'

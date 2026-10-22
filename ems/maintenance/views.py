@@ -54,6 +54,21 @@ def view_complains(request):
     is_approver = request.user.has_perm('core.can_approve_complaint') or request.user.groups.filter(name='Approvers').exists()
     is_engineer = request.user.has_perm('core.can_review_complaint') or request.user.groups.filter(name='Engineers').exists()
 
+    # Two tabs: active tickets, and closed ones. Users see a ticket as closed once they confirm the work
+    # (engineers still have to document it, so for them it stays active until fully CLOSED).
+    tab = 'closed' if request.GET.get('tab') == 'closed' else 'active'
+    closed_statuses = [MachineIssue.STATUS_CLOSED]
+    if not (is_engineer or is_approver):
+        closed_statuses.append(MachineIssue.STATUS_AWAITING_DOCUMENTATION)
+
+    if is_engineer or is_approver:
+        closed_scope = MachineIssue.objects.all()
+    else:
+        closed_scope = MachineIssue.objects.filter(user=emp)
+    closed_list = (closed_scope.filter(status__in=closed_statuses)
+                   .select_related('user', 'equipment', 'machine_id', 'error_department', 'temporary_issue', 'selected_issue')
+                   .order_by('-date_time'))
+
     # Filter tickets based on user role
     # Check for users with BOTH roles first
     if is_approver and is_engineer:
@@ -94,31 +109,18 @@ def view_complains(request):
             user=emp
         ).select_related('user', 'equipment', 'machine_id', 'error_department', 'temporary_issue', 'selected_issue').order_by('-date_time')
 
-    
-    # Debug: Print details about what we're showing
+    active_list = issue_list.exclude(status__in=closed_statuses)
+
     # Get count of pending temporary issues for engineers/approvers
     pending_temp_issues_count = 0
     if is_engineer or is_approver:
         pending_temp_issues_count = TemporaryIssue.objects.filter(reviewed=False).count()
 
-    print(f"\n{'='*60}")
-    print(f"COMPLAIN VIEW DEBUG")
-    print(f"{'='*60}")
-    print(f"User: {request.user.username}")
-    print(f"Employee: {emp.name if emp else 'None'}")
-    print(f"Department: {emp.department.name if emp and emp.department else 'None'}")
-    print(f"Is Approver: {is_approver}")
-    print(f"Is Engineer: {is_engineer}")
-    print(f"Total issues in list: {issue_list.count()}")
-    print(f"Pending Temporary Issues: {pending_temp_issues_count}")
-    if issue_list.count() > 0:
-        print(f"First 3 tickets:")
-        for issue in issue_list[:3]:
-            print(f"  - Ticket #{issue.ticket_num}: {issue.status} - {issue.description_user[:50]}")
-    print(f"{'='*60}\n")
-
     return render(request, "maintenance/complain-view.html", {
-        'issue_list': issue_list,
+        'issue_list': closed_list if tab == 'closed' else active_list,
+        'tab': tab,
+        'active_count': active_list.count(),
+        'closed_count': closed_list.count(),
         'emp': emp,
         'is_approver': is_approver,
         'is_engineer': is_engineer,

@@ -1222,7 +1222,7 @@
             {% elif issue.status == 'IN_PROGRESS' %}ct-status--in_progress
             {% elif issue.status == 'User Feedback' %}ct-status--user_feedback
             {% elif issue.status == 'RESOLVED' %}ct-status--resolved
-            {% elif issue.status == 'AWAITING_DOCUMENTATION' %}ct-status--awaiting_documentation
+            {% elif issue.status == 'AWAITING_DOCUMENTATION' %}{% if is_engineer_view %}ct-status--awaiting_documentation{% else %}ct-status--closed{% endif %}
             {% elif issue.status == 'UNDER_OBSERVATION' %}ct-status--under_observation
             {% elif issue.status == 'REVIEWED' %}ct-status--reviewed
             {% elif issue.status == 'APPROVED' %}ct-status--approved
@@ -1236,7 +1236,7 @@
             {% elif issue.status == 'IN_PROGRESS' %}In Progress
             {% elif issue.status == 'User Feedback' %}User Feedback
             {% elif issue.status == 'RESOLVED' %}Resolved
-            {% elif issue.status == 'AWAITING_DOCUMENTATION' %}Awaiting Docs
+            {% elif issue.status == 'AWAITING_DOCUMENTATION' %}{% if is_engineer_view %}Awaiting Docs{% else %}Closed{% endif %}
             {% elif issue.status == 'UNDER_OBSERVATION' %}Under Observation
             {% elif issue.status == 'REVIEWED' %}Reviewed
             {% elif issue.status == 'APPROVED' %}Approved
@@ -1520,7 +1520,7 @@
                     {% if issue.status == 'User Feedback' %}
                     <div class="ct-tl-alert ct-tl-alert--info" style="margin-top: 0.35rem;">
                         <i class="fas fa-user-check"></i>
-                        Waiting for your confirmation
+                        {% if can_confirm %}Waiting for your confirmation{% else %}Waiting for user confirmation{% endif %}
                     </div>
                     {% endif %}
                 </div>
@@ -1529,16 +1529,18 @@
                     <div class="ct-tl-dot ct-tl-dot--done">
                         <i class="fas fa-check"></i>
                     </div>
-                    <div class="ct-tl-title">Awaiting Documentation</div>
+                    <div class="ct-tl-title">{% if is_engineer_view %}Awaiting Documentation{% else %}Work Completed &amp; Closed{% endif %}</div>
                     {% if issue.user_confirmation_timestamp %}
                     <div class="ct-tl-date">
                         Confirmed: {{ issue.user_confirmation_timestamp|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}
                     </div>
                     {% endif %}
+                    {% if is_engineer_view %}
                     <div class="ct-tl-alert ct-tl-alert--info">
                         <i class="fas fa-clipboard-list"></i>
-                        Engineer is completing documentation
+                        Closing documentation pending
                     </div>
+                    {% endif %}
                 </div>
                 {% elif issue.status == 'UNDER_OBSERVATION' %}
                 <div class="ct-tl-step">
@@ -1699,21 +1701,25 @@
     {% endif %}
 
     <div class="ct-actions">
-        {% if issue.status == 'User Feedback' and issue.user.user == user %}
+        {% if can_confirm %}
+            <div class="ct-info-banner" style="flex-basis: 100%;">
+                <i class="fas fa-user-check"></i>
+                <span>The engineer has marked this repair as done. Please check the machine and confirm.</span>
+            </div>
             <button class="ct-btn ct-btn--primary" type="button" id="ctConfirmBtn">
                 <i class="fas fa-check-circle"></i>
-                Confirm Resolution
+                Work Completed
             </button>
             <button class="ct-btn ct-btn--danger" type="button" id="ctRejectBtn">
-                <i class="fas fa-times-circle"></i>
-                Report Still Broken
+                <i class="fas fa-redo"></i>
+                Problem Still Persists
             </button>
-        {% elif issue.status == 'AWAITING_DOCUMENTATION' and issue.user.user == user %}
+        {% elif issue.status == 'AWAITING_DOCUMENTATION' and is_engineer_view %}
             <div class="ct-info-banner">
                 <i class="fas fa-clipboard-check"></i>
-                <span>You have confirmed this issue is resolved. The engineer is completing the final documentation.</span>
+                <span>The user confirmed the work is completed. Complete the closing documentation to finish this ticket.</span>
             </div>
-        {% elif issue.status == 'CLOSED' %}
+        {% elif issue.status == 'AWAITING_DOCUMENTATION' or issue.status == 'CLOSED' %}
             <div class="ct-closed-banner">
                 <i class="fas fa-check-double"></i>
                 Complaint Resolved &amp; Closed
@@ -1728,7 +1734,7 @@
 </div>
 
 <!-- ===== 9. USER FEEDBACK FORM (Bottom Sheet) ===== -->
-{% if issue.status == 'User Feedback' and issue.user.user == user %}
+{% if can_confirm %}
 <div class="ct-feedback-overlay" id="ctFeedbackOverlay">
     <div class="ct-feedback-sheet">
         <div class="ct-sheet-handle"></div>
@@ -1737,7 +1743,7 @@
                 <i class="fas fa-check-circle" id="ctSheetIconEl"></i>
             </div>
             <div class="ct-sheet-head-text">
-                <h3 id="ctSheetTitle">Confirm Resolution</h3>
+                <h3 id="ctSheetTitle">Work Completed</h3>
                 <p id="ctSheetDesc">Is the equipment working properly now?</p>
             </div>
         </div>
@@ -1768,7 +1774,7 @@
                 </div>
                 <div class="ct-sheet-notice" id="ctSheetNotice">
                     <i class="fas fa-info-circle"></i>
-                    <span id="ctSheetNoticeText">By confirming, you acknowledge the machine is operational. The engineer will complete the documentation.</span>
+                    <span id="ctSheetNoticeText">By confirming, you acknowledge the machine is working. The complaint will be closed.</span>
                 </div>
             </div>
             <div class="ct-sheet-actions">
@@ -1863,7 +1869,7 @@
     });
 
     // ===== User Feedback Sheet =====
-    {% if issue.status == 'User Feedback' and issue.user.user == user %}
+    {% if can_confirm %}
     (function() {
         var overlay = $('ctFeedbackOverlay');
         var confirmBtn = $('ctConfirmBtn');
@@ -1885,8 +1891,8 @@
             $('ctFeedbackHint').textContent = reopening ? '(required)' : '(optional)';
             $('ctOperationalGroup').style.display = reopening ? 'block' : 'none';
             $('ctSheetNoticeText').textContent = reopening
-                ? 'The complaint will be reopened and sent back to the engineer.'
-                : 'By confirming, you acknowledge the machine is operational. The engineer will complete the documentation.';
+                ? 'The complaint will be sent back to the engineer for rework.'
+                : 'By confirming, you acknowledge the machine is working. The complaint will be closed.';
             comments.placeholder = reopening ? 'What is still wrong with the machine?' : 'Any observations about the repair...';
 
             if (mode === 'confirm') {
@@ -1895,20 +1901,20 @@
                 sheetIcon.style.background = '';
                 sheetIcon.style.color = '';
                 sheetIconEl.className = 'fas fa-check-circle';
-                sheetTitle.textContent = 'Confirm Resolution';
+                sheetTitle.textContent = 'Work Completed';
                 sheetDesc.textContent = 'Is the equipment working properly now?';
                 submitBtn.className = 'ct-sheet-btn ct-sheet-btn--confirm';
-                submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Yes, It\'s Working';
+                submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Yes, Close Complaint';
             } else {
                 actionInput.value = 'NOT_FIXED';
                 sheetIcon.className = 'ct-sheet-icon';
                 sheetIcon.style.background = '#fee2e2';
                 sheetIcon.style.color = '#dc2626';
                 sheetIconEl.className = 'fas fa-times-circle';
-                sheetTitle.textContent = 'Report Still Broken';
-                sheetDesc.textContent = 'Describe the remaining issue so the engineer can follow up.';
+                sheetTitle.textContent = 'Problem Still Persists';
+                sheetDesc.textContent = 'Describe the remaining issue so the engineer can rework it.';
                 submitBtn.className = 'ct-sheet-btn ct-sheet-btn--danger';
-                submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Still Not Fixed';
+                submitBtn.innerHTML = '<i class="fas fa-redo"></i> Send Back for Rework';
             }
 
             overlay.classList.add('is-open');
@@ -1949,7 +1955,7 @@
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             CT.closeLightbox();
-            {% if issue.status == 'User Feedback' and issue.user.user == user %}
+            {% if can_confirm %}
             var overlay = $('ctFeedbackOverlay');
             if (overlay) {
                 overlay.classList.remove('is-open');
