@@ -1445,12 +1445,14 @@
 
             <div class="ct-chat-list">
                 {% for comment in quick_review_comments %}
-                <div class="ct-chat-msg {% if comment.commenter == issue.user %}ct-chat-msg--user{% else %}ct-chat-msg--engineer{% endif %}">
+                <div class="ct-chat-msg {% if comment.commenter_id == issue.user_id %}ct-chat-msg--user{% else %}ct-chat-msg--engineer{% endif %}">
                     <div class="ct-chat-bubble">
                         <div class="ct-chat-author">
                             {{ comment.commenter.name }}
-                            {% if comment.commenter == issue.user %}
+                            {% if comment.commenter.user_id == user.pk %}
                                 <span class="ct-chat-role ct-chat-role--user">You</span>
+                            {% elif comment.commenter_id == issue.user_id %}
+                                <span class="ct-chat-role ct-chat-role--user">Reporter</span>
                             {% else %}
                                 <span class="ct-chat-role ct-chat-role--engineer">Engineer</span>
                             {% endif %}
@@ -1761,6 +1763,13 @@
     {% endif %}
 
     <!-- ===== 8. ACTION BUTTONS ===== -->
+    {% if feedback_error %}
+    <div class="ct-info-banner" role="alert" style="background: #fef2f2; border-color: #fecaca; color: #991b1b; margin-bottom: 1rem;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>{{ feedback_error }}</span>
+    </div>
+    {% endif %}
+
     <div class="ct-actions">
         {% if issue.status == 'User Feedback' and issue.user.user == user %}
             <button class="ct-btn ct-btn--primary" type="button" id="ctConfirmBtn">
@@ -1809,7 +1818,7 @@
             <input type="hidden" name="status" id="ctActionInput" value="RESOLVED">
             <div class="ct-sheet-body">
                 <label for="ctUserComments">
-                    <i class="fas fa-comment-alt"></i> Your Feedback <span style="color: var(--ct-text-muted); font-weight: 400;">(optional)</span>
+                    <i class="fas fa-comment-alt"></i> Your Feedback <span id="ctFeedbackHint" style="color: var(--ct-text-muted); font-weight: 400;">(optional)</span>
                 </label>
                 <textarea
                     name="user-feedback"
@@ -1817,9 +1826,21 @@
                     placeholder="Any observations about the repair..."
                     rows="3"
                 ></textarea>
-                <div class="ct-sheet-notice">
+                <div id="ctFeedbackRequiredMsg" style="display: none; color: #dc2626; font-size: 0.8rem; margin-top: 0.35rem;">
+                    Please describe what is still wrong.
+                </div>
+                <div id="ctOperationalGroup" style="display: none; margin-top: 0.75rem;">
+                    <label for="ctOperationalStatus">
+                        <i class="fas fa-power-off"></i> Is the machine running?
+                    </label>
+                    <select name="operational-status" id="ctOperationalStatus" class="form-select">
+                        <option value="NON_OPERATIONAL" {% if issue.operational_status == 'NON_OPERATIONAL' %}selected{% endif %}>No - machine is down</option>
+                        <option value="OPERATIONAL" {% if issue.operational_status != 'NON_OPERATIONAL' %}selected{% endif %}>Yes - running, but the problem remains</option>
+                    </select>
+                </div>
+                <div class="ct-sheet-notice" id="ctSheetNotice">
                     <i class="fas fa-info-circle"></i>
-                    <span>By confirming, you acknowledge the machine is operational. The engineer will complete the documentation.</span>
+                    <span id="ctSheetNoticeText">By confirming, you acknowledge the machine is operational. The engineer will complete the documentation.</span>
                 </div>
             </div>
             <div class="ct-sheet-actions">
@@ -1926,18 +1947,32 @@
         var sheetIconEl = $('ctSheetIconEl');
         var sheetTitle = $('ctSheetTitle');
         var sheetDesc = $('ctSheetDesc');
+        var comments = $('ctUserComments');
+        var requiredMsg = $('ctFeedbackRequiredMsg');
 
         function openSheet(mode) {
+            var reopening = mode !== 'confirm';
+            comments.required = reopening;
+            requiredMsg.style.display = 'none';
+            $('ctFeedbackHint').textContent = reopening ? '(required)' : '(optional)';
+            $('ctOperationalGroup').style.display = reopening ? 'block' : 'none';
+            $('ctSheetNoticeText').textContent = reopening
+                ? 'The complaint will be reopened and sent back to the engineer.'
+                : 'By confirming, you acknowledge the machine is operational. The engineer will complete the documentation.';
+            comments.placeholder = reopening ? 'What is still wrong with the machine?' : 'Any observations about the repair...';
+
             if (mode === 'confirm') {
                 actionInput.value = 'RESOLVED';
                 sheetIcon.className = 'ct-sheet-icon ct-sheet-icon--green';
+                sheetIcon.style.background = '';
+                sheetIcon.style.color = '';
                 sheetIconEl.className = 'fas fa-check-circle';
                 sheetTitle.textContent = 'Confirm Resolution';
                 sheetDesc.textContent = 'Is the equipment working properly now?';
                 submitBtn.className = 'ct-sheet-btn ct-sheet-btn--confirm';
                 submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Yes, It\'s Working';
             } else {
-                actionInput.value = 'not_fixed';
+                actionInput.value = 'NOT_FIXED';
                 sheetIcon.className = 'ct-sheet-icon';
                 sheetIcon.style.background = '#fee2e2';
                 sheetIcon.style.color = '#dc2626';
@@ -1969,7 +2004,13 @@
             if (e.target === overlay) closeSheet();
         });
 
-        $('ctFeedbackForm').addEventListener('submit', function() {
+        $('ctFeedbackForm').addEventListener('submit', function(e) {
+            if (actionInput.value === 'NOT_FIXED' && !comments.value.trim()) {
+                e.preventDefault();
+                requiredMsg.style.display = 'block';
+                comments.focus();
+                return;
+            }
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';
         });

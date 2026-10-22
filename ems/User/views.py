@@ -172,10 +172,34 @@ class InitiateComplainView(View):
         return redirect('maintenance:complain_list')
 
 
-class ComplainTrackingView(View):
+def can_view_issue(user, issue):
+    """Same scope as the dashboard: reporter, own department's machines, engineers or view-all permission"""
+    if user.has_perm('core.view_all_issues') or user.has_perm('core.can_review_complaint'):
+        return True
+    if user.groups.filter(name='Engineers').exists():
+        return True
+    if issue.user and issue.user.user_id == user.pk:
+        return True
+    department = getattr(getattr(user, 'employee', None), 'department_id', None)
+    return department is not None and issue.machine_id is not None and issue.machine_id.Department_id == department
+
+
+class ComplainTrackingView(LoginRequiredMixin, View):
+    login_url = 'User:login'
+
     def get(self, request, pk):
-        issue = MachineIssue.objects.get(pk=pk)
-        return render(request, 'user/complain-tracking.html', {'issue':issue})
+        issue = get_object_or_404(
+            MachineIssue.objects.select_related('user__user', 'equipment', 'machine_id', 'error_department'), pk=pk)
+        if not can_view_issue(request.user, issue):
+            return render(request, 'user/error/404.html', {'error': 'You do not have access to this complaint.'},
+                          status=403)
+        context = {
+            'issue': issue,
+            'work_sessions': issue.work_sessions.select_related('engineer').order_by('started_at'),
+            'quick_review_comments': issue.quick_review_comments.select_related('commenter__user').order_by('created_at'),
+            'feedback_error': request.session.pop(f'feedback_error_{issue.pk}', None),
+        }
+        return render(request, 'user/complain-tracking.html', context)
     
     
 
@@ -1072,112 +1096,60 @@ def spare_issue(request, pk):
             return JsonResponse({"Error": e})
 
 
-@login_required
+@login_required(login_url='User:login')
 def user_close_complaint(request, pk):
     """
-    Allow user who raised complaint to confirm resolution when status is ~User Feedback~.
-    Changes status from User Feedback to either AWAITING_DOCUMENTATION or PENDING depending on the user selection.
+    The user who raised the complaint answers the engineer's fix while the status is 'User Feedback':
+    - RESOLVED   -> AWAITING_DOCUMENTATION (engineer completes the closing documentation)
+    - NOT_FIXED  -> PENDING (reopened for the engineer, feedback required)
     """
-    if request.method == 'POST':
-        
-        employee = request.user.employee   
-        
-        try:      
-            issue = MachineIssue.objects.get(pk=pk)
+    if request.method != 'POST':
+        return redirect('User:complain_track', pk=pk)
 
-            # Verify the current user is the one who created the complaint
-            if issue.user.user != request.user:
-                return render(request, 'user/error/404.html', {
-                    'error': 'You can only close complaints that you created'
-                })
+    issue = get_object_or_404(MachineIssue.objects.select_related('user__user'), pk=pk)
+    employee = getattr(request.user, 'employee', None)
 
-            # Verify status is User Feedback
-            if issue.status != 'User Feedback':
-                return render(request, 'user/error/404.html', {
-                    'error': f'The engineer is still working on the complain you cannot close it {str(issue.status)}'
-                })
+    if employee is None or issue.user_id != employee.pk:
+        return render(request, 'user/error/404.html', {
+            'error': 'Only the person who raised this complaint can confirm or reopen it.'
+        }, status=403)
 
-            # Get optional user feedback
-            user_feedback = request.POST.get('user-feedback', '')
-            status = request.POST.get('status', '')
-            
-            if status.lower() != 'resolved':
-                # Update status to pending
-                print("inside if condition")
-                try:
-                    
-                    comment = QuickReviewComments.objects.create(
-                        issue=issue,
-                        commenter= employee,
-                        comment=user_feedback,
-                    )
-                    
-                    issue.status = issue.STATUS_CHOICES[0][0]  # PENDING
+    if issue.status != MachineIssue.STATUS_USER_FEEDBACK:
+        # Already answered (e.g. a double submit) - just show the current state
+        return redirect('User:complain_track', pk=pk)
 
-                    issue.save()
+    action = request.POST.get('status', '').upper()
+    feedback = request.POST.get('user-feedback', '').strip()
 
-                    return redirect('User:complain_track', pk=pk)
+    if action not in ('RESOLVED', 'NOT_FIXED'):
+        request.session[f'feedback_error_{pk}'] = 'Please choose whether the issue is fixed.'
+        return redirect('User:complain_track', pk=pk)
+    if action == 'NOT_FIXED' and not feedback:
+        request.session[f'feedback_error_{pk}'] = 'Please describe what is still wrong so the engineer can follow up.'
+        return redirect('User:complain_track', pk=pk)
 
-                except Exception as e:
-                    print(str(e))
-                    return render(request, 'user/error/404.html', {
-                        'error': f'Error saving feedback: {str(e)}'
-                    })
- 
-            
-            try:
-                comment = QuickReviewComments.objects.create(
-                    issue=issue,
-                    commenter= employee,
-                    comment=user_feedback,
-                )
-                issue.status = 'AWAITING_DOCUMENTATION'
-            except Exception as e:
-                print(str(e))
-                return render(request, 'user/error/404.html', {
-                    'error': f'Error saving feedback: {str(e)}'
-                })
-            
-            
-
-
-            # Record user confirmation timestamp
-            issue.user_confirmation_timestamp = timezone.now()
-
-            # Calculate user response time
+    now = timezone.now()
+    with transaction.atomic():
+        if action == 'RESOLVED':
+            if feedback:
+                QuickReviewComments.objects.create(issue=issue, commenter=employee, comment=feedback)
+            issue.status = MachineIssue.STATUS_AWAITING_DOCUMENTATION
+            issue.operational_status = 'OPERATIONAL'
+            issue.user_confirmation_timestamp = now
             if issue.quick_review_timestamp:
-                time_diff = issue.user_confirmation_timestamp - issue.quick_review_timestamp
-                issue.user_response_hours = time_diff.total_seconds() / 3600
+                issue.user_response_hours = (now - issue.quick_review_timestamp).total_seconds() / 3600
+        else:
+            QuickReviewComments.objects.create(issue=issue, commenter=employee,
+                                               comment=f'Reopened - still not fixed: {feedback}')
+            issue.status = MachineIssue.STATUS_PENDING
+            if request.POST.get('operational-status') in ('OPERATIONAL', 'NON_OPERATIONAL'):
+                issue.operational_status = request.POST['operational-status']
+            # Response times are measured again for the new attempt
+            issue.quick_review_timestamp = None
+            issue.engineer_response_hours = None
+        issue.save()
 
-            # Store user feedback if provided (you might want to add this to description or a new field)
-            # if user_feedback:
-            #     issue.description_user = f"{issue.description_user}\n\n[User Confirmation Feedback]: {user_feedback}"
-
-            issue.save()
-
-            print(f"\n{'='*60}")
-            print(f"USER COMPLAINT CLOSURE")
-            print(f"{'='*60}")
-            print(f"Issue ID: {issue.pk}")
-            print(f"Ticket #: {issue.ticket_num}")
-            print(f"User: {request.user.username}")
-            print(f"Status changed: RESOLVED → AWAITING_DOCUMENTATION")
-            print(f"User feedback: {'Yes' if user_feedback else 'No'}")
-            print(f"{'='*60}\n")
-
-            # Redirect back to tracking page
-            return redirect('User:complain_track', pk=pk)
-
-        except MachineIssue.DoesNotExist:
-            return render(request, 'user/error/404.html', {
-                'error': 'Complaint not found'
-            })
-        except Exception as e:
-            return render(request, 'user/error/404.html', {
-                'error': str(e)
-            })
-
-    # GET request - redirect to tracking page
+    logger.info(f"Ticket {issue.ticket_num}: user {request.user.username} answered feedback with {action}")
     return redirect('User:complain_track', pk=pk)
 
 
