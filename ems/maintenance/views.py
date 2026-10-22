@@ -162,7 +162,7 @@ def closed_complaints_archive(request):
         'machineissue__issueclosing__contractor'
     ).prefetch_related(
         'image',
-        'machineissue__reviewrImages',
+        'machineissue__reviewerImages',
         'machineissue__malfunction_part',
         'machineissue__issueclosing__image'
     ).order_by('-date_time')

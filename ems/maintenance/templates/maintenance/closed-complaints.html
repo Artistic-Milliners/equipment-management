@@ -597,9 +597,9 @@
                         </div>
                     </div>
                     {% endif %}
-                    {% if issue.machineissue.reviewrImages.all %}
+                    {% if issue.machineissue.reviewerImages.all %}
                     <div class="images-grid">
-                        {% for img in issue.machineissue.reviewrImages.all %}
+                        {% for img in issue.machineissue.reviewerImages.all %}
                         <img src="{{ img.image.url }}" alt="Review Image" class="image-thumbnail" onclick="window.open(this.src)">
                         {% endfor %}
                     </div>

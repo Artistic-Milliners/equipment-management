@@ -141,10 +141,12 @@
                         Add Item
                     </button>
                     {% endif %}
+                    {% comment %} Export is disabled until the export views exist (their URLs are commented out in User/urls.py)
                     <button type="button" class="btn-modern btn-success-modern" onclick="exportInventory()">
                         <i class="fas fa-download"></i>
                         Export
                     </button>
+                    {% endcomment %}
                 </div>
             </div>
         </div>
@@ -1183,10 +1185,12 @@
                     <i class="fas fa-times"></i>
                     Close
                 </button>
+                {% comment %} Export is disabled until the export views exist (their URLs are commented out in User/urls.py)
                 <button type="button" class="btn-modern btn-success-modern" onclick="exportLedger()">
                     <i class="fas fa-download"></i>
                     Export CSV
                 </button>
+                {% endcomment %}
             </div>
         </div>
     </div>
@@ -1639,8 +1643,8 @@ function viewLedger(itemId) {
 }
 
 function exportInventory() {
-    // Export all inventory items to CSV
-    window.location.href = "{% url 'User:export_inventory_csv' %}";
+    // Export all inventory items to CSV (route disabled in User/urls.py; button hidden)
+    window.location.href = "/home/spares/export";
 }
 
 // Global variable to store current spare ID for ledger export
