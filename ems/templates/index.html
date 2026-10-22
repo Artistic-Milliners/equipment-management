@@ -1096,11 +1096,20 @@
                 </a>
             </div>
             
-            {% if perms.core.can_review_complaint or perms.core.can_approve_complaint %}
+            {% if perms.core.can_review_complaint or perms.core.can_approve_complaint or user|has_group:"Engineers" or user|has_group:"Approvers" %}
+            <!-- Engineers / approvers: full documentation archive (same access rule as the archive page) -->
             <div class="nav-item">
                 <a href="{% url 'maintenance:closed_archive' %}" class="nav-link">
                     <i class="fas fa-archive nav-icon"></i>
-                    <span>Closed Archive</span>
+                    <span>Closed Complaints Archive</span>
+                </a>
+            </div>
+            {% else %}
+            <!-- Other users: their own closed / completed tickets -->
+            <div class="nav-item">
+                <a href="{% url 'maintenance:complain_list' %}?tab=closed" class="nav-link">
+                    <i class="fas fa-archive nav-icon"></i>
+                    <span>Closed Complaints</span>
                 </a>
             </div>
             {% endif %}
@@ -1245,14 +1254,15 @@
             });
 
             // Set active navigation item
+            // Prefer an exact match including the query (e.g. "?tab=closed"), else match the path only
             const currentPath = window.location.pathname;
-            const navLinks = document.querySelectorAll('.nav-link');
-            
-            navLinks.forEach(link => {
-                if (link.getAttribute('href') === currentPath) {
-                    link.classList.add('active');
-                }
-            });
+            const currentFull = currentPath + window.location.search;
+            const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+            const activeLink = navLinks.find(link => link.getAttribute('href') === currentFull)
+                || navLinks.find(link => link.getAttribute('href') === currentPath);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
         });
 
         // Equipment toggle function
