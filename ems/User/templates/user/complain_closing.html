@@ -1,1016 +1,875 @@
 {% extends "index.html" %}
 {% load static %}
-{% load app_filters user_tags %}
+{% load tz %}
+{% load user_tags %}
 
 {% block page-title %}Close Complaint - #{{ issue.ticket_num }}{% endblock page-title %}
+
 {% block main-body %}
 <style>
-    /* Modern Complaint Closing Styles */
-    .closing-container {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 2rem;
+    /* ============================================
+       CLOSING DOCUMENTATION WIZARD
+       Same design language as Complaint Tracking / Quick Review
+       ============================================ */
+    :root {
+        --cf-bg: #f8fafc;
+        --cf-card: #ffffff;
+        --cf-border: #e2e8f0;
+        --cf-border-light: #f1f5f9;
+        --cf-text: #0f172a;
+        --cf-text-2: #64748b;
+        --cf-muted: #94a3b8;
+        --cf-body: #334155;
+        --cf-blue: #2563eb;
+        --cf-blue-light: #dbeafe;
+        --cf-blue-dark: #1e40af;
+        --cf-green: #059669;
+        --cf-green-light: #d1fae5;
+        --cf-green-dark: #065f46;
+        --cf-red: #dc2626;
+        --cf-red-light: #fee2e2;
+        --cf-red-dark: #991b1b;
+        --cf-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+        --cf-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+        --cf-radius: 16px;
+        --cf-radius-sm: 12px;
+        --cf-radius-xs: 8px;
+    }
+
+    .cf-page { max-width: 720px; margin: 0 auto; padding: 0 0.75rem 7rem; -webkit-font-smoothing: antialiased; }
+
+    /* Nav + header */
+    .cf-nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; margin-bottom: 0.25rem; }
+    .cf-back-link {
+        display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px;
+        padding: 0.5rem 0.75rem; border-radius: var(--cf-radius-xs);
+        color: var(--cf-text-2); font-size: 0.875rem; font-weight: 500; text-decoration: none;
+    }
+    .cf-back-link:hover { color: var(--cf-text); background: var(--cf-border-light); }
+    .cf-step-pill {
+        font-size: 0.8rem; font-weight: 600; padding: 0.4rem 0.85rem; border-radius: 100px;
+        background: var(--cf-border-light); color: var(--cf-text-2);
+    }
+    .cf-header { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .cf-ticket-id { font-size: 1.375rem; font-weight: 700; color: var(--cf-text); letter-spacing: -0.02em; }
+    .cf-badge {
+        display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border-radius: 100px;
+        font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+        background: var(--cf-blue-light); color: var(--cf-blue-dark);
+    }
+    .cf-header-title { flex-basis: 100%; margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--cf-text-2); }
+
+    /* Cards */
+    .cf-card {
+        background: var(--cf-card); border: 1px solid var(--cf-border); border-radius: var(--cf-radius);
+        box-shadow: var(--cf-shadow-sm); margin-bottom: 1rem; overflow: hidden;
+    }
+    .cf-card-body { padding: 1.25rem; }
+    .cf-section-label {
+        display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;
+        font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--cf-muted);
+    }
+    .cf-section-label i { font-size: 0.85rem; }
+    .cf-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1rem; }
+    .cf-meta-label { display: block; font-size: 0.7rem; color: var(--cf-muted); font-weight: 500; margin-bottom: 0.15rem; }
+    .cf-meta-value { display: block; font-size: 0.9rem; color: var(--cf-text); font-weight: 600; word-break: break-word; }
+    .cf-note {
+        margin-top: 1rem; padding: 0.85rem 1rem; border-radius: var(--cf-radius-sm);
+        background: var(--cf-bg); border: 1px solid var(--cf-border-light);
+        font-size: 0.875rem; color: var(--cf-body); line-height: 1.5;
+    }
+    .cf-note-title { font-size: 0.7rem; font-weight: 600; color: var(--cf-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+    .cf-chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
+    .cf-chip {
+        display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.65rem; border-radius: 100px;
+        background: var(--cf-border-light); color: var(--cf-body); font-size: 0.78rem; font-weight: 500;
+    }
+
+    /* Error summary */
+    .cf-alert {
+        display: flex; gap: 0.75rem; padding: 1rem 1.1rem; margin-bottom: 1rem; border-radius: var(--cf-radius-sm);
+        background: var(--cf-red-light); color: var(--cf-red-dark); border: 1px solid #fecaca; font-size: 0.875rem;
+    }
+    .cf-alert ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+
+    /* Progress */
+    .cf-progress { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; margin: 0.25rem 0 1rem; }
+    .cf-progress-step { display: flex; flex-direction: column; gap: 0.4rem; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+    .cf-progress-step:disabled { cursor: default; }
+    .cf-progress-bar { height: 4px; border-radius: 100px; background: var(--cf-border); transition: background 0.2s ease; }
+    .cf-progress-name { font-size: 0.72rem; font-weight: 600; color: var(--cf-muted); }
+    .cf-progress-step.is-done .cf-progress-bar { background: var(--cf-green); }
+    .cf-progress-step.is-current .cf-progress-bar { background: var(--cf-blue); }
+    .cf-progress-step.is-current .cf-progress-name { color: var(--cf-blue-dark); }
+    .cf-progress-step.is-done .cf-progress-name { color: var(--cf-green-dark); }
+    .cf-progress-step.has-error .cf-progress-bar { background: var(--cf-red); }
+
+    /* Steps */
+    .cf-step { display: none; }
+    .cf-step.is-active { display: block; animation: cfFade 0.2s ease; }
+    @keyframes cfFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .cf-step-title { font-size: 1.05rem; font-weight: 700; color: var(--cf-text); margin: 0 0 0.25rem; }
+    .cf-step-desc { font-size: 0.85rem; color: var(--cf-text-2); margin: 0 0 1.1rem; }
+
+    /* Fields */
+    .cf-field { margin-bottom: 1.1rem; }
+    .cf-field:last-child { margin-bottom: 0; }
+    .cf-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--cf-body); margin-bottom: 0.4rem; }
+    .cf-label .cf-optional { color: var(--cf-muted); font-weight: 400; }
+    .cf-input, .cf-select, .cf-textarea {
+        width: 100%; box-sizing: border-box; min-height: 48px; padding: 0.7rem 0.9rem;
+        border: 1.5px solid var(--cf-border); border-radius: var(--cf-radius-sm); background: #fff;
+        font-size: 1rem; color: var(--cf-text); transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .cf-textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+    .cf-input:focus, .cf-select:focus, .cf-textarea:focus {
+        outline: none; border-color: var(--cf-blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .cf-field.is-invalid .cf-input, .cf-field.is-invalid .cf-select, .cf-field.is-invalid .cf-textarea { border-color: var(--cf-red); }
+    .cf-hint { display: block; margin-top: 0.35rem; font-size: 0.78rem; color: var(--cf-text-2); }
+    .cf-field-error { display: none; margin-top: 0.35rem; font-size: 0.78rem; color: var(--cf-red); font-weight: 500; }
+    .cf-field.is-invalid .cf-field-error { display: block; }
+    .cf-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+    .cf-input-suffix { position: relative; }
+    .cf-input-suffix .cf-input { padding-right: 3rem; }
+    .cf-input-suffix span { position: absolute; right: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--cf-muted); font-size: 0.85rem; pointer-events: none; }
+
+    /* Segmented choice cards */
+    .cf-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .cf-choice { position: relative; }
+    .cf-choice input { position: absolute; opacity: 0; pointer-events: none; }
+    .cf-choice label {
+        display: flex; align-items: center; gap: 0.65rem; min-height: 56px; padding: 0.75rem 0.9rem; cursor: pointer;
+        border: 1.5px solid var(--cf-border); border-radius: var(--cf-radius-sm); background: #fff;
+        font-size: 0.9rem; font-weight: 600; color: var(--cf-body); transition: all 0.15s ease;
+    }
+    .cf-choice label i { font-size: 1.05rem; color: var(--cf-muted); width: 1.2rem; text-align: center; }
+    .cf-choice input:focus-visible + label { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); }
+    .cf-choice input:checked + label { border-color: var(--cf-blue); background: #eff6ff; color: var(--cf-blue-dark); }
+    .cf-choice input:checked + label i { color: var(--cf-blue); }
+    .cf-choice--good input:checked + label { border-color: var(--cf-green); background: #ecfdf5; color: var(--cf-green-dark); }
+    .cf-choice--good input:checked + label i { color: var(--cf-green); }
+    .cf-choice--bad input:checked + label { border-color: var(--cf-red); background: #fef2f2; color: var(--cf-red-dark); }
+    .cf-choice--bad input:checked + label i { color: var(--cf-red); }
+    .cf-hidden { display: none !important; }
+
+    /* Spares picker */
+    .cf-spares-search { position: relative; }
+    .cf-spares-search i { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--cf-muted); }
+    .cf-spares-search .cf-input { padding-left: 2.5rem; }
+    .cf-spares-results {
+        display: none; margin-top: 0.4rem; max-height: 240px; overflow-y: auto;
+        border: 1px solid var(--cf-border); border-radius: var(--cf-radius-sm); background: #fff; box-shadow: var(--cf-shadow-lg);
+    }
+    .cf-spares-results.is-open { display: block; }
+    .cf-spare-option {
+        display: flex; align-items: center; gap: 0.6rem; width: 100%; min-height: 44px; padding: 0.6rem 0.9rem;
+        background: none; border: 0; border-bottom: 1px solid var(--cf-border-light); text-align: left;
+        font-size: 0.9rem; color: var(--cf-body); cursor: pointer;
+    }
+    .cf-spare-option:last-child { border-bottom: 0; }
+    .cf-spare-option:hover, .cf-spare-option:focus { background: var(--cf-bg); outline: none; }
+    .cf-spare-option .cf-tag { margin-left: auto; }
+    .cf-spare-option.is-selected { color: var(--cf-muted); }
+    .cf-tag { font-size: 0.68rem; font-weight: 600; padding: 0.12rem 0.5rem; border-radius: 100px; background: var(--cf-blue-light); color: var(--cf-blue-dark); white-space: nowrap; }
+    .cf-spares-empty { padding: 0.75rem 0.9rem; font-size: 0.85rem; color: var(--cf-muted); }
+    .cf-selected-spares { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+    .cf-selected-spare {
+        display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.4rem 0.35rem 0.75rem; border-radius: 100px;
+        background: var(--cf-blue-light); color: var(--cf-blue-dark); font-size: 0.82rem; font-weight: 600;
+    }
+    .cf-selected-spare button {
+        display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%;
+        border: 0; background: rgba(30, 64, 175, 0.12); color: var(--cf-blue-dark); cursor: pointer;
+    }
+
+    /* Upload */
+    .cf-upload {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem;
+        padding: 1.25rem; border: 1.5px dashed var(--cf-border); border-radius: var(--cf-radius-sm); background: var(--cf-bg);
+        color: var(--cf-text-2); font-size: 0.85rem; text-align: center; cursor: pointer;
+    }
+    .cf-upload:hover, .cf-upload.is-dragover { border-color: var(--cf-blue); color: var(--cf-blue-dark); }
+    .cf-upload i { font-size: 1.4rem; color: var(--cf-blue); }
+    .cf-upload input { display: none; }
+    .cf-thumbs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+    .cf-thumbs img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--cf-radius-xs); border: 1px solid var(--cf-border); }
+
+    /* Review */
+    .cf-review-group { border: 1px solid var(--cf-border); border-radius: var(--cf-radius-sm); margin-bottom: 0.75rem; overflow: hidden; }
+    .cf-review-head {
+        display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.9rem;
+        background: var(--cf-bg); border-bottom: 1px solid var(--cf-border-light);
+        font-size: 0.78rem; font-weight: 700; color: var(--cf-body); text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .cf-review-edit { background: none; border: 0; color: var(--cf-blue); font-size: 0.8rem; font-weight: 600; cursor: pointer; padding: 0.25rem 0.4rem; text-transform: none; letter-spacing: 0; }
+    .cf-review-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--cf-border-light); font-size: 0.875rem; }
+    .cf-review-row:last-child { border-bottom: 0; }
+    .cf-review-row dt { color: var(--cf-text-2); flex-shrink: 0; font-weight: 400; }
+    .cf-review-row dd { margin: 0; color: var(--cf-text); font-weight: 600; text-align: right; white-space: pre-line; word-break: break-word; }
+    .cf-review-row dd.is-empty { color: var(--cf-muted); font-weight: 400; }
+
+    /* Sticky action bar */
+    .cf-actionbar {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 1030;
+        padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+        background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(8px);
+        border-top: 1px solid var(--cf-border); box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+    }
+    .cf-actionbar-inner { max-width: 720px; margin: 0 auto; display: flex; gap: 0.75rem; }
+    .cf-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 50px; padding: 0 1.25rem;
+        border-radius: var(--cf-radius-sm); border: 1.5px solid transparent; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+        transition: transform 0.1s ease, background 0.15s ease; -webkit-tap-highlight-color: transparent;
+    }
+    .cf-btn:active { transform: scale(0.98); }
+    .cf-btn:disabled { opacity: 0.6; cursor: default; }
+    .cf-btn--ghost { background: #fff; border-color: var(--cf-border); color: var(--cf-body); }
+    .cf-btn--primary { flex: 1; background: var(--cf-blue); color: #fff; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25); }
+    .cf-btn--success { flex: 1; background: var(--cf-green); color: #fff; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25); }
+
+    /* Confirm bottom sheet */
+    .cf-overlay {
+        position: fixed; inset: 0; z-index: 1050; display: flex; align-items: flex-end; justify-content: center;
+        background: rgba(15, 23, 42, 0.45); opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    .cf-overlay.is-open { opacity: 1; visibility: visible; }
+    .cf-sheet {
+        width: 100%; max-width: 520px; background: #fff; border-radius: 20px 20px 0 0;
+        padding: 0.75rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+        transform: translateY(100%); transition: transform 0.25s ease;
+    }
+    .cf-overlay.is-open .cf-sheet { transform: none; }
+    .cf-sheet-handle { width: 40px; height: 4px; border-radius: 100px; background: var(--cf-border); margin: 0 auto 1rem; }
+    .cf-sheet-head { display: flex; gap: 0.9rem; align-items: flex-start; margin-bottom: 1rem; }
+    .cf-sheet-icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--cf-green-light); color: var(--cf-green); font-size: 1.2rem; }
+    .cf-sheet h3 { margin: 0 0 0.2rem; font-size: 1.05rem; font-weight: 700; color: var(--cf-text); }
+    .cf-sheet p { margin: 0; font-size: 0.875rem; color: var(--cf-text-2); line-height: 1.45; }
+    .cf-sheet-actions { display: flex; gap: 0.75rem; }
+
+    @media (min-width: 768px) {
+        .cf-overlay { align-items: center; }
+        .cf-sheet { border-radius: 20px; }
+    }
+    @media (max-width: 480px) {
+        .cf-two-col, .cf-meta-grid { grid-template-columns: 1fr; }
+        .cf-progress-name { font-size: 0.65rem; }
     }
-    
-    .closing-header {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 16px;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);
-    }
-    
-    .closing-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    
-    .ticket-badge {
-        background: rgba(255,255,255,0.2);
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        backdrop-filter: blur(10px);
-    }
-    
-    .closing-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 2rem;
-        margin-top: 1.5rem;
-        font-size: 1.1rem;
-    }
-    
-    .meta-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .meta-item i {
-        font-size: 1.2rem;
-        opacity: 0.8;
-    }
-    
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    .form-section {
-        background: white;
-        border-radius: 16px;
-        padding: 2rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        border: 1px solid #e2e8f0;
-    }
-    
-    .section-title {
-        font-size: 1.3rem;
-        font-weight: 600;
-        color: #1e293b;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid #f1f5f9;
-    }
-    
-    .section-title i {
-        color: #10b981;
-        font-size: 1.4rem;
-    }
-    
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-label {
-        display: block;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 0.5rem;
-        font-size: 0.95rem;
-    }
-    
-    .form-control {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        background: white;
-    }
-    
-    .form-control:focus {
-        outline: none;
-        border-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
-    
-    .form-control:disabled {
-        background: #f8fafc;
-        color: #64748b;
-        cursor: not-allowed;
-    }
-    
-    .form-select {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 1rem;
-        background: white;
-        transition: all 0.3s ease;
-    }
-    
-    .form-select:focus {
-        outline: none;
-        border-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
-    
-    .textarea {
-        min-height: 120px;
-        resize: vertical;
-        font-family: inherit;
-    }
-    
-    .malfunction-parts {
-        background: #f8fafc;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 1rem;
-        min-height: 60px;
-    }
-    
-    .part-item {
-        background: #e0f2fe;
-        color: #0369a1;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin: 0.25rem;
-        display: inline-block;
-    }
-    
-    /* Modern Spares Selector */
-    .modern-spares-selector {
-        background: white;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 0;
-        overflow: visible;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        transition: all 0.3s ease;
-        position: relative;
-    }
-    
-    .modern-spares-selector:focus-within {
-        border-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
-    
-    /* Spares Search Container */
-    .spares-search-container {
-        padding: 16px;
-        border-bottom: 1px solid #e2e8f0;
-        background: #f8fafc;
-    }
-    
-    .spares-search-input-group {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
-    
-    .spares-search-input {
-        flex: 1;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        font-size: 14px;
-        background: white;
-        transition: all 0.2s ease;
-    }
-    
-    .spares-search-input:focus {
-        border-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        outline: none;
-    }
-    
-    .spares-search-btn {
-        background: #10b981;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 12px 16px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 14px;
-        font-weight: 500;
-    }
-    
-    .spares-search-btn:hover {
-        background: #059669;
-        transform: translateY(-1px);
-    }
-    
-    /* Spares Search Results */
-    .spares-search-results {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white !important;
-        border: 2px solid #e2e8f0;
-        border-top: none;
-        border-radius: 0 0 12px 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        z-index: 9999;
-        max-height: 300px;
-        overflow-y: auto;
-        margin-top: 0;
-    }
-    
-    .spares-search-results[style*="display: block"] {
-        display: block !important;
-    }
-    
-    .spares-results-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 16px;
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
-        font-size: 14px;
-        font-weight: 500;
-        color: #1e293b;
-    }
-    
-    .spares-close-results {
-        background: none;
-        border: none;
-        color: #64748b;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-    }
-    
-    .spares-close-results:hover {
-        background: #e2e8f0;
-        color: #1e293b;
-    }
-    
-    .spares-results-list {
-        max-height: 250px;
-        overflow-y: auto;
-    }
-    
-    .spares-result-item {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border-bottom: 1px solid #f1f5f9;
-        font-size: 14px;
-        list-style: none;
-    }
-    
-    .spares-result-item:hover {
-        background: #f8fafc;
-        color: #10b981;
-    }
-    
-    .spares-result-item:last-child {
-        border-bottom: none;
-    }
-    
-    .spares-result-item i {
-        margin-right: 8px;
-        color: #10b981;
-        width: 16px;
-    }
-    
-    .spares-no-results {
-        padding: 20px;
-        text-align: center;
-        color: #64748b;
-        font-style: italic;
-    }
-    
-    /* Selected Spares */
-    .spares-selected-items {
-        padding: 16px;
-        background: white;
-    }
-    
-    .spares-selected-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-        font-size: 14px;
-        font-weight: 500;
-        color: #1e293b;
-    }
-    
-    .spares-selected-list {
-        min-height: 60px;
-        max-height: 200px;
-        overflow-y: auto;
-    }
-    
-    .spares-no-selection {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #64748b;
-        font-style: italic;
-        padding: 20px;
-        text-align: center;
-    }
-    
-    .spares-no-selection i {
-        margin-right: 8px;
-        font-size: 16px;
-    }
-    
-    .spares-selected-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #e0f2fe;
-        color: #0369a1;
-        padding: 8px 12px;
-        margin-bottom: 8px;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-    
-    .spares-selected-item:hover {
-        background: #bae6fd;
-    }
-    
-    .spares-selected-item:last-child {
-        margin-bottom: 0;
-    }
-    
-    .spares-selected-item i {
-        margin-right: 8px;
-        color: #0369a1;
-    }
-    
-    .spares-remove-item {
-        background: none;
-        border: none;
-        color: #0369a1;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-        font-size: 12px;
-    }
-    
-    .spares-remove-item:hover {
-        background: rgba(239, 68, 68, 0.1);
-        color: #ef4444;
-    }
-    
-    .file-upload {
-        position: relative;
-        display: inline-block;
-        width: 100%;
-    }
-    
-    .file-upload input[type="file"] {
-        position: absolute;
-        opacity: 0;
-        width: 100%;
-        height: 100%;
-        cursor: pointer;
-    }
-    
-    .file-upload-label {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        padding: 2rem;
-        border: 2px dashed #d1d5db;
-        border-radius: 8px;
-        background: #f9fafb;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-align: center;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .file-upload-label:hover {
-        border-color: #10b981;
-        background: #f0fdf4;
-    }
-    
-    .file-upload-label i {
-        font-size: 2rem;
-        color: #6b7280;
-    }
-    
-    .action-section {
-        background: white;
-        border-radius: 16px;
-        padding: 2rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        border: 1px solid #e2e8f0;
-        margin-top: 2rem;
-    }
-    
-    .action-buttons {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        margin-top: 2rem;
-    }
-    
-    .btn-temp-close, .btn-close {
-        padding: 1rem 2rem;
-        border: 2px solid transparent;
-        border-radius: 12px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        width: 180px;
-        height: 56px;
-        justify-content: center;
-        box-sizing: border-box;
-    }
-    
-    .btn-temp-close {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-        border: 2px solid transparent;
-    }
-    
-    .btn-temp-close:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
-        background: linear-gradient(135deg, #d97706, #b45309);
-    }
-    
-    .btn-close {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-        border: 2px solid transparent;
-    }
-    
-    .btn-close:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-        background: linear-gradient(135deg, #059669, #047857);
-    }
-    
-    .back-button {
-        background: #f8fafc;
-        color: #64748b;
-        border: 2px solid #e2e8f0;
-        padding: 0.75rem 1.5rem;
-        border-radius: 12px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .back-button:hover {
-        background: #e2e8f0;
-        color: #374151;
-        transform: translateY(-1px);
-    }
-    
-    .hidden-field {
-        display: none;
-    }
-    
-    @media (max-width: 768px) {
-        .closing-container {
-            padding: 1rem;
-        }
-        
-        .closing-title {
-            font-size: 2rem;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
-        }
-        
-        .closing-meta {
-            flex-direction: column;
-            gap: 1rem;
-        }
-        
-        .form-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .action-buttons {
-            flex-direction: column;
-        }
-    }
-    .closing-errors {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        color: #991b1b;
-        border-radius: 10px;
-        padding: 1rem 1.25rem;
-        margin-bottom: 1.5rem;
-    }
-    .closing-errors ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
-    .spare-linked-badge {
-        margin-left: auto;
-        font-size: 0.7rem;
-        background: #dbeafe;
-        color: #1e40af;
-        padding: 0.1rem 0.45rem;
-        border-radius: 4px;
-        white-space: nowrap;
-    }
-    .form-hint { display: block; margin-top: 0.35rem; font-size: 0.8rem; color: #64748b; }
 </style>
 
-<div class="closing-container">
-    <!-- Back Button -->
-    <a href="{% url 'maintenance:complain_detail' pk=issue.pk %}" class="back-button">
-        <i class="fas fa-arrow-left"></i>
-        Back to Complaint Details
-    </a>
+<div class="cf-page">
+    <!-- Navigation -->
+    <nav class="cf-nav">
+        <a href="{% url 'User:complain_track' pk=issue.pk %}" class="cf-back-link">
+            <i class="fas fa-arrow-left"></i> Back to ticket
+        </a>
+        <span class="cf-step-pill" id="cfStepPill">Step 1 of 4</span>
+    </nav>
 
-    <!-- Closing Header -->
-    <div class="closing-header">
-        <div class="closing-title">
-            <i class="fas fa-check-circle"></i>
-            Close Complaint
-            <span class="ticket-badge">#{{ issue.ticket_num|default:"N/A" }}</span>
-        </div>
-        <div class="closing-meta">
-            <div class="meta-item">
-                <i class="fas fa-calendar"></i>
-                <span id="current-date"></span>
+    <!-- Ticket header -->
+    <div class="cf-header">
+        <span class="cf-ticket-id">#{{ issue.ticket_num|default:"--" }}</span>
+        <span class="cf-badge">{% if issue.status == 'APPROVED' %}Approved{% else %}Awaiting Docs{% endif %}</span>
+        <h1 class="cf-header-title">Closing documentation</h1>
+    </div>
+
+    <!-- Ticket summary -->
+    <div class="cf-card">
+        <div class="cf-card-body">
+            <div class="cf-section-label"><i class="fas fa-ticket-alt" style="color: var(--cf-blue);"></i> Ticket summary</div>
+            <div class="cf-meta-grid">
+                <div>
+                    <span class="cf-meta-label">Machine</span>
+                    <span class="cf-meta-value">{{ issue.machine_id.name }}</span>
+                </div>
+                <div>
+                    <span class="cf-meta-label">Equipment</span>
+                    <span class="cf-meta-value">{{ issue.equipment.name }}</span>
+                </div>
+                <div>
+                    <span class="cf-meta-label">Reported by</span>
+                    <span class="cf-meta-value">{{ issue.user.name|default:issue.user.user.username }}</span>
+                </div>
+                <div>
+                    <span class="cf-meta-label">Raised</span>
+                    <span class="cf-meta-value">{{ issue.date_time|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}</span>
+                </div>
+                {% if issue.user_confirmation_timestamp %}
+                <div>
+                    <span class="cf-meta-label">Confirmed by user</span>
+                    <span class="cf-meta-value">{{ issue.user_confirmation_timestamp|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}</span>
+                </div>
+                {% endif %}
+                <div>
+                    <span class="cf-meta-label">Hours at failure</span>
+                    <span class="cf-meta-value">{{ issue.machine_hours|default_if_none:"Not recorded" }}</span>
+                </div>
             </div>
-            <div class="meta-item">
-                <i class="fas fa-user"></i>
-                <span>{{ issue.user.name|default:issue.user.user.username }}</span>
+
+            <div class="cf-note">
+                <div class="cf-note-title">Problem reported</div>
+                {{ issue.description_user|default:"No description" }}
             </div>
-            <div class="meta-item">
-                <i class="fas fa-cogs"></i>
-                <span>{{ issue.machine_id.name }}{% if issue.equipment %} ({{ issue.equipment.name }}){% endif %}</span>
+            {% if engineer_note %}
+            <div class="cf-note">
+                <div class="cf-note-title">Engineer's note</div>
+                {{ engineer_note }}
             </div>
+            {% endif %}
+            {% if review and review.malfunction_part.all %}
+            <div class="cf-note">
+                <div class="cf-note-title">Malfunction parts</div>
+                <div class="cf-chip-row">
+                    {% for part in review.malfunction_part.all %}<span class="cf-chip"><i class="fas fa-cog"></i> {{ part.name }}</span>{% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
     {% if errors %}
-    <div class="closing-errors" role="alert">
-        <strong><i class="fas fa-exclamation-circle me-1"></i> Please fix the following before closing:</strong>
-        <ul>
-            {% for error in errors %}<li>{{ error }}</li>{% endfor %}
-        </ul>
+    <div class="cf-alert" role="alert">
+        <i class="fas fa-exclamation-circle" style="margin-top: 0.15rem;"></i>
+        <div>
+            <strong>Please fix the following before closing:</strong>
+            <ul>{% for error in errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
+        </div>
     </div>
     {% endif %}
 
-    <form action="{% url 'User:complain_closing' pk=issue.pk %}" method="post" enctype="multipart/form-data" id="closing-form">
+    <!-- Progress -->
+    <div class="cf-progress" id="cfProgress" aria-label="Progress">
+        <button type="button" class="cf-progress-step" data-goto="0"><span class="cf-progress-bar"></span><span class="cf-progress-name">Machine</span></button>
+        <button type="button" class="cf-progress-step" data-goto="1"><span class="cf-progress-bar"></span><span class="cf-progress-name">Resolution</span></button>
+        <button type="button" class="cf-progress-step" data-goto="2"><span class="cf-progress-bar"></span><span class="cf-progress-name">Parts &amp; Solution</span></button>
+        <button type="button" class="cf-progress-step" data-goto="3"><span class="cf-progress-bar"></span><span class="cf-progress-name">Review</span></button>
+    </div>
+
+    <form action="{% url 'User:complain_closing' pk=issue.pk %}" method="post" enctype="multipart/form-data" id="cfForm" novalidate>
         {% csrf_token %}
 
-        <div class="form-grid">
-            <!-- Machine Information -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <i class="fas fa-cogs"></i>
-                    Machine Information
-                </h3>
+        <!-- STEP 1: Machine -->
+        <section class="cf-step cf-card" data-step="0" aria-labelledby="cfStep1Title">
+            <div class="cf-card-body">
+                <h2 class="cf-step-title" id="cfStep1Title">Machine condition</h2>
+                <p class="cf-step-desc">Record the machine's state after the repair.</p>
 
-                <div class="form-group">
-                    <label class="form-label" for="final-machine-hours">
-                        <i class="fas fa-clock me-1"></i>
-                        Current Machine Hours
-                    </label>
-                    <input type="number" class="form-control" id="final-machine-hours" name="machine-hours"
-                           placeholder="Enter current machine hours" required step="1"
-                           min="{{ issue.machine_hours|default:0 }}"
-                           value="{% if posted %}{{ posted|get_item:'machine-hours' }}{% endif %}">
-                    {% if issue.machine_hours is not None %}
-                    <small class="form-hint">Hours at failure: {{ issue.machine_hours }}. Can stay the same if the machine was stopped during repair.</small>
-                    {% endif %}
-                </div>
+                <div class="cf-two-col">
+                    <div class="cf-field" data-field="machine-hours">
+                        <label class="cf-label" for="cfHours">Current machine hours</label>
+                        <div class="cf-input-suffix">
+                            <input type="number" inputmode="numeric" class="cf-input" id="cfHours" name="machine-hours"
+                                   step="1" min="{{ issue.machine_hours|default:0 }}" required
+                                   value="{% if posted %}{{ posted|get_item:'machine-hours' }}{% endif %}" placeholder="e.g. {{ issue.machine_hours|default:'1200' }}">
+                            <span>hrs</span>
+                        </div>
+                        {% if issue.machine_hours is not None %}
+                        <span class="cf-hint">At failure: {{ issue.machine_hours }} hrs. Same value is fine if the machine was stopped.</span>
+                        {% endif %}
+                        <span class="cf-field-error"></span>
+                    </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="duration">
-                        <i class="fas fa-hourglass-half me-1"></i>
-                        Repair Duration (Hours)
-                    </label>
-                    <input type="number" class="form-control" id="duration" name="duration"
-                           placeholder="Enter repair duration in hours" step="0.1" min="0" required
-                           value="{% if posted %}{{ posted.duration }}{% else %}{{ default_duration }}{% endif %}">
-                    {% if default_duration and not posted %}
-                    <small class="form-hint">Pre-filled from the recorded work time; adjust if needed.</small>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="equipment-status">
-                        <i class="fas fa-power-off me-1"></i>
-                        Equipment Status
-                    </label>
-                    <select class="form-select" name="equipment-status" id="equipment-status">
-                        <option value="on" {% if posted|get_item:'equipment-status' == 'on' %}selected{% endif %}>Operational</option>
-                        <option value="off" {% if posted|get_item:'equipment-status' == 'off' %}selected{% endif %}>Non-Operational</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Parts Information -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <i class="fas fa-puzzle-piece"></i>
-                    Parts Information
-                </h3>
-
-                <div class="form-group">
-                    <label class="form-label">Malfunction Parts</label>
-                    <div class="malfunction-parts">
-                        {% for part in review.malfunction_part.all %}
-                            <span class="part-item">{{ part.name }}</span>
-                        {% empty %}
-                            <span class="text-muted">No malfunction parts identified</span>
-                        {% endfor %}
+                    <div class="cf-field" data-field="duration">
+                        <label class="cf-label" for="cfDuration">Repair duration</label>
+                        <div class="cf-input-suffix">
+                            <input type="number" inputmode="decimal" class="cf-input" id="cfDuration" name="duration"
+                                   step="0.1" min="0" required placeholder="e.g. 1.5"
+                                   value="{% if posted %}{{ posted.duration }}{% else %}{{ default_duration }}{% endif %}">
+                            <span>hrs</span>
+                        </div>
+                        {% if default_duration and not posted %}
+                        <span class="cf-hint">Pre-filled from recorded work time.</span>
+                        {% endif %}
+                        <span class="cf-field-error"></span>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="spares-search">
-                        <i class="fas fa-tools me-1"></i>
-                        Spares Installed
-                    </label>
-
-                    <div class="modern-spares-selector">
-                        <div class="spares-search-container">
-                            <div class="spares-search-input-group">
-                                <input type="text" id="spares-search" class="spares-search-input" placeholder="Type to search spares..." autocomplete="off">
-                                <button type="button" class="spares-search-btn" id="spares-search-btn">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
+                {% with status=posted|get_item:'equipment-status' %}
+                <div class="cf-field" data-field="equipment-status">
+                    <span class="cf-label" id="cfStatusLabel">Equipment status after repair</span>
+                    <div class="cf-choices" role="radiogroup" aria-labelledby="cfStatusLabel">
+                        <div class="cf-choice cf-choice--good">
+                            <input type="radio" name="equipment-status" id="cfStatusOn" value="on" {% if status != 'off' %}checked{% endif %}>
+                            <label for="cfStatusOn"><i class="fas fa-check-circle"></i> Operational</label>
                         </div>
-
-                        <div class="spares-search-results" id="spares-search-results" style="display: none;">
-                            <div class="spares-results-header">
-                                <span class="spares-results-count">0 spares found</span>
-                                <button type="button" class="spares-close-results" id="spares-close-results">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <div class="spares-results-list" id="spares-results-list"></div>
-                        </div>
-
-                        <div class="spares-selected-items" id="spares-selected-items">
-                            <div class="spares-selected-header">
-                                <span class="spares-selected-count">Selected Spares (0)</span>
-                            </div>
-                            <div class="spares-selected-list" id="spares-selected-list"></div>
+                        <div class="cf-choice cf-choice--bad">
+                            <input type="radio" name="equipment-status" id="cfStatusOff" value="off" {% if status == 'off' %}checked{% endif %}>
+                            <label for="cfStatusOff"><i class="fas fa-power-off"></i> Non-operational</label>
                         </div>
                     </div>
-                    <small class="form-hint">Spares linked to this machine are listed first.</small>
-
-                    <!-- All spares for the search (machine-linked first) -->
-                    <select id="all-spares-options" style="display: none;">
-                        {% for spare in spares %}
-                            <option value="{{ spare.id }}" data-linked="{{ spare.linked|yesno:'1,0' }}"
-                                    {% if spare.id in selected_spares %}data-selected="1"{% endif %}>{{ spare.name }}</option>
-                        {% endfor %}
-                    </select>
-
-                    <!-- Submitted values, filled by JavaScript -->
-                    <select name="states[]" id="spares-select" multiple style="display: none;"></select>
+                    <span class="cf-field-error"></span>
                 </div>
+                {% endwith %}
             </div>
+        </section>
 
-            <!-- Resolution Details -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <i class="fas fa-user-tie"></i>
-                    Resolution Details
-                </h3>
+        <!-- STEP 2: Resolution -->
+        <section class="cf-step cf-card" data-step="1" aria-labelledby="cfStep2Title">
+            <div class="cf-card-body">
+                <h2 class="cf-step-title" id="cfStep2Title">Who resolved it</h2>
+                <p class="cf-step-desc">Was the repair done by your own team or by an outside service provider?</p>
 
                 {% with resolution=posted|get_item:'resolved-by-type' %}
-                <div class="form-group">
-                    <label class="form-label" for="resolved-by-type">
-                        <i class="fas fa-wrench me-1"></i>
-                        Resolution Type
-                    </label>
-                    <select class="form-select" name="resolved-by-type" id="resolved-by-type" onchange="changeOptions()">
-                        <option value="IN_HOUSE" {% if resolution == 'IN_HOUSE' %}selected{% endif %}>In-House</option>
-                        <option value="OUTSOURCED" {% if resolution != 'IN_HOUSE' %}selected{% endif %}>Outsourced</option>
-                    </select>
+                <div class="cf-field" data-field="resolved-by-type">
+                    <span class="cf-label" id="cfTypeLabel">Resolution type</span>
+                    <div class="cf-choices" role="radiogroup" aria-labelledby="cfTypeLabel">
+                        <div class="cf-choice">
+                            <input type="radio" name="resolved-by-type" id="cfTypeInHouse" value="IN_HOUSE"
+                                   {% if resolution == 'IN_HOUSE' or not resolution and review.assignDepartment_id %}checked{% endif %}>
+                            <label for="cfTypeInHouse"><i class="fas fa-users-cog"></i> In-house</label>
+                        </div>
+                        <div class="cf-choice">
+                            <input type="radio" name="resolved-by-type" id="cfTypeOutsourced" value="OUTSOURCED"
+                                   {% if resolution == 'OUTSOURCED' or not resolution and not review.assignDepartment_id %}checked{% endif %}>
+                            <label for="cfTypeOutsourced"><i class="fas fa-building"></i> Outsourced</label>
+                        </div>
+                    </div>
+                    <span class="cf-field-error"></span>
                 </div>
                 {% endwith %}
 
-                <div class="form-group" id="service-provider-group">
-                    <label class="form-label" for="service-provider">
-                        <i class="fas fa-building me-1"></i>
-                        Service Provider
-                    </label>
-                    <select class="form-select" name="contractor" id="service-provider">
-                        <option value="">-- Select Service Provider --</option>
-                        {% for contractor in contractors %}
-                            <option value="{{ contractor.id }}" {% if posted|get_item:'contractor' == contractor.id|stringformat:'s' %}selected{% endif %}>{{ contractor.contractor }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group hidden-field" id="department-group">
-                    <label class="form-label" for="department-select">
-                        <i class="fas fa-building me-1"></i>
-                        Department
-                    </label>
-                    <select class="form-select" name="department" id="department-select">
-                        <option value="">-- Select Department --</option>
+                <div class="cf-field" data-field="department" id="cfDepartmentField">
+                    <label class="cf-label" for="cfDepartment">Department</label>
+                    <select class="cf-select" name="department" id="cfDepartment">
+                        <option value="">Select department</option>
                         {% for department in departments %}
-                            <option value="{{ department.id }}"
-                                {% if posted %}{% if posted|get_item:'department' == department.id|stringformat:'s' %}selected{% endif %}
-                                {% elif review.assignDepartment_id == department.id %}selected{% endif %}>{{ department.name }}</option>
+                        <option value="{{ department.id }}"
+                            {% if posted %}{% if posted|get_item:'department' == department.id|stringformat:'s' %}selected{% endif %}
+                            {% elif review.assignDepartment_id == department.id %}selected{% endif %}>{{ department.name }}</option>
                         {% endfor %}
                     </select>
+                    <span class="cf-field-error"></span>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="technician">
-                        <i class="fas fa-user-hard-hat me-1"></i>
-                        Technician Name
-                    </label>
-                    <input type="text" class="form-control" id="technician" name="technician" placeholder="Enter technician name"
-                           maxlength="{{ name_max_length }}" value="{{ posted|get_item:'technician'|default:'' }}">
+                <div class="cf-field" data-field="contractor" id="cfContractorField">
+                    <label class="cf-label" for="cfContractor">Service provider</label>
+                    <select class="cf-select" name="contractor" id="cfContractor">
+                        <option value="">Select service provider</option>
+                        {% for contractor in contractors %}
+                        <option value="{{ contractor.id }}" {% if posted|get_item:'contractor' == contractor.id|stringformat:'s' %}selected{% endif %}>{{ contractor.contractor }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="cf-field-error"></span>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="supervisor">
-                        <i class="fas fa-user-tie me-1"></i>
-                        Supervisor Name
-                    </label>
-                    <input type="text" class="form-control" id="supervisor" name="supervisor" placeholder="Enter supervisor name"
-                           maxlength="{{ name_max_length }}" value="{{ posted|get_item:'supervisor'|default:'' }}">
-                </div>
-            </div>
-
-            <!-- Solution Details -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <i class="fas fa-lightbulb"></i>
-                    Solution Details
-                </h3>
-
-                <div class="form-group">
-                    <label class="form-label" for="solution-description">
-                        <i class="fas fa-file-alt me-1"></i>
-                        Solution Description
-                    </label>
-                    <textarea name="solution-description" id="solution-description" class="form-control textarea" placeholder="Describe the solution implemented..." required>{{ posted|get_item:'solution-description'|default:'' }}</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="additional-remarks">
-                        <i class="fas fa-comment me-1"></i>
-                        Additional Remarks
-                    </label>
-                    <textarea name="additional-remarks" id="additional-remarks" class="form-control textarea" placeholder="Any additional notes or observations...">{{ posted|get_item:'additional-remarks'|default:'' }}</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="image">
-                        <i class="fas fa-images me-1"></i>
-                        Upload Documentation
-                    </label>
-                    <div class="file-upload">
-                        <input type="file" id="image" name="image[]" multiple accept="image/*">
-                        <label for="image" class="file-upload-label">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <span>Click to upload images or drag and drop</span>
-                            <small>{% if errors %}Please re-attach your images. {% endif %}Upload repair photos, documentation, or alarm history</small>
-                        </label>
+                <div class="cf-two-col">
+                    <div class="cf-field" data-field="technician">
+                        <label class="cf-label" for="cfTechnician">Technician <span class="cf-optional">(optional)</span></label>
+                        <input type="text" class="cf-input" id="cfTechnician" name="technician" maxlength="{{ name_max_length }}"
+                               autocomplete="off" placeholder="Name" value="{{ posted|get_item:'technician' }}">
+                        <span class="cf-field-error"></span>
+                    </div>
+                    <div class="cf-field" data-field="supervisor">
+                        <label class="cf-label" for="cfSupervisor">Supervisor <span class="cf-optional">(optional)</span></label>
+                        <input type="text" class="cf-input" id="cfSupervisor" name="supervisor" maxlength="{{ name_max_length }}"
+                               autocomplete="off" placeholder="Name" value="{{ posted|get_item:'supervisor' }}">
+                        <span class="cf-field-error"></span>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Action Section -->
-        <div class="action-section">
-            <h3 class="section-title">
-                <i class="fas fa-gavel"></i>
-                Final Action
-            </h3>
-            <p class="text-muted mb-4">Closing marks the complaint as fully resolved and records this documentation.</p>
+        <!-- STEP 3: Parts & solution -->
+        <section class="cf-step cf-card" data-step="2" aria-labelledby="cfStep3Title">
+            <div class="cf-card-body">
+                <h2 class="cf-step-title" id="cfStep3Title">Parts &amp; solution</h2>
+                <p class="cf-step-desc">What was replaced and what fixed the problem.</p>
 
-            <div class="action-buttons">
-                <button type="submit" class="btn-close" name="close-complain" id="close-complain">
-                    <i class="fas fa-check-circle"></i>
-                    Close
-                </button>
+                <div class="cf-field" data-field="solution-description">
+                    <label class="cf-label" for="cfSolution">Solution implemented</label>
+                    <textarea class="cf-textarea" id="cfSolution" name="solution-description" required
+                              placeholder="e.g. Replaced worn drive belt and re-tensioned the pulley">{{ posted|get_item:'solution-description' }}</textarea>
+                    <span class="cf-field-error"></span>
+                </div>
+
+                <div class="cf-field">
+                    <label class="cf-label" for="cfSpareSearch">Spares installed <span class="cf-optional">(optional)</span></label>
+                    <div class="cf-spares-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="cf-input" id="cfSpareSearch" placeholder="Search spares..." autocomplete="off"
+                               role="combobox" aria-expanded="false" aria-controls="cfSpareResults">
+                    </div>
+                    <div class="cf-spares-results" id="cfSpareResults" role="listbox"></div>
+                    <div class="cf-selected-spares" id="cfSelectedSpares"></div>
+                    <span class="cf-hint">Spares linked to this machine are listed first.</span>
+                    <select id="cfAllSpares" hidden>
+                        {% for spare in spares %}
+                        <option value="{{ spare.id }}" data-linked="{{ spare.linked|yesno:'1,0' }}"{% if spare.id in selected_spares %} data-selected="1"{% endif %}>{{ spare.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="states[]" id="cfSpareValues" multiple hidden></select>
+                </div>
+
+                <div class="cf-field">
+                    <label class="cf-label" for="cfRemarks">Additional remarks <span class="cf-optional">(optional)</span></label>
+                    <textarea class="cf-textarea" id="cfRemarks" name="additional-remarks" style="min-height: 80px;"
+                              placeholder="Anything to watch out for next time">{{ posted|get_item:'additional-remarks' }}</textarea>
+                </div>
+
+                <div class="cf-field">
+                    <span class="cf-label">Photos <span class="cf-optional">(optional)</span></span>
+                    <label class="cf-upload" id="cfUpload">
+                        <input type="file" name="image[]" id="cfImages" multiple accept="image/*">
+                        <i class="fas fa-camera"></i>
+                        <span id="cfUploadText">Tap to add repair photos or alarm screenshots</span>
+                        {% if errors %}<small>Please re-attach your photos.</small>{% endif %}
+                    </label>
+                    <div class="cf-thumbs" id="cfThumbs"></div>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <!-- STEP 4: Review -->
+        <section class="cf-step cf-card" data-step="3" aria-labelledby="cfStep4Title">
+            <div class="cf-card-body">
+                <h2 class="cf-step-title" id="cfStep4Title">Review &amp; close</h2>
+                <p class="cf-step-desc">Check the details. Closing completes this ticket.</p>
+                <div id="cfReview"></div>
+            </div>
+        </section>
     </form>
 </div>
 
+<!-- Sticky action bar -->
+<div class="cf-actionbar">
+    <div class="cf-actionbar-inner">
+        <button type="button" class="cf-btn cf-btn--ghost" id="cfBack"><i class="fas fa-arrow-left"></i> Back</button>
+        <button type="button" class="cf-btn cf-btn--primary" id="cfNext">Next <i class="fas fa-arrow-right"></i></button>
+        <button type="button" class="cf-btn cf-btn--success cf-hidden" id="cfClose"><i class="fas fa-check-circle"></i> Close complaint</button>
+    </div>
+</div>
+
+<!-- Confirm sheet -->
+<div class="cf-overlay" id="cfOverlay" aria-hidden="true">
+    <div class="cf-sheet" role="dialog" aria-modal="true" aria-labelledby="cfSheetTitle">
+        <div class="cf-sheet-handle"></div>
+        <div class="cf-sheet-head">
+            <div class="cf-sheet-icon"><i class="fas fa-check-double"></i></div>
+            <div>
+                <h3 id="cfSheetTitle">Close complaint #{{ issue.ticket_num }}?</h3>
+                <p>The documentation will be saved and the ticket moves to Closed. This can't be undone from here.</p>
+            </div>
+        </div>
+        <div class="cf-sheet-actions">
+            <button type="button" class="cf-btn cf-btn--ghost" id="cfSheetCancel" style="flex: 1;">Cancel</button>
+            <button type="button" class="cf-btn cf-btn--success" id="cfSheetConfirm"><i class="fas fa-check-circle"></i> Yes, close it</button>
+        </div>
+    </div>
+</div>
+
+{{ error_fields|json_script:"cfErrorFields" }}
+
 <script>
+(function () {
+    'use strict';
+
+    var $ = function (id) { return document.getElementById(id); };
+    var form = $('cfForm');
+    var steps = Array.prototype.slice.call(document.querySelectorAll('.cf-step'));
+    var progress = Array.prototype.slice.call(document.querySelectorAll('.cf-progress-step'));
+    var STEP_FIELDS = [
+        ['machine-hours', 'duration', 'equipment-status'],
+        ['resolved-by-type', 'department', 'contractor', 'technician', 'supervisor'],
+        ['solution-description'],
+        []
+    ];
+    var INITIAL_HOURS = parseInt('{{ issue.machine_hours|default_if_none:"" }}', 10);
+    var current = 0;
+    var furthest = 0;
+
     function escapeHtml(text) {
-        return String(text).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+        return String(text).replace(/[&<>"']/g, function (c) {
+            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+        });
     }
 
-    // Show the current date in the header
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    // ===== Field errors =====
+    function fieldBox(name) { return form.querySelector('.cf-field[data-field="' + name + '"]'); }
+
+    function setError(name, message) {
+        var box = fieldBox(name);
+        if (!box) return;
+        box.classList.toggle('is-invalid', !!message);
+        var slot = box.querySelector('.cf-field-error');
+        if (slot) slot.textContent = message || '';
+    }
+
+    function value(name) {
+        var checked = form.querySelector('[name="' + name + '"]:checked');
+        if (checked) return checked.value.trim();
+        var el = form.querySelector('[name="' + name + '"]');
+        if (!el || el.type === 'radio') return '';
+        return el.value.trim();
+    }
+
+    function resolutionType() { return value('resolved-by-type'); }
+
+    function validateStep(index) {
+        var ok = true;
+        function fail(name, message) { setError(name, message); ok = false; }
+        STEP_FIELDS[index].forEach(function (name) { setError(name, ''); });
+
+        if (index === 0) {
+            var hours = value('machine-hours');
+            if (!/^\d+$/.test(hours)) fail('machine-hours', 'Enter the current machine hours as a whole number.');
+            else if (!isNaN(INITIAL_HOURS) && parseInt(hours, 10) < INITIAL_HOURS) fail('machine-hours', 'Cannot be lower than the hours at failure (' + INITIAL_HOURS + ').');
+            var duration = value('duration');
+            if (duration === '' || isNaN(Number(duration)) || Number(duration) < 0) fail('duration', 'Enter the repair duration in hours, e.g. 1.5');
+            if (!value('equipment-status')) fail('equipment-status', 'Select the equipment status.');
+        } else if (index === 1) {
+            var type = resolutionType();
+            if (!type) fail('resolved-by-type', 'Select who resolved it.');
+            if (type === 'IN_HOUSE' && !value('department')) fail('department', 'Select the department that did the repair.');
+            if (type === 'OUTSOURCED' && !value('contractor')) fail('contractor', 'Select the service provider.');
+        } else if (index === 2) {
+            if (!value('solution-description')) fail('solution-description', 'Describe the solution implemented.');
+        }
+        progress[index].classList.toggle('has-error', !ok);
+        return ok;
+    }
+
+    // ===== Navigation =====
+    function show(index) {
+        current = index;
+        furthest = Math.max(furthest, index);
+        steps.forEach(function (step, i) { step.classList.toggle('is-active', i === index); });
+        progress.forEach(function (p, i) {
+            p.classList.toggle('is-current', i === index);
+            p.classList.toggle('is-done', i < index);
+            p.disabled = i > furthest;
+            if (i === index) p.setAttribute('aria-current', 'step'); else p.removeAttribute('aria-current');
+        });
+        $('cfStepPill').textContent = 'Step ' + (index + 1) + ' of ' + steps.length;
+        $('cfBack').classList.toggle('cf-hidden', index === 0);
+        $('cfNext').classList.toggle('cf-hidden', index === steps.length - 1);
+        $('cfClose').classList.toggle('cf-hidden', index !== steps.length - 1);
+        if (index === steps.length - 1) renderReview();
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    $('cfNext').addEventListener('click', function () {
+        if (!validateStep(current)) {
+            var firstBad = steps[current].querySelector('.cf-field.is-invalid input, .cf-field.is-invalid select, .cf-field.is-invalid textarea');
+            if (firstBad) firstBad.focus();
+            return;
+        }
+        show(current + 1);
+    });
+    $('cfBack').addEventListener('click', function () { if (current > 0) show(current - 1); });
+    progress.forEach(function (p) {
+        p.addEventListener('click', function () {
+            var target = parseInt(p.dataset.goto, 10);
+            if (target <= furthest) show(target);
         });
     });
 
-    // Spares selector
-    document.addEventListener('DOMContentLoaded', function() {
-        const allSpares = Array.from(document.getElementById('all-spares-options').options).map(option => ({
-            id: option.value,
-            text: option.text,
-            linked: option.dataset.linked === '1',
-            preselected: option.dataset.selected === '1',
-        }));
-        let selectedSpares = allSpares.filter(spare => spare.preselected);
-
-        const searchInput = document.getElementById('spares-search');
-        const resultsBox = document.getElementById('spares-search-results');
-        const resultsList = document.getElementById('spares-results-list');
-
-        searchInput.addEventListener('input', function() {
-            searchSpares(this.value.toLowerCase());
-        });
-        searchInput.addEventListener('focus', function() {
-            searchSpares(this.value.toLowerCase());
-        });
-        document.getElementById('spares-search-btn').addEventListener('click', function() {
-            searchSpares(searchInput.value.toLowerCase());
-        });
-        document.getElementById('spares-close-results').addEventListener('click', hideSparesResults);
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.modern-spares-selector')) {
-                hideSparesResults();
-            }
-        });
-
-        function searchSpares(searchTerm) {
-            const filtered = allSpares.filter(spare => spare.text.toLowerCase().includes(searchTerm));
-            resultsList.innerHTML = '';
-
-            if (filtered.length === 0) {
-                resultsList.innerHTML = '<div class="spares-no-results">No spares found matching "' + escapeHtml(searchTerm) + '"</div>';
-            } else {
-                filtered.forEach(spare => {
-                    const isSelected = selectedSpares.some(selected => selected.id === spare.id);
-                    const item = document.createElement('div');
-                    item.className = 'spares-result-item';
-                    item.dataset.id = spare.id;
-                    item.innerHTML = '<i class="fas fa-tools"></i><span>' + escapeHtml(spare.text) + '</span>' +
-                        (spare.linked ? '<span class="spare-linked-badge">This machine</span>' : '') +
-                        (isSelected ? '<i class="fas fa-check text-success ms-2"></i>' : '');
-                    resultsList.appendChild(item);
-                });
-            }
-
-            document.querySelector('.spares-results-count').textContent = filtered.length + ' spares found';
-            resultsBox.style.display = 'block';
-        }
-
-        function hideSparesResults() {
-            resultsBox.style.display = 'none';
-        }
-
-        // Add a spare from the results
-        resultsList.addEventListener('click', function(e) {
-            const item = e.target.closest('.spares-result-item');
-            if (!item) return;
+    // Enter in a single-line input moves to the next step instead of submitting
+    form.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'file' && e.target.id !== 'cfSpareSearch') {
             e.preventDefault();
-            e.stopPropagation();
-
-            const spare = allSpares.find(s => s.id === item.dataset.id);
-            if (spare && !selectedSpares.some(s => s.id === spare.id)) {
-                selectedSpares.push(spare);
-                renderSelected();
-            }
-            hideSparesResults();
-        });
-
-        // Remove a selected spare
-        document.getElementById('spares-selected-list').addEventListener('click', function(e) {
-            const button = e.target.closest('.spares-remove-item');
-            if (!button) return;
-            selectedSpares = selectedSpares.filter(spare => spare.id !== button.dataset.id);
-            renderSelected();
-        });
-
-        function renderSelected() {
-            const selectedList = document.getElementById('spares-selected-list');
-            const hiddenSelect = document.getElementById('spares-select');
-            selectedList.innerHTML = '';
-            hiddenSelect.innerHTML = '';
-
-            if (selectedSpares.length === 0) {
-                selectedList.innerHTML = '<div class="spares-no-selection"><i class="fas fa-info-circle"></i>No spares selected yet</div>';
-            }
-            selectedSpares.forEach(spare => {
-                const item = document.createElement('div');
-                item.className = 'spares-selected-item';
-                item.innerHTML = '<div><i class="fas fa-tools"></i>' + escapeHtml(spare.text) + '</div>' +
-                    '<button type="button" class="spares-remove-item" data-id="' + escapeHtml(spare.id) + '">' +
-                    '<i class="fas fa-times"></i></button>';
-                selectedList.appendChild(item);
-
-                const option = document.createElement('option');
-                option.value = spare.id;
-                option.selected = true;
-                hiddenSelect.appendChild(option);
-            });
-
-            document.querySelector('.spares-selected-count').textContent = 'Selected Spares (' + selectedSpares.length + ')';
+            if (current < steps.length - 1) $('cfNext').click();
         }
+    });
 
+    // ===== Resolution type: show the matching dropdown =====
+    function syncResolution() {
+        var type = resolutionType();
+        $('cfDepartmentField').classList.toggle('cf-hidden', type !== 'IN_HOUSE');
+        $('cfContractorField').classList.toggle('cf-hidden', type !== 'OUTSOURCED');
+    }
+    form.querySelectorAll('[name="resolved-by-type"]').forEach(function (r) { r.addEventListener('change', syncResolution); });
+    syncResolution();
+
+    // ===== Spares picker =====
+    var allSpares = Array.prototype.map.call($('cfAllSpares').options, function (o) {
+        return {id: o.value, name: o.text, linked: o.dataset.linked === '1', selected: o.dataset.selected === '1'};
+    });
+    var search = $('cfSpareSearch');
+    var results = $('cfSpareResults');
+
+    function renderResults() {
+        var term = search.value.trim().toLowerCase();
+        var matches = allSpares.filter(function (s) { return s.name.toLowerCase().indexOf(term) !== -1; }).slice(0, 50);
+        if (!matches.length) {
+            results.innerHTML = '<div class="cf-spares-empty">No spares match "' + escapeHtml(term) + '"</div>';
+        } else {
+            results.innerHTML = matches.map(function (s) {
+                return '<button type="button" class="cf-spare-option' + (s.selected ? ' is-selected' : '') + '" role="option" data-id="' + escapeHtml(s.id) + '">' +
+                    '<i class="fas ' + (s.selected ? 'fa-check' : 'fa-tools') + '"></i>' + escapeHtml(s.name) +
+                    (s.linked ? '<span class="cf-tag">This machine</span>' : '') + '</button>';
+            }).join('');
+        }
+        results.classList.add('is-open');
+        search.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeResults() {
+        results.classList.remove('is-open');
+        search.setAttribute('aria-expanded', 'false');
+    }
+
+    function renderSelected() {
+        var chosen = allSpares.filter(function (s) { return s.selected; });
+        $('cfSelectedSpares').innerHTML = chosen.map(function (s) {
+            return '<span class="cf-selected-spare">' + escapeHtml(s.name) +
+                '<button type="button" aria-label="Remove ' + escapeHtml(s.name) + '" data-remove="' + escapeHtml(s.id) + '"><i class="fas fa-times"></i></button></span>';
+        }).join('');
+        $('cfSpareValues').innerHTML = chosen.map(function (s) {
+            return '<option value="' + escapeHtml(s.id) + '" selected></option>';
+        }).join('');
+    }
+
+    search.addEventListener('focus', renderResults);
+    search.addEventListener('input', renderResults);
+    search.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeResults();
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            var first = results.querySelector('.cf-spare-option');
+            if (first) first.click();
+        }
+    });
+    results.addEventListener('click', function (e) {
+        var option = e.target.closest('.cf-spare-option');
+        if (!option) return;
+        var spare = allSpares.find(function (s) { return s.id === option.dataset.id; });
+        if (spare) spare.selected = true;
+        renderSelected();
+        search.value = '';
+        closeResults();
+        search.focus();
+    });
+    $('cfSelectedSpares').addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-remove]');
+        if (!btn) return;
+        var spare = allSpares.find(function (s) { return s.id === btn.dataset.remove; });
+        if (spare) spare.selected = false;
         renderSelected();
     });
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.cf-spares-search') && !e.target.closest('#cfSpareResults')) closeResults();
+    });
+    renderSelected();
 
-    // Show the contractor or the department dropdown depending on the resolution type
-    function changeOptions() {
-        const inHouse = document.querySelector('#resolved-by-type').value === 'IN_HOUSE';
-        const contractorSelect = document.querySelector('#service-provider');
-        const departmentSelect = document.querySelector('#department-select');
+    // ===== Photos =====
+    var imageInput = $('cfImages');
+    var upload = $('cfUpload');
+    imageInput.addEventListener('change', function () {
+        var files = Array.prototype.slice.call(imageInput.files);
+        $('cfUploadText').textContent = files.length ? files.length + ' photo(s) selected - tap to change' : 'Tap to add repair photos or alarm screenshots';
+        $('cfThumbs').innerHTML = '';
+        files.forEach(function (file) {
+            var img = document.createElement('img');
+            img.alt = file.name;
+            img.src = URL.createObjectURL(file);
+            $('cfThumbs').appendChild(img);
+        });
+    });
+    ['dragenter', 'dragover'].forEach(function (ev) {
+        upload.addEventListener(ev, function (e) { e.preventDefault(); upload.classList.add('is-dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+        upload.addEventListener(ev, function (e) { e.preventDefault(); upload.classList.remove('is-dragover'); });
+    });
+    upload.addEventListener('drop', function (e) {
+        if (e.dataTransfer && e.dataTransfer.files.length) {
+            imageInput.files = e.dataTransfer.files;
+            imageInput.dispatchEvent(new Event('change'));
+        }
+    });
 
-        document.querySelector('#service-provider-group').classList.toggle('hidden-field', inHouse);
-        document.querySelector('#department-group').classList.toggle('hidden-field', !inHouse);
-        contractorSelect.disabled = inHouse;
-        departmentSelect.disabled = !inHouse;
-        contractorSelect.required = !inHouse;
-        departmentSelect.required = inHouse;
+    // ===== Review =====
+    function selectedText(id) {
+        var el = $(id);
+        return el && el.value ? el.options[el.selectedIndex].text : '';
     }
 
-    document.addEventListener('DOMContentLoaded', changeOptions);
+    function row(label, val) {
+        return '<div class="cf-review-row"><dt>' + label + '</dt><dd class="' + (val ? '' : 'is-empty') + '">' +
+            (val ? escapeHtml(val) : 'Not provided') + '</dd></div>';
+    }
 
-    // File upload preview
-    document.getElementById('image').addEventListener('change', function(e) {
-        const files = e.target.files;
-        const label = document.querySelector('.file-upload-label');
+    function group(title, stepIndex, rows) {
+        return '<div class="cf-review-group"><div class="cf-review-head">' + title +
+            '<button type="button" class="cf-review-edit" data-goto="' + stepIndex + '"><i class="fas fa-pen"></i> Edit</button></div><dl style="margin:0">' +
+            rows.join('') + '</dl></div>';
+    }
 
-        if (files.length > 0) {
-            label.innerHTML = `
-                <i class="fas fa-check-circle text-success"></i>
-                <span>${files.length} file(s) selected</span>
-                <small>Click to change files</small>
-            `;
-        }
+    function renderReview() {
+        var type = resolutionType();
+        var spares = allSpares.filter(function (s) { return s.selected; }).map(function (s) { return s.name; }).join(', ');
+        var photos = imageInput.files.length;
+        $('cfReview').innerHTML =
+            group('Machine', 0, [
+                row('Machine hours', value('machine-hours') ? value('machine-hours') + ' hrs' : ''),
+                row('Repair duration', value('duration') ? value('duration') + ' hrs' : ''),
+                row('Status', value('equipment-status') === 'off' ? 'Non-operational' : 'Operational')
+            ]) +
+            group('Resolution', 1, [
+                row('Type', type === 'IN_HOUSE' ? 'In-house' : 'Outsourced'),
+                row(type === 'IN_HOUSE' ? 'Department' : 'Service provider', selectedText(type === 'IN_HOUSE' ? 'cfDepartment' : 'cfContractor')),
+                row('Technician', value('technician')),
+                row('Supervisor', value('supervisor'))
+            ]) +
+            group('Parts &amp; solution', 2, [
+                row('Solution', value('solution-description')),
+                row('Spares installed', spares),
+                row('Remarks', value('additional-remarks')),
+                row('Photos', photos ? photos + ' attached' : '')
+            ]);
+    }
+
+    $('cfReview').addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-goto]');
+        if (btn) show(parseInt(btn.dataset.goto, 10));
     });
 
-    // Form validation (the server checks the same rules)
-    document.getElementById('closing-form').addEventListener('submit', function(e) {
-        const currentHours = parseInt(document.getElementById('final-machine-hours').value, 10);
-        const initialHours = parseInt('{{ issue.machine_hours|default_if_none:"" }}', 10);
+    // ===== Close: confirm sheet then submit =====
+    var overlay = $('cfOverlay');
+    function openSheet() {
+        overlay.classList.add('is-open');
+        overlay.setAttribute('aria-hidden', 'false');
+        $('cfSheetConfirm').focus();
+    }
+    function closeSheet() {
+        overlay.classList.remove('is-open');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
 
-        if (!isNaN(initialHours) && currentHours < initialHours) {
-            e.preventDefault();
-            alert('Current machine hours cannot be lower than the hours at failure (' + initialHours + ').');
-            return false;
+    $('cfClose').addEventListener('click', function () {
+        for (var i = 0; i < steps.length - 1; i++) {
+            if (!validateStep(i)) { show(i); return; }
         }
-
-        if (!confirm('Are you sure you want to close this complaint?')) {
-            e.preventDefault();
-            return false;
-        }
+        openSheet();
     });
+    $('cfSheetCancel').addEventListener('click', closeSheet);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) closeSheet(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+    $('cfSheetConfirm').addEventListener('click', function () {
+        var btn = $('cfSheetConfirm');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Closing...';
+        form.submit();
+    });
+
+    // ===== Start: jump to the first step with a server error =====
+    var serverErrors = JSON.parse($('cfErrorFields').textContent);
+    var startStep = 0;
+    if (serverErrors.length) {
+        startStep = steps.length - 1;
+        serverErrors.forEach(function (name) {
+            STEP_FIELDS.forEach(function (fields, i) {
+                if (fields.indexOf(name) !== -1) {
+                    startStep = Math.min(startStep, i);
+                    progress[i].classList.add('has-error');
+                    var box = fieldBox(name);
+                    if (box) box.classList.add('is-invalid');
+                }
+            });
+        });
+        furthest = steps.length - 1;
+    }
+    show(startStep);
+})();
 </script>
 {% endblock main-body %}

@@ -373,7 +373,7 @@ class ComplainClosingView(LoginRequiredMixin, View):
                 self._close_issue(issue, data)
         except Exception as e:
             logger.exception(f"Failed to close issue {pk}")
-            return self._render_form(request, issue, errors=[f"Could not close the complaint: {e}"])
+            return self._render_form(request, issue, errors=[{'field': '', 'message': f"Could not close the complaint: {e}"}])
 
         if image_errors:
             messages.warning(request, f"Closed successfully, but some images failed: {image_errors}")
@@ -431,6 +431,8 @@ class ComplainClosingView(LoginRequiredMixin, View):
 
         worked_hours = issue.work_sessions.aggregate(total=Sum('duration_hours'))['total']
         posted = request.POST if errors else None
+        engineer_note = (issue.quick_review_comments.exclude(commenter_id=issue.user_id)
+                         .order_by('-created_at').values_list('comment', flat=True).first())
 
         context = {
             'issue': issue,
@@ -440,59 +442,64 @@ class ComplainClosingView(LoginRequiredMixin, View):
             'spares': [{'id': s.pk, 'name': s.name, 'linked': s.pk in machine_spare_ids} for s in spares],
             'selected_spares': [int(x) for x in posted.getlist('states[]') if x.isdigit()] if posted else [],
             'errors': errors or [],
+            'error_fields': [e['field'] for e in errors or [] if e['field']],
             'posted': posted,
+            'engineer_note': engineer_note or (review.description_reviewer if review else ''),
             'default_duration': round(worked_hours, 1) if worked_hours else '',
             'name_max_length': self.NAME_MAX_LENGTH,
         }
         return render(request, "user/complain_closing.html", context)
 
     def _validate(self, request, issue):
-        """Return (cleaned data, list of error messages)"""
+        """Return (cleaned data, list of {'field', 'message'} errors); field names match the form inputs"""
         post = request.POST
         errors = []
         data = {}
 
+        def error(field, message):
+            errors.append({'field': field, 'message': message})
+
         try:
             data['machine_hours'] = int(post.get('machine-hours', ''))
             if data['machine_hours'] < 0:
-                errors.append('Current machine hours cannot be negative.')
+                error('machine-hours', 'Current machine hours cannot be negative.')
             elif issue.machine_hours is not None and data['machine_hours'] < issue.machine_hours:
-                errors.append(f'Current machine hours cannot be lower than the hours at failure ({issue.machine_hours}).')
+                error('machine-hours', f'Current machine hours cannot be lower than the hours at failure ({issue.machine_hours}).')
         except ValueError:
-            errors.append('Enter the current machine hours as a whole number.')
+            error('machine-hours', 'Enter the current machine hours as a whole number.')
 
         try:
             data['duration'] = Decimal(post.get('duration', '').strip())
             if data['duration'] < 0:
-                errors.append('Repair duration cannot be negative.')
+                error('duration', 'Repair duration cannot be negative.')
         except (InvalidOperation, ValueError):
-            errors.append('Enter the repair duration in hours (e.g. 1.5).')
+            error('duration', 'Enter the repair duration in hours (e.g. 1.5).')
 
         data['equipment_status'] = post.get('equipment-status')
         if data['equipment_status'] not in dict(IssueClosing.EQUIPMENT_STATUS_CHOICES):
-            errors.append('Select the equipment status.')
+            error('equipment-status', 'Select the equipment status.')
 
         data['resolution_type'] = post.get('resolved-by-type')
         data['contractor'] = data['department'] = None
         if data['resolution_type'] == IssueClosing.RESOLUTION_OUTSOURCED:
             data['contractor'] = Contractor.objects.filter(pk=post.get('contractor') or None).first()
             if not data['contractor']:
-                errors.append('Select the service provider for an outsourced repair.')
+                error('contractor', 'Select the service provider for an outsourced repair.')
         elif data['resolution_type'] == IssueClosing.RESOLUTION_IN_HOUSE:
             data['department'] = self._in_house_departments().filter(pk=post.get('department') or None).first()
             if not data['department']:
-                errors.append('Select the department that did the in-house repair.')
+                error('department', 'Select the department that did the in-house repair.')
         else:
-            errors.append('Select the resolution type.')
+            error('resolved-by-type', 'Select the resolution type.')
 
         for field, label in (('technician', 'Technician name'), ('supervisor', 'Supervisor name')):
             data[field] = post.get(field, '').strip()
             if len(data[field]) > self.NAME_MAX_LENGTH:
-                errors.append(f'{label} must be at most {self.NAME_MAX_LENGTH} characters.')
+                error(field, f'{label} must be at most {self.NAME_MAX_LENGTH} characters.')
 
         data['solution'] = post.get('solution-description', '').strip()
         if not data['solution']:
-            errors.append('Describe the solution implemented.')
+            error('solution-description', 'Describe the solution implemented.')
         data['remarks'] = post.get('additional-remarks', '').strip()
 
         return data, errors
