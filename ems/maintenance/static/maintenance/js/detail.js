@@ -1,19 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-function createInputElem(value){
-  var hiddenAction = document.createElement("input");
-  var form = document.querySelector('#remarks-form')
-  form.appendChild(hiddenAction)
-  console.log("value")
-  hiddenAction.type='hidden';
-  hiddenAction.value=value;
-  hiddenAction.name='status'
-  hiddenAction.id='status'
-  if (hiddenAction.value==='Rejected'){
-    document.querySelector('#remarks-form').submit()
-=======
-=======
->>>>>>> loginPage
 function createInputElem(value) {
   console.log("I am here");
   console.log(value); // Corrected log statement
@@ -28,10 +12,6 @@ function createInputElem(value) {
       return; // Stop form submission
   } else {
       remarks.setCustomValidity(""); // Clear any previous custom validity message
-<<<<<<< HEAD
->>>>>>> 0c4d5ed (login.html modified for desktop added button to detail approval page)
-=======
->>>>>>> loginPage
   }
 
   // Check if hidden input already exists to prevent duplicate IDs

@@ -12,15 +12,5 @@ __pycache__/
 venv/
 env/
 .env/
-<<<<<<< HEAD
-<<<<<<< HEAD
-.env.*
-=======
 .env
 .env.*
->>>>>>> fe16867 (added multiple items)
-=======
-.env
-.env.*
->>>>>>> loginPage
-        

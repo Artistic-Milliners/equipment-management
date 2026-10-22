@@ -5,83 +5,11 @@
 {% block page-title %}Track Complaint - #{{ issue.ticket_num }}{% endblock page-title %}
 
 {% block main-body %}
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  <div>
-=======
-  <h1>{{ issue.description }}</h1>
-=======
->>>>>>> d0320c4 (Update complain-tracking.html)
-  <div class="timeline-main-heading">
-<<<<<<< HEAD
->>>>>>> 20b8dd1 (Color Updates)
-    <span style="font-size: large; font-weight: bold;">Complaint Resolved</span>
-    <span class="timeline-description">on Mon 19 Oct 20</span>
-=======
-    <span style="font-size: large; font-weight: bold;">Complaint Tracking</span>
->>>>>>> b9a44c2 (made changes in complain closing.css and spares model)
-  </div>
-  <div class="timeline">
-    <div class="timeline-event">
-      <div class="timeline-point-track-container">
-        <div class="timeline-point"></div>
-        <div class="timeline-track"></div>
-      </div>
-      <div class="timeline-content">
-        <div>
-          <span class="timeline-heading">
-            Complaint Raised
-          </span>
-          <span class="timeline-date">
-            {{ issue.date_time }}
-          </span>
-        </div>
-        <div class="timeline-description">
-          <span>
-            Description: {{ issue.description_user }}
-          </span>   
-        </div>
-      </div>
-    </div>
-    <div class="timeline-event">
-      <div class="timeline-point-track-container">
-        <div class="timeline-point"></div>
-        <div class="timeline-track"></div>
-      </div>
-      <div class="timeline-content">
-        <div>
-          <span class="timeline-heading">
-            Engineer Review
-          </span>
-          {% if issue.status == 'REVIEWED' or issue.status == 'Approved' %}
-          <span class="timeline-date">
-            {{ issue.machineissue.reviewDate }}
-          </span>
-          <div class="timeline-description">
-            <span>
-              {{ issue.machineissue.description_reviewer }}
-            </span>
-          </div>
-          {% else %}
-          <span class="timeline-date">
-            Pending review
-          </span>
-          {% endif %}
-        </div>
-=======
-=======
->>>>>>> loginPage
 <style>
     /* ============================================
        COMPLAINT TRACKING PAGE
        Mobile-first industrial maintenance UI
        ============================================ */
-<<<<<<< HEAD
->>>>>>> fe16867 (added multiple items)
-=======
->>>>>>> loginPage
 
     :root {
         --ct-bg: #f8fafc;
