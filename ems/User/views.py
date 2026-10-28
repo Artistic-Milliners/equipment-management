@@ -180,6 +180,8 @@ def can_view_issue(user, issue):
         return True
     if issue.user and issue.user.user_id == user.pk:
         return True
+    if issue.escalations.filter(escalated_to=user).exists():
+        return True
     department = getattr(getattr(user, 'employee', None), 'department_id', None)
     return department is not None and issue.machine_id is not None and issue.machine_id.Department_id == department
 
@@ -213,6 +215,7 @@ class ComplainTrackingView(LoginRequiredMixin, View):
             'work_sessions': issue.work_sessions.select_related('engineer').order_by('started_at'),
             'quick_review_comments': issue.quick_review_comments.select_related('commenter__user').order_by('created_at'),
             'feedback_error': request.session.pop(f'feedback_error_{issue.pk}', None),
+            'escalations': issue.escalations.select_related('escalated_by').prefetch_related('escalated_to__employee'),
             'can_confirm': issue.status == MachineIssue.STATUS_USER_FEEDBACK and can_confirm_issue(request.user, issue),
             'is_engineer_view': is_engineer_user(request.user),
         }

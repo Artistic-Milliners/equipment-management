@@ -439,6 +439,7 @@ class MachineIssue(models.Model):
     STATUS_REVIEWED = 'REVIEWED'
     STATUS_APPROVED = 'APPROVED'
     STATUS_REJECTED = 'REJECTED'
+    STATUS_ESCALATED = 'ESCALATED'
     STATUS_CLOSED = 'CLOSED'
 
     STATUS_CHOICES = [
@@ -451,6 +452,7 @@ class MachineIssue(models.Model):
         (STATUS_REVIEWED, 'Reviewed - Awaiting Approval'),
         (STATUS_APPROVED, 'Approved'),
         (STATUS_REJECTED, 'Rejected'),
+        (STATUS_ESCALATED, 'Escalated to Management'),
         (STATUS_CLOSED, 'Closed'),
     ]
     
@@ -610,6 +612,30 @@ class QuickReviewComments(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class IssueEscalation(models.Model):
+    """An engineer escalates a ticket to one or more Engineering Management users (reason required)."""
+
+    ESCALATION_GROUP = 'Engineering Management'
+
+    issue = models.ForeignKey(MachineIssue, on_delete=models.CASCADE, related_name='escalations')
+    escalated_by = models.ForeignKey(Employee, on_delete=models.PROTECT, related_name='escalations_raised')
+    escalated_to = models.ManyToManyField(CustomUser, related_name='escalations_received')
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.issue.ticket_num} escalated by {self.escalated_by.name}"
+
+    @classmethod
+    def recipients(cls):
+        """Users who can receive escalations"""
+        return (CustomUser.objects.filter(groups__name=cls.ESCALATION_GROUP, is_active=True)
+                .select_related('employee').order_by('first_name', 'username').distinct())
 
 
 class MachineIssueReview(models.Model):

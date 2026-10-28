@@ -160,6 +160,24 @@
     .ct-status--approved { background: var(--ct-green-light); color: var(--ct-green-dark); }
     .ct-status--rejected { background: var(--ct-red-light); color: var(--ct-red-dark); }
     .ct-status--closed { background: var(--ct-gray-light); color: var(--ct-gray-dark); }
+    .ct-status--escalated { background: var(--ct-red-light); color: var(--ct-red-dark); }
+    .ct-status--escalated .ct-badge-dot { background: var(--ct-red); }
+
+    /* ===== ESCALATION CARD ===== */
+    .ct-escalation-card { border-left: 4px solid var(--ct-red); }
+    .ct-escalation-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; }
+    .ct-escalation-label { display: block; font-size: 0.7rem; color: var(--ct-text-muted); font-weight: 500; margin-bottom: 0.2rem; }
+    .ct-escalation-value { display: block; font-size: 0.9rem; color: var(--ct-text-primary); font-weight: 600; }
+    .ct-escalation-people { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .ct-escalation-person {
+        display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.7rem; border-radius: 100px;
+        background: var(--ct-border-light); color: var(--ct-text-body); font-size: 0.8rem; font-weight: 600;
+    }
+    .ct-escalation-person.is-me { background: var(--ct-red-light); color: var(--ct-red-dark); }
+    .ct-escalation-reason {
+        margin-top: 0.85rem; padding: 0.85rem 1rem; border-radius: var(--ct-radius-sm);
+        background: #fef2f2; border: 1px solid #fecaca; color: var(--ct-text-body); font-size: 0.875rem; line-height: 1.5;
+    }
 
     /* ===== CARDS ===== */
     .ct-card {
@@ -1242,9 +1260,10 @@
             {% elif issue.status == 'REVIEWED' %}ct-status--reviewed
             {% elif issue.status == 'APPROVED' %}ct-status--approved
             {% elif issue.status == 'REJECTED' %}ct-status--rejected
+            {% elif issue.status == 'ESCALATED' %}ct-status--escalated
             {% elif issue.status == 'CLOSED' %}ct-status--closed
             {% endif %}">
-            {% if issue.status == 'PENDING' or issue.status == 'IN_PROGRESS' or issue.status == 'User Feedback' or issue.status == 'UNDER_OBSERVATION' %}
+            {% if issue.status == 'PENDING' or issue.status == 'IN_PROGRESS' or issue.status == 'User Feedback' or issue.status == 'UNDER_OBSERVATION' or issue.status == 'ESCALATED' %}
                 <span class="ct-badge-dot"></span>
             {% endif %}
             {% if issue.status == 'PENDING' %}Pending
@@ -1256,10 +1275,47 @@
             {% elif issue.status == 'REVIEWED' %}Reviewed
             {% elif issue.status == 'APPROVED' %}Approved
             {% elif issue.status == 'REJECTED' %}Rejected
+            {% elif issue.status == 'ESCALATED' %}Escalated
             {% elif issue.status == 'CLOSED' %}Closed
             {% endif %}
         </span>
     </div>
+
+    <!-- ===== ESCALATION ===== -->
+    {% for escalation in escalations %}
+    <div class="ct-card ct-escalation-card">
+        <div class="ct-card-body">
+            <div class="ct-section-label">
+                <i class="fas fa-arrow-up" style="color: var(--ct-red);"></i>
+                Escalated to Engineering Management
+            </div>
+            <div class="ct-escalation-meta">
+                <div>
+                    <span class="ct-escalation-label">Escalated by</span>
+                    <span class="ct-escalation-value">{{ escalation.escalated_by.name }}</span>
+                </div>
+                <div>
+                    <span class="ct-escalation-label">When</span>
+                    <span class="ct-escalation-value">{{ escalation.created_at|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}</span>
+                </div>
+            </div>
+            <div class="ct-escalation-label" style="margin-top: 0.85rem;">Escalated to</div>
+            <div class="ct-escalation-people">
+                {% for person in escalation.escalated_to.all %}
+                <span class="ct-escalation-person{% if person.pk == user.pk %} is-me{% endif %}">
+                    <i class="fas fa-user-tie"></i>
+                    {% if person.employee %}{{ person.employee.name }}{% else %}{{ person.get_full_name|default:person.username }}{% endif %}
+                    {% if person.pk == user.pk %}(you){% endif %}
+                </span>
+                {% endfor %}
+            </div>
+            <div class="ct-escalation-reason">
+                <div class="ct-escalation-label">Reason</div>
+                {{ escalation.reason|linebreaksbr }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 
     <!-- ===== 3. ISSUE DETAIL CARD ===== -->
     <div class="ct-card">
@@ -1436,7 +1492,7 @@
 
                 <!-- Stage 2: Engineer Review -->
                 <div class="ct-tl-step">
-                    {% if issue.status == 'RESOLVED' or issue.status == 'User Feedback' or issue.status == 'AWAITING_DOCUMENTATION' or issue.status == 'UNDER_OBSERVATION' or issue.status == 'REVIEWED' or issue.status == 'APPROVED' or issue.status == 'REJECTED' or issue.status == 'CLOSED' %}
+                    {% if issue.status == 'RESOLVED' or issue.status == 'User Feedback' or issue.status == 'AWAITING_DOCUMENTATION' or issue.status == 'UNDER_OBSERVATION' or issue.status == 'REVIEWED' or issue.status == 'APPROVED' or issue.status == 'REJECTED' or issue.status == 'CLOSED' or issue.status == 'ESCALATED' %}
                         <div class="ct-tl-dot ct-tl-dot--done">
                             <i class="fas fa-check"></i>
                         </div>
@@ -1578,6 +1634,25 @@
                     </div>
                     {% endif %}
                 </div>
+                {% elif issue.status == 'ESCALATED' %}
+                {% with escalation=escalations.0 %}
+                <div class="ct-tl-step">
+                    <div class="ct-tl-dot ct-tl-dot--active">
+                        <i class="fas fa-arrow-up" style="font-size: 7px;"></i>
+                    </div>
+                    <div class="ct-tl-title">Escalated to Engineering Management</div>
+                    {% if escalation %}
+                    <div class="ct-tl-date">
+                        {{ escalation.created_at|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }} by {{ escalation.escalated_by.name }}
+                    </div>
+                    <div class="ct-tl-desc">{{ escalation.reason }}</div>
+                    {% endif %}
+                    <div class="ct-tl-alert ct-tl-alert--warning">
+                        <i class="fas fa-user-tie"></i>
+                        Awaiting management action
+                    </div>
+                </div>
+                {% endwith %}
                 {% endif %}
 
                 <!-- Stage 4: Approval (REVIEWED / APPROVED / REJECTED / CLOSED) -->

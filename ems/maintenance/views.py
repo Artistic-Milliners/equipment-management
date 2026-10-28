@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from core.models import (MachineIssue, Equipment, Machines, Spares, MachineSpares, ImageModel,
                         CustomUser, MachineIssueApproval, MachineIssueReview, Department, Employee,
-                        TemporaryIssue, FaultLibrary, QuickReviewComments, WorkSession)
+                        TemporaryIssue, FaultLibrary, QuickReviewComments, WorkSession, IssueEscalation)
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
@@ -84,6 +85,7 @@ def view_complains(request):
                 MachineIssue.STATUS_PENDING, MachineIssue.STATUS_IN_PROGRESS, MachineIssue.STATUS_USER_FEEDBACK,
                 MachineIssue.STATUS_REVIEWED, MachineIssue.STATUS_APPROVED, MachineIssue.STATUS_REJECTED,
                 MachineIssue.STATUS_AWAITING_DOCUMENTATION, MachineIssue.STATUS_RESOLVED, MachineIssue.STATUS_UNDER_OBSERVATION,
+                MachineIssue.STATUS_ESCALATED,
             ]
         ).select_related('user', 'equipment', 'machine_id', 'error_department', 'temporary_issue', 'selected_issue').order_by('-date_time')
         print(f"[ENGINEER + APPROVER] User: {request.user.username}, Found {issue_list.count()} tickets")
@@ -100,6 +102,7 @@ def view_complains(request):
                 MachineIssue.STATUS_PENDING, MachineIssue.STATUS_IN_PROGRESS, MachineIssue.STATUS_USER_FEEDBACK,
                 MachineIssue.STATUS_APPROVED, MachineIssue.STATUS_AWAITING_DOCUMENTATION,
                 MachineIssue.STATUS_RESOLVED, MachineIssue.STATUS_UNDER_OBSERVATION,
+                MachineIssue.STATUS_ESCALATED,
             ]
         ).select_related('user', 'equipment', 'machine_id', 'error_department', 'temporary_issue', 'selected_issue').order_by('-date_time')
 
@@ -108,6 +111,11 @@ def view_complains(request):
         issue_list = MachineIssue.objects.filter(
             user=emp
         ).select_related('user', 'equipment', 'machine_id', 'error_department', 'temporary_issue', 'selected_issue').order_by('-date_time')
+
+    # Tickets escalated to this user always appear in their list, whatever their role
+    escalated_to_me = MachineIssue.objects.filter(escalations__escalated_to=request.user)
+    if escalated_to_me.exists():
+        issue_list = (issue_list | escalated_to_me).distinct().order_by('-date_time')
 
     active_list = issue_list.exclude(status__in=closed_statuses)
 
@@ -276,6 +284,8 @@ def quick_review(request, pk):
             'elapsed_hours': elapsed_hours,
             'elapsed_minutes': elapsed_minutes,
             'active_session': active_session,
+            'escalation_recipients': IssueEscalation.recipients(),
+            'escalation_error': request.session.pop(f'escalation_error_{issue.pk}', None),
         })
 
     elif request.method == 'POST':
@@ -336,20 +346,39 @@ def quick_review(request, pk):
             return redirect('User:review_complain', pk=issue.pk)
 
         elif decision == 'ESCALATE':
-            # Close active work session
-            if active_session:
-                active_session.complete(WorkSession.OUTCOME_ESCALATED, comments)
+            # Escalate to selected Engineering Management users; a reason is mandatory
+            reason = comments.strip()
+            recipients = IssueEscalation.recipients().filter(pk__in=[
+                pk for pk in request.POST.getlist('escalate-to') if pk.isdigit()])
+            engineer = Employee.objects.filter(user=request.user).first()
 
-            # Save engineer's comment as QuickReviewComments record
-            if comments:
-                engineer = Employee.objects.get(user=request.user)
-                QuickReviewComments.objects.create(
-                    issue=issue,
-                    commenter=engineer,
-                    comment=comments,
-                )
-            logger.info(f"✓ Issue escalated")
+            error = None
+            if engineer is None:
+                error = 'Your account is not linked to an employee record.'
+            elif issue.status not in (MachineIssue.STATUS_PENDING, MachineIssue.STATUS_IN_PROGRESS):
+                error = f'This ticket cannot be escalated while it is "{issue.get_status_display()}".'
+            elif not recipients.exists():
+                error = 'Select at least one person from Engineering Management to escalate to.'
+            elif not reason:
+                error = 'Explain why this complaint is being escalated.'
+            if error:
+                request.session[f'escalation_error_{issue.pk}'] = error
+                return redirect('maintenance:quick_review', pk=issue.pk)
 
+            with transaction.atomic():
+                if active_session:
+                    active_session.complete(WorkSession.OUTCOME_ESCALATED, reason)
+                escalation = IssueEscalation.objects.create(issue=issue, escalated_by=engineer, reason=reason)
+                escalation.escalated_to.set(recipients)
+                QuickReviewComments.objects.create(issue=issue, commenter=engineer, comment=f'Escalated: {reason}')
+                issue.status = MachineIssue.STATUS_ESCALATED
+                if not issue.quick_review_timestamp:
+                    issue.quick_review_timestamp = timezone.now()
+                    issue.engineer_response_hours = (issue.quick_review_timestamp - issue.date_time).total_seconds() / 3600
+                issue.save()
+
+            logger.info(f"Ticket {issue.ticket_num} escalated by {request.user.username} to "
+                        f"{', '.join(u.username for u in recipients)}")
             return redirect('maintenance:complain_list')
 
         logger.info(f"{'='*60}\n")

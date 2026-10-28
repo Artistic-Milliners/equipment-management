@@ -637,6 +637,39 @@
         background: #fff;
     }
 
+    /* Escalation recipients multi-select */
+    .qr-escalate-group { margin-bottom: 1rem; }
+    .qr-required { color: #dc2626; }
+    .qr-multiselect { position: relative; }
+    .qr-multiselect-toggle {
+        display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+        width: 100%; min-height: 48px; padding: 0.7rem 0.85rem; text-align: left;
+        border: 2px solid #e5e7eb; border-radius: 12px; background: #f9fafb; color: #1e293b;
+        font-size: 0.95rem; cursor: pointer;
+    }
+    .qr-multiselect-toggle:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); background: #fff; }
+    .qr-multiselect-placeholder { color: #94a3b8; }
+    .qr-multiselect-panel {
+        margin-top: 4px;
+        max-height: 220px; overflow-y: auto; background: #fff;
+        border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+    .qr-multiselect-option {
+        display: flex !important; align-items: center; gap: 0.65rem; margin: 0 !important;
+        padding: 0.7rem 0.85rem; min-height: 44px; cursor: pointer;
+        border-bottom: 1px solid #f1f5f9; font-weight: 500 !important; color: #1e293b !important;
+    }
+    .qr-multiselect-option:last-child { border-bottom: 0; }
+    .qr-multiselect-option:hover { background: #f8fafc; }
+    .qr-multiselect-option input { width: 18px; height: 18px; accent-color: #dc2626; flex-shrink: 0; }
+    .qr-multiselect-option small { display: block; color: #64748b; font-size: 0.75rem; font-weight: 400; }
+    .qr-multiselect-empty { padding: 0.85rem; color: #64748b; font-size: 0.85rem; }
+    .qr-field-error { margin-top: 0.35rem; color: #dc2626; font-size: 0.8rem; font-weight: 500; }
+    .qr-page-error {
+        display: flex; gap: 0.6rem; align-items: flex-start; margin-bottom: 1rem; padding: 0.85rem 1rem;
+        border-radius: 12px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-size: 0.875rem;
+    }
+
     .qr-modal-actions {
         display: flex;
         gap: 0.75rem;
@@ -999,6 +1032,13 @@
         </div>
     </div>
 
+    {% if escalation_error %}
+    <div class="qr-page-error" role="alert">
+        <i class="fas fa-exclamation-circle" style="margin-top: 0.15rem;"></i>
+        <span>{{ escalation_error }}</span>
+    </div>
+    {% endif %}
+
     <!-- Action Area -->
     <div class="qr-action-area">
         {% if active_session %}
@@ -1082,8 +1122,38 @@
             {% csrf_token %}
             <input type="hidden" name="decision" id="qrDecisionInput">
             <div class="qr-modal-content">
+                <!-- Escalation recipients (Escalate only) -->
+                <div class="qr-escalate-group" id="qrEscalateGroup" hidden>
+                    <label id="qrEscalateLabel">
+                        <i class="fas fa-user-tie"></i> Escalate to <span class="qr-required">*</span>
+                    </label>
+                    <div class="qr-multiselect" id="qrMultiselect">
+                        <button type="button" class="qr-multiselect-toggle" id="qrMultiselectToggle"
+                                aria-haspopup="listbox" aria-expanded="false" aria-labelledby="qrEscalateLabel qrMultiselectSummary">
+                            <span id="qrMultiselectSummary" class="qr-multiselect-placeholder">Select Engineering Management</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="qr-multiselect-panel" id="qrMultiselectPanel" role="listbox" aria-multiselectable="true" hidden>
+                            {% for person in escalation_recipients %}
+                            <label class="qr-multiselect-option">
+                                <input type="checkbox" name="escalate-to" value="{{ person.pk }}"
+                                       data-name="{% if person.employee %}{{ person.employee.name }}{% else %}{{ person.get_full_name|default:person.username }}{% endif %}">
+                                <span>
+                                    {% if person.employee %}{{ person.employee.name }}{% else %}{{ person.get_full_name|default:person.username }}{% endif %}
+                                    {% if person.employee.designation %}<small>{{ person.employee.designation }}</small>{% endif %}
+                                </span>
+                            </label>
+                            {% empty %}
+                            <div class="qr-multiselect-empty">No users in the Engineering Management group. Add them in Django admin.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="qr-field-error" id="qrEscalateError" hidden>Select at least one person.</div>
+                </div>
+
                 <label for="qrComments">
-                    <i class="fas fa-comment-alt"></i> Comments <span style="color:#94a3b8;font-weight:400;">(optional)</span>
+                    <i class="fas fa-comment-alt"></i> <span id="qrCommentsLabel">Comments</span>
+                    <span id="qrCommentsHint" style="color:#94a3b8;font-weight:400;">(optional)</span>
                 </label>
                 <textarea
                     name="engineer-comments"
@@ -1091,6 +1161,7 @@
                     placeholder="Brief notes about your action..."
                     rows="3"
                 ></textarea>
+                <div class="qr-field-error" id="qrCommentsError" hidden>A reason is required to escalate.</div>
             </div>
             <div class="qr-modal-actions">
                 <button type="button" class="qr-modal-btn qr-btn-cancel" id="qrModalCancel">Cancel</button>
@@ -1216,7 +1287,7 @@
         },
         'ESCALATE': {
             title: 'Escalate Issue',
-            desc: 'This escalates to senior management or a specialized team for further action.',
+            desc: 'Send this ticket to Engineering Management with the full history so far.',
             icon: 'fas fa-arrow-up',
             iconClass: 'qr-modal-icon--escalate',
             btnClass: 'qr-btn-confirm--escalate'
@@ -1267,6 +1338,25 @@
         $('qrModalSubmit').className = 'qr-modal-btn qr-btn-confirm ' + cfg.btnClass;
         $('qrComments').value = '';
 
+        // Escalation needs recipients and a mandatory reason
+        var escalating = decision === 'ESCALATE';
+        $('qrEscalateGroup').hidden = !escalating;
+        $('qrCommentsLabel').textContent = escalating ? 'Reason for escalation' : 'Comments';
+        $('qrCommentsHint').textContent = escalating ? '*' : '(optional)';
+        $('qrCommentsHint').style.color = escalating ? '#dc2626' : '#94a3b8';
+        $('qrComments').placeholder = escalating
+            ? 'What has been tried and why management needs to step in...'
+            : 'Brief notes about your action...';
+        $('qrComments').required = escalating;
+        $('qrEscalateError').hidden = true;
+        $('qrCommentsError').hidden = true;
+        $$('input[name="escalate-to"]').forEach(function(cb) {
+            cb.checked = false;
+            cb.disabled = !escalating;
+        });
+        QR.updateRecipients();
+        QR.togglePanel(false);
+
         var overlay = $('qrModal');
         overlay.classList.add('is-open');
         document.body.style.overflow = 'hidden';
@@ -1298,8 +1388,46 @@
         }
     });
 
+    // ===== Escalation recipients multi-select =====
+    QR.togglePanel = function(open) {
+        var panel = $('qrMultiselectPanel');
+        if (!panel) return;
+        if (typeof open !== 'boolean') open = panel.hidden;
+        panel.hidden = !open;
+        $('qrMultiselectToggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
+    QR.updateRecipients = function() {
+        var names = [];
+        $$('input[name="escalate-to"]:checked').forEach(function(cb) { names.push(cb.dataset.name); });
+        var summary = $('qrMultiselectSummary');
+        summary.textContent = names.length ? names.join(', ') : 'Select Engineering Management';
+        summary.className = names.length ? '' : 'qr-multiselect-placeholder';
+        if (names.length) $('qrEscalateError').hidden = true;
+    };
+
+    $('qrMultiselectToggle').addEventListener('click', function() { QR.togglePanel(); });
+    $$('input[name="escalate-to"]').forEach(function(cb) {
+        cb.addEventListener('change', QR.updateRecipients);
+    });
+    $('qrComments').addEventListener('input', function() {
+        if (this.value.trim()) $('qrCommentsError').hidden = true;
+    });
+
     // Form submit
-    $('qrReviewForm').addEventListener('submit', function() {
+    $('qrReviewForm').addEventListener('submit', function(e) {
+        if ($('qrDecisionInput').value === 'ESCALATE') {
+            var noRecipients = !$$('input[name="escalate-to"]:checked').length;
+            var noReason = !$('qrComments').value.trim();
+            $('qrEscalateError').hidden = !noRecipients;
+            $('qrCommentsError').hidden = !noReason;
+            if (noRecipients || noReason) {
+                e.preventDefault();
+                if (noRecipients) { QR.togglePanel(true); $('qrMultiselectToggle').focus(); }
+                else { $('qrComments').focus(); }
+                return;
+            }
+        }
         var btn = $('qrModalSubmit');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';

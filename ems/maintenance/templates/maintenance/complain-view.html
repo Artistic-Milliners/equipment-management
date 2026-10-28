@@ -352,6 +352,12 @@
     .tm-chip--rejected .tm-chip-count { background: rgba(185,28,28,0.1); }
     .tm-chip--rejected.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
 
+    /* Chip: Escalated */
+    .tm-chip--escalated { background: #fff1f2; color: #be123c; }
+    .tm-chip--escalated.is-on { background: #e11d48; color: #fff; }
+    .tm-chip--escalated .tm-chip-count { background: rgba(190,18,60,0.1); }
+    .tm-chip--escalated.is-on .tm-chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
     /* Chip: Awaiting Doc */
     .tm-chip--awaiting_documentation {
         background: #fff7ed;
@@ -501,6 +507,7 @@
     .tm-ticket[data-status="REVIEWED"]::before { background: #06b6d4; }
     .tm-ticket[data-status="APPROVED"]::before { background: #22c55e; }
     .tm-ticket[data-status="REJECTED"]::before { background: #ef4444; }
+    .tm-ticket[data-status="ESCALATED"]::before { background: #e11d48; }
     .tm-ticket[data-status="AWAITING_DOCUMENTATION"]::before { background: #f97316; }
     .tm-ticket[data-status="UNDER_OBSERVATION"]::before { background: #eab308; }
     .tm-ticket[data-status="RESOLVED"]::before { background: #10b981; }
@@ -552,6 +559,7 @@
     .tm-status--reviewed { background: #cffafe; color: #0e7490; }
     .tm-status--approved { background: #dcfce7; color: #166534; }
     .tm-status--rejected { background: #fee2e2; color: #991b1b; }
+    .tm-status--escalated { background: #ffe4e6; color: #9f1239; }
     .tm-status--awaiting_documentation { background: #ffedd5; color: #9a3412; }
     .tm-status--under_observation { background: #fef9c3; color: #854d0e; }
     .tm-status--resolved { background: #d1fae5; color: #065f46; }
@@ -1541,6 +1549,9 @@
         <button class="tm-chip tm-chip--rejected" data-filter="REJECTED">
             Rejected <span class="tm-chip-count" id="tmChipRejected">0</span>
         </button>
+        <button class="tm-chip tm-chip--escalated" data-filter="ESCALATED">
+            Escalated <span class="tm-chip-count" id="tmChipEscalated">0</span>
+        </button>
         <button class="tm-chip tm-chip--closed" data-filter="CLOSED">
             Closed <span class="tm-chip-count" id="tmChipClosed">0</span>
         </button>
@@ -1670,6 +1681,7 @@
         'REVIEWED': 'Reviewed',
         'APPROVED': 'Approved',
         'REJECTED': 'Rejected',
+        'ESCALATED': 'Escalated',
         // Users see a confirmed ticket as closed; engineers still have to document it
         'AWAITING_DOCUMENTATION': USER_ROLE.isEngineer ? 'Awaiting Docs' : 'Closed',
         'UNDER_OBSERVATION': 'Observation',
@@ -1841,6 +1853,7 @@
         $('tmChipObservation').textContent = counts['UNDER_OBSERVATION'] || 0;
         $('tmChipResolved').textContent = counts['RESOLVED'] || 0;
         $('tmChipRejected').textContent = counts['REJECTED'] || 0;
+        $('tmChipEscalated').textContent = counts['ESCALATED'] || 0;
         $('tmChipClosed').textContent = counts['CLOSED'] || 0;
 
         // Hide chips with zero count (except All)

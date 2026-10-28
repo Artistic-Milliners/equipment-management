@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
 from .models import (CustomUser, Department, Designation, Contractor, Manufacturer,
                      FaultLibrary, TemporaryIssue, Employee, Machines, Spares, MachineIssue, Equipment,
-                     SpareTransaction, IssueClosing, Unit, WorkSession, MachineSection)
+                     SpareTransaction, IssueClosing, Unit, WorkSession, MachineSection, IssueEscalation)
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django import forms
@@ -443,6 +443,17 @@ class WorkSessionAdmin(admin.ModelAdmin):
     list_filter = ['outcome', 'started_at']
     search_fields = ['issue__ticket_num', 'engineer__name']
     readonly_fields = ['started_at']
+
+@admin.register(IssueEscalation)
+class IssueEscalationAdmin(admin.ModelAdmin):
+    list_display = ['issue', 'escalated_by', 'recipients', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['issue__ticket_num', 'escalated_by__name', 'reason']
+    filter_horizontal = ['escalated_to']
+    readonly_fields = ['created_at']
+
+    def recipients(self, obj):
+        return ', '.join(u.get_full_name() or u.username for u in obj.escalated_to.all())
 
 @admin.register(IssueClosing)
 class IssueClosingAdmin(admin.ModelAdmin):
