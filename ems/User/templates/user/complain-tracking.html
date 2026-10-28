@@ -854,6 +854,10 @@
         flex-shrink: 0;
     }
 
+    .ct-confirm-prompt {
+        margin: 0.5rem 0 0.75rem;
+    }
+
     /* ===== USER FEEDBACK FORM (Bottom sheet style) ===== */
     .ct-feedback-overlay {
         display: none;
@@ -1137,10 +1141,21 @@
 
         .ct-actions {
             flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
-        .ct-btn {
-            flex: 1;
+        /* Equal-width buttons, centred in the row; banners in the row take the full width */
+        .ct-actions > .ct-btn {
+            flex: 1 1 0;
+            min-width: 160px;
+            max-width: 240px;
+            white-space: nowrap;
+        }
+
+        .ct-actions > .ct-info-banner,
+        .ct-actions > .ct-closed-banner {
+            flex-basis: 100%;
         }
 
         .ct-chat-msg {
@@ -1700,12 +1715,15 @@
     </div>
     {% endif %}
 
+    {% if can_confirm %}
+    <div class="ct-info-banner ct-confirm-prompt">
+        <i class="fas fa-user-check"></i>
+        <span>The engineer has marked this repair as done. Please check the machine and confirm.</span>
+    </div>
+    {% endif %}
+
     <div class="ct-actions">
         {% if can_confirm %}
-            <div class="ct-info-banner" style="flex-basis: 100%;">
-                <i class="fas fa-user-check"></i>
-                <span>The engineer has marked this repair as done. Please check the machine and confirm.</span>
-            </div>
             <button class="ct-btn ct-btn--primary" type="button" id="ctConfirmBtn">
                 <i class="fas fa-check-circle"></i>
                 Work Completed
