@@ -1708,6 +1708,7 @@
                 user: "{{ issue.user.name }}",
                 department: "{{ issue.error_department.name }}",
                 date: "{{ issue.date_time|date:'Y-m-d' }}",
+                timestamp: {{ issue.date_time|date:'U'|default:0 }},
                 date_display: "{{ issue.date_time|date:'M d, Y' }}",
                 time_display: "{{ issue.date_time|date:'h:i A' }}",
                 issue_info: {% if issue.temporary_issue %}{
@@ -1875,8 +1876,10 @@
         });
 
         // Sort
+        // By date and time raised (newest first by default); ticket id breaks ties
         filteredTickets.sort(function(a, b) {
-            return sortNewest ? (b.date > a.date ? 1 : -1) : (a.date > b.date ? 1 : -1);
+            var diff = (a.timestamp - b.timestamp) || (a.id - b.id);
+            return sortNewest ? -diff : diff;
         });
 
         renderTickets();
