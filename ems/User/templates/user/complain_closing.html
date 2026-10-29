@@ -392,10 +392,10 @@
                             <input type="radio" name="equipment-status" id="cfStatusOn" value="on" {% if status != 'off' %}checked{% endif %}>
                             <label for="cfStatusOn"><i class="fas fa-check-circle"></i> Operational</label>
                         </div>
-                        <div class="cf-choice cf-choice--bad">
+                        {% comment %} <div class="cf-choice cf-choice--bad">
                             <input type="radio" name="equipment-status" id="cfStatusOff" value="off" {% if status == 'off' %}checked{% endif %}>
                             <label for="cfStatusOff"><i class="fas fa-power-off"></i> Non-operational</label>
-                        </div>
+                        </div> {% endcomment %}
                     </div>
                     <span class="cf-field-error"></span>
                 </div>
