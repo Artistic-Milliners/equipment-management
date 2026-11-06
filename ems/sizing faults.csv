@@ -1,0 +1,416 @@
+﻿fault
+Size Box 1 tension value not stable on HMI
+"Delivery tension low, yarn sheet loose"
+"Delivery nip roll motor tripped, machine stopped during running"
+Creel towing roll drive tripped on overload
+Size Box 1 squeeze roll drive MPCB tripped
+Size Box 1 size level sensor not detecting
+Drycan main drive tripped on overload
+Size Box 2 immersion roll motor overload relay tripped
+Drycan group 3 motor MPCB tripped
+Delivery roll drive tripped during acceleration
+Head beam drive motor drive tripped on over voltage
+Machine stopped suddenly at Head
+Head comb motor inverter tripped (OC fault)
+Size Box 2 circulation pump motor inverter tripped (OC fault)
+Creel brake unit inverter tripped (OC fault)
+Creel draw-off motor drive tripped during acceleration
+Size Box 1 squeeze roll drive inverter showing overheat alarm
+Head limit switch not operating
+"Head main drive stopped, overload indication on panel"
+Size Box 1 low size level alarm continuously ON
+Head comb motor MPCB tripped
+Size Box 1 circulation pump motor MPCB tripped
+"Size Box 1 immersion roll motor tripped, machine stopped during running"
+Head expansion comb not moving
+Squeezing air pressure issue
+Comb motor not operating
+Size Box 1 low size level alarm continuously ON
+Machine stopped suddenly at Drycan
+Beam clamping sensor not detecting
+"Size Box 1 level probe not working, pump not auto filling"
+"Size Box 2 level probe not working, pump not auto filling"
+Drycan temperature not maintaining set value
+Creel draw-off motor MPCB tripped
+Winder drive overload relay tripped
+"Size Box 2 level probe not working, pump not auto filling"
+Creel proximity sensor fault
+Head comb motor MPCB tripped
+Delivery sensor false signal
+"Size Box 2 circulation pump motor tripped, machine stopped during running"
+"Size Box 2 immersion roll motor stopped, overload indication on panel"
+"Size Box 2 level sensor false signal, size overflowing"
+Head main drive heating up
+Exhaust Fan # 3
+Winder entry roll motor body temperature high
+Short circuit fault
+Size Box 2 low size level alarm continuously ON
+Size Box 1 low size level alarm continuously ON
+Drycan group 2 motor MPCB tripped
+Size Box 2 circulation pump motor MPCB tripped
+Size Box 1 low size level alarm continuously ON
+Winder drive heating up
+Machine not starting from Delivery
+Size Box 1 low size level alarm continuously ON
+Head handy display error
+Winder entry roll motor MPCB tripped
+"Head comb motor stopped, overload indication on panel"
+Machine stopped suddenly at Winder Entry
+"Size Box 2 level probe not working, pump not auto filling"
+Drycan steam pressure not maintaining
+"Drycan group 2 motor stopped, overload indication on panel"
+Head emergency push button stuck
+Head pressing roll motor MPCB tripped
+Size Box 2 solenoid valve not operating
+Winder entry drive motor drive tripped on over voltage
+Head main drive overload relay tripped
+"Drycan main drive fault, machine stopped"
+"Drycan group 2 motor drive fault, machine stopped"
+Motor faulty
+Circulation pump was jammed
+Beam hoist not working at head
+Machine stopped suddenly at Head
+"Emergency stop active at Head, machine not starting"
+"Drycan group 4 motor tripped, machine stopped during running"
+Machine not starting from Drycan
+Drycan group 4 motor tripped on overload
+"Drycan group 3 motor stopped, overload indication on panel"
+"Size Box 2 squeeze roll drive stopped, overload indication on panel"
+"Delivery roll motor drive fault, machine stopped"
+Drycan group 3 motor tripped on overload
+Creel sheet tension too high
+Winder drive overload relay tripped
+Coil fulty
+Size Box 2 immersion roll motor overload relay tripped
+Size Box 2 low size level alarm continuously ON
+"Size Box 2 immersion roll motor drive fault, machine stopped"
+Machine not starting from Winder Entry
+Head handy not responding
+"Size Box 2 level probe not working, pump not auto filling"
+Monthly Maintenance
+Size Box 2 entry roll motor inverter tripped (OC fault)
+"Creel tension low, yarn sheet loose"
+Delivery nip roll motor inverter showing overheat alarm
+"Size Box 1 circulation pump motor drive fault, machine stopped"
+"Size Box 2 entry roll motor encoder signal error, drive tripped"
+Winder entry roll motor encoder alarm on drive
+Drycan group 3 motor MPCB tripped
+Delivery roll drive tripped on overload
+Head pressing roll motor MPCB tripped
+Winder Entry sensor not detecting
+Winder Entry tension value not stable on HMI
+Size Box 2 size level sensor not detecting
+"Creel brake unit tripped, machine stopped during running"
+Creel towing roll drive tripped on overload
+"Drycan main drive stopped, overload indication on panel"
+Emergency stop circuit fault at Delivery
+Head beam drive motor inverter tripped (OC fault)
+"Creel towing roll drive over temperature, burning smell"
+Beam hoist not working at head
+"Size Box 2 circulation pump motor stopped, overload indication on panel"
+"Winder drive tripped, machine stopped during running"
+Head beam drive motor tripped on overload
+Size Box 1 size level sensor not detecting
+Padder issue
+"Size Box 2 squeeze roll drive stopped, overload indication on panel"
+Beam clamping sensor not detecting
+Creel panel cooling fan not working
+Drycan temperature not maintaining set value
+Head beam clamp not locking
+"Head handy heated up, not working"
+Delivery roll motor overload relay tripped
+Winder Entry yarn tension fluctuating
+Hoist up/down not working
+Size Box 1 solenoid valve not operating
+Wall exhaust fan
+Size Box 1 circulation pump motor MPCB tripped
+"Delivery roll motor stopped, overload indication on panel"
+Delivery nip roll motor overload relay tripped
+Size Box 1 squeeze roll drive MPCB tripped
+"Head safety sensor fault, machine not starting"
+Drycan I/P valve not responding
+"Size Box 1 level sensor false signal, size overflowing"
+Drycan steam pressure not maintaining
+Creel proximity sensor fault
+Size Box 1 tension value not stable on HMI
+HMI blank screen at Head panel
+Head main drive MPCB tripped
+Emergency stop circuit fault at Winder Entry
+"Delivery nip roll motor stopped, overload indication on panel"
+Head emergency push button stuck
+HMI touch not responding at Head
+Creel emergency push button stuck
+Drycan temperature not maintaining set value
+"Emergency stop active at Head, machine not starting"
+A.C not working
+"Size Box 2 immersion roll motor stopped, overload indication on panel"
+Drycan over temperature alarm
+"Head pressing roll motor drive fault, machine stopped"
+Drycan temperature fault on HMI
+Winder Entry emergency push button stuck
+Hoist up/down not working
+"Delivery nip roll motor drive fault, machine stopped"
+"Drycan group 2 motor tripped, machine stopped during running"
+Size Box 1 entry roll motor tripped on overload
+Drycan temperature fault on HMI
+Winder drive speed feedback lost (encoder fault)
+Machine stopped suddenly at Head
+Winder drive tripped during acceleration
+"Machine stopped at Size Box 2, no alarm on HMI"
+Drycan solenoid valve not operating
+Drycan temperature reading fluctuating
+Head handy not responding
+Delivery sensor false signal
+"Drycan group 4 motor stopped, overload indication on panel"
+"Head beam drive motor tripped, machine stopped during running"
+Drycan main drive overload relay tripped
+Winder Entry load cell reading abnormal
+Hoist trolley not moving
+Profibus error on Delivery drive
+Drycan temperature fault on HMI
+"Size Box 1 level probe not working, pump not auto filling"
+"Size Box 2 entry roll motor stopped, overload indication on panel"
+"Creel towing roll drive tripped, machine stopped during running"
+"Drycan group 3 motor over temperature, burning smell"
+Drycan group 3 motor MPCB tripped
+"Drycan group 2 motor tripped, machine stopped during running"
+Drycan group 2 motor encoder alarm on drive
+Beam clamp open/close fault
+Size Box 1 emergency push button stuck
+Creel brake unit drive tripped on over voltage
+Drycan over temperature alarm
+Size Box 1 load cell reading abnormal
+Delivery nip roll motor drive tripped on over voltage
+Hoist trolley not moving
+Winder Entry proximity sensor fault
+Size Box 1 squeeze roll drive tripped on overload
+Pressing roll solenoid issue
+Machine On Maintenance
+HMI touch not responding at Head
+Head handy not responding
+Beam hoist not working at head
+"Size Box 2 level probe not working, pump not auto filling"
+Emergency stop circuit fault at Drycan
+HMI blank screen at Head panel
+"Drycan main drive tripped, machine stopped during running"
+Head expansion comb not moving
+Squeezing air pressure issue
+"Size Box 1 level probe not working, pump not auto filling"
+Emergency stop circuit fault at Drycan
+HMI blank screen at Head panel
+Beam clamping sensor not detecting
+Head comb motor overload relay tripped
+Delivery proximity sensor fault
+Winder entry drive motor EOCR tripped (over current)
+Cooking tank motor not run
+Beam clamp open/close fault
+Size box2 mandi try not work
+"Head handy heated up, not working"
+Mechanical work done
+HMI touch not responding at Head
+Size Box 1 low size level alarm continuously ON
+"Size Box 1 immersion roll motor drive fault, machine stopped"
+Drycan group 3 motor MPCB tripped
+Winder encoder error 31118
+Winder encoder error 31118
+Creel towing roll drive body temperature high
+Winder encoder error 31118
+Delivery rool motor trip
+Creel draw-off motor speed feedback lost (encoder fault)
+Head safety circuit open
+Delivery sensor not detecting
+Drycan group 4 motor inverter showing overheat alarm
+Winder encoder error 31118
+Delivery roll motor inverter showing overheat alarm
+Winder drive inverter showing overheat alarm
+Drycan panel MCB tripped
+"Size Box 1 entry roll motor drive fault, machine stopped"
+Delivery roll drive not starting
+Creel limit switch stuck
+Delivery sensor not detecting
+Drycan group 4 motor overload relay tripped
+"Head handy heated up, not working"
+Delivery roll motor overload relay tripped
+Motor Jammed
+Head beam clamp not locking
+Size box#1 motor issue
+Drycan group 3 motor overload relay tripped
+Winder Entry emergency push button stuck
+Delivery proximity sensor fault
+Head safety circuit open
+HMI communication lost at Head
+Drycan group 4 motor MPCB tripped
+Size Box 2 load cell reading abnormal
+Size Box 2 entry roll motor encoder alarm on drive
+"Drycan group 2 motor tripped, machine stopped during running"
+Delivery roll drive speed feedback lost (encoder fault)
+Main HMI hanged at Head panel
+Head PLC I/O module fault
+Size Box 2 panel cooling fan not working
+Drycan group 3 motor tripped on overload
+Creel safety bar activated without contact
+Beam clamp open/close fault
+"Drycan group 2 motor tripped, machine stopped during running"
+Delivery proximity sensor fault
+Motor Jammed
+Drycan safety circuit open
+"Winder Entry safety sensor fault, machine not starting"
+Drycan drive communication lost
+Head PLC I/O module fault
+Main HMI hanged at Head panel
+Winde sheet loose
+Delivery proximity sensor fault
+Drycan group 4 motor overload relay tripped
+S.B A Dip Roll issue
+Creel brake unit MPCB tripped
+Winder entry roll motor drive tripped on over voltage
+Delivery proximity sensor fault
+Head handy display error
+Winder entry roll motor encoder feedback error
+Drycan group 3 motor EOCR showing O.C fault
+Drycan group 2 motor overload relay tripped
+Creel draw-off motor MPCB tripped
+Main HMI hanged at Head panel
+Head PLC communication fault
+Profibus error on Cooking Tank drive
+Winder Entry PLC I/O module fault
+Drycan group 2 motor overload relay tripped
+Winder entry roll motor MPCB tripped
+Comb limit fault at head
+Delivery roll drive overload relay tripped
+"Delivery roll drive over temperature, burning smell"
+Drycan emergency push button stuck
+Beam hoist not working at head
+Drycan group 3 motor MPCB tripped
+Main HMI hanged at Head panel
+Winder Entry limit switch stuck
+Drycan main drive tripped on overload
+"Winder drive stopped, overload indication on panel"
+Beam hoist not working at head
+Creel safety circuit open
+Power off
+Drycan group 4 motor MPCB tripped
+Drycan group 4 motor overload relay tripped
+Head main drive inverter showing overheat alarm
+Drycan group 3 motor MPCB tripped
+Hoist trolley not moving
+Size box 1encoder alarm
+Drycan main drive MPCB tripped
+Delivery drive cooling fan faulty
+Size Box 2 entry roll motor encoder feedback error
+Size box 1encoder alarm
+Creel draw-off motor encoder alarm on drive
+Drycan PLC I/O module fault
+Drycan main drive tripped on overload
+Creel draw-off motor MPCB tripped
+Drycan group 2 motor MPCB tripped
+"Drycan group 2 motor tripped, machine stopped during running"
+Size Box 1 emergency push button stuck
+HMI touch not responding at Head
+Head beam clamp not locking
+"Drycan group 3 motor tripped, machine stopped during running"
+Delivery nip roll motor encoder feedback error
+Inclinometer Faulty
+Drycan group 3 motor EOCR showing O.C fault
+Emergency stop circuit fault at Head
+Winder entry drive motor drive tripped on over voltage
+HMI blank screen at Head panel
+EOCR trip on Head beam drive motor
+Winder drive EOCR showing O.C fault
+Delivery nip roll motor speed feedback lost (encoder fault)
+Delivery safety bar activated without contact
+Winder entry roll motor EOCR showing O.C fault
+Head main drive EOCR tripped (over current)
+Drycan group 4 motor encoder alarm on drive
+Size Box tray issue
+Winder entry roll motor encoder feedback error
+Size Box 1 immersion roll motor encoder alarm on drive
+Beam clamp open/close fault
+Drycan group 4 motor tripped on overload
+Delivery roll drive encoder feedback error
+"Size Box 1 entry roll motor encoder signal error, drive tripped"
+Size Box 2 entry roll motor body temperature high
+Delivery roll drive speed feedback lost (encoder fault)
+Drycan group 4 motor EOCR tripped (over current)
+Size Box 1 size level sensor not detecting
+Winder entry roll motor drive tripped on over voltage
+Delivery nip roll motor encoder feedback error
+Size Box 1 load cell reading abnormal
+Ampere increase
+Winder drive tripped on over voltage
+Head beam clamp not locking
+Beam hoist not working at head
+Drycan group 4 motor MPCB tripped
+Size Box 1 low size level alarm continuously ON
+"Drycan group 2 motor stopped, overload indication on panel"
+Winder entry drive motor encoder feedback error
+"Drycan main drive stopped, overload indication on panel"
+Size Box 2 size level sensor not detecting
+Size Box 1 squeeze roll drive speed feedback lost (encoder fault)
+Lighting And fan checking
+HMI blank screen at Head panel
+Winder motor issue
+Winder entry drive motor heating up
+Head safety bar activated without contact
+Beam hoist pendant not responding
+Creel towing roll drive encoder feedback error
+"Drycan group 4 motor encoder signal error, drive tripped"
+HMI communication lost at Head
+"Size Box 1 squeeze roll drive tripped, machine stopped during running"
+Winder drive not starting
+"Size Box 1 tension low, yarn sheet loose"
+Delivery limit switch stuck
+Delivery sensor false signal
+"Size Box 1 level probe not working, pump not auto filling"
+"Winder entry drive motor stopped, overload indication on panel"
+Pump Motor not run
+"Drycan group 2 motor stopped, overload indication on panel"
+Head PLC communication fault
+Beam hoist not working at head
+Drycan temperature fault on HMI
+Hoist up/down not working
+Delivery roll motor tripped on overload
+"Size Box 1 level probe not working, pump not auto filling"
+Pressing roll solenoid issue
+"Machine stopped at Winder Entry, no alarm on HMI"
+Cable damaged due to cut
+Hoist up/down not working
+Circulation pump issue
+Beam hoist pendant not responding
+"Creel tension low, yarn sheet loose"
+"Delivery roll motor drive fault, machine stopped"
+Beam hoist not working at head
+Size Box 2 immersion roll motor encoder feedback error
+Dryer 04 error
+Beam hoist pendant not responding
+S.Box Squezing issue
+Winder drive overload relay tripped
+"Machine not running,no anyerror"
+"Machine not running,no anyerror"
+Over head light issue
+Hoist trolley not moving
+Size Box 1 entry roll motor inverter showing overheat alarm
+Creel sheet tension too high
+Drycan over temperature alarm
+"Head handy (pendant) error, jog not working"
+Delivery yarn tension fluctuating
+Winder entry roll motor encoder alarm on drive
+Drycan temperature fault on HMI
+"Delivery tension low, yarn sheet loose"
+Hoist up/down not working
+Drycan temperature fault on HMI
+Motors cleaning work
+"Head handy (pendant) error, jog not working"
+Size box 1 in motor not run
+Comb limit fault at head
+Drycan temperature reading fluctuating
+Drycan temperature not maintaining set value
+Drycan group 4 motor encoder alarm on drive
+Drycan temperature not maintaining set value
+Machine stopped suddenly at Size Box 2
+Creel yarn tension fluctuating
+"Drycan group 2 motor stopped, overload indication on panel"
+Hoist trolley not moving
+"Delivery nip roll motor tripped, machine stopped during running"
+Motor connection need
+Size Box 1 limit switch not operating
