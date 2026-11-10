@@ -265,6 +265,41 @@ def complain_detail(request, pk):
         return render(request, "maintenance/complain-detail.html", {'issue':issue})
 
 
+def _read_fault(request, issue):
+    """Engineer's fault choice from the Quick Review dialog as (fault, new_fault_text, error); nothing picked keeps the current one"""
+    value = request.POST.get('fault', '').strip()
+    if not value:
+        return None, None, None
+    if value == 'other':
+        text = ' '.join(request.POST.get('new-fault-description', '').split())
+        if not text:
+            return None, None, 'Describe the new fault, or pick one from the list.'
+        return None, text, None
+    fault = FaultLibrary.for_machine(issue.machine_id).filter(pk=value).first() if value.isdigit() else None
+    if fault is None:
+        return None, None, 'The selected fault does not apply to this machine.'
+    return fault, None, None
+
+
+def _apply_fault(request, issue, fault, new_fault_text):
+    """Tag the ticket with a Fault Library entry, or report a new fault for the temporary issue review queue"""
+    old_temp = issue.temporary_issue
+    if fault:
+        issue.selected_issue = fault
+        issue.temporary_issue = None
+        # Drop an unreviewed new-fault report that this ticket no longer uses
+        if old_temp and not old_temp.reviewed and not old_temp.machine_issues.exclude(pk=issue.pk).exists():
+            old_temp.delete()
+    elif new_fault_text:
+        if old_temp and not old_temp.reviewed:
+            old_temp.user_description = new_fault_text
+            old_temp.save(update_fields=['user_description'])
+        else:
+            issue.temporary_issue = TemporaryIssue.objects.create(
+                user=request.user, equipment=issue.equipment, machine=issue.machine_id, user_description=new_fault_text)
+        issue.selected_issue = None
+
+
 def quick_review(request, pk):
     """Quick review page for engineers to decide if complaint is resolved or needs observation"""
 
@@ -285,7 +320,8 @@ def quick_review(request, pk):
             'elapsed_minutes': elapsed_minutes,
             'active_session': active_session,
             'escalation_recipients': IssueEscalation.recipients(),
-            'escalation_error': request.session.pop(f'escalation_error_{issue.pk}', None),
+            'faults': FaultLibrary.for_machine(issue.machine_id),
+            'page_error': request.session.pop(f'quick_review_error_{issue.pk}', None),
         })
 
     elif request.method == 'POST':
@@ -305,6 +341,11 @@ def quick_review(request, pk):
         # Close any active work session for this issue
         active_session = issue.work_sessions.filter(outcome=WorkSession.OUTCOME_IN_PROGRESS).first()
 
+        fault, new_fault_text, fault_error = _read_fault(request, issue)
+        if fault_error and decision in ('User_Feedback', 'ESCALATE'):
+            request.session[f'quick_review_error_{issue.pk}'] = fault_error
+            return redirect('maintenance:quick_review', pk=issue.pk)
+
         if decision == 'User_Feedback':
             # Mark issue as resolved - NO review record yet
             # User will acknowledge, then engineer documents before closing
@@ -317,6 +358,7 @@ def quick_review(request, pk):
             time_diff = issue.quick_review_timestamp - issue.date_time
             issue.engineer_response_hours = time_diff.total_seconds() / 3600
 
+            _apply_fault(request, issue, fault, new_fault_text)
             issue.save()
 
             # Close active work session
@@ -362,7 +404,7 @@ def quick_review(request, pk):
             elif not reason:
                 error = 'Explain why this complaint is being escalated.'
             if error:
-                request.session[f'escalation_error_{issue.pk}'] = error
+                request.session[f'quick_review_error_{issue.pk}'] = error
                 return redirect('maintenance:quick_review', pk=issue.pk)
 
             with transaction.atomic():
@@ -372,6 +414,7 @@ def quick_review(request, pk):
                 escalation.escalated_to.set(recipients)
                 QuickReviewComments.objects.create(issue=issue, commenter=engineer, comment=f'Escalated: {reason}')
                 issue.status = MachineIssue.STATUS_ESCALATED
+                _apply_fault(request, issue, fault, new_fault_text)
                 if not issue.quick_review_timestamp:
                     issue.quick_review_timestamp = timezone.now()
                     issue.engineer_response_hours = (issue.quick_review_timestamp - issue.date_time).total_seconds() / 3600

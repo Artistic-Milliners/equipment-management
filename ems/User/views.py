@@ -9,7 +9,7 @@ from core.models import (Contractor, CustomUser, MachineIssueReview, Employee,
                          Unit, MachineIssue, Spares, Equipment,
                          Machines, ImageModel, Department,
                          MachineIssueReview, IssueClosing, MachineSpares,
-                         FaultLibrary, TemporaryIssue, MachineSection, QuickReviewComments)
+                         FaultLibrary, MachineSection, QuickReviewComments)
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -98,10 +98,7 @@ class InitiateComplainView(View):
         image = request.FILES.getlist('image[]')
         error_department = request.POST["error-department"]
 
-        # New fields for issue selection
-        issue_type = request.POST.get('issue-type')  # 'existing' or 'other'
-        selected_issue_id = request.POST.get('selected-issue-id', None)
-        custom_issue_description = request.POST.get('custom-issue-description', None)
+        # The fault is identified by the engineer during Quick Review, not by the reporter
         machine_section_id = request.POST.get('machine-section', None)
 
 
@@ -135,24 +132,6 @@ class InitiateComplainView(View):
                 issue.machine_section = machine_section
             except MachineSection.DoesNotExist:
                 pass
-
-        # Handle issue selection
-        if issue_type == 'existing' and selected_issue_id:
-            # User selected a fault from the Fault Library; it must apply to this machine
-            try:
-                issue.selected_issue = FaultLibrary.for_machine(machine).get(pk=selected_issue_id)
-            except (FaultLibrary.DoesNotExist, ValueError):
-                pass
-
-        elif issue_type == 'other' and custom_issue_description:
-            # User entered custom issue - create TemporaryIssue
-            temp_issue = TemporaryIssue.objects.create(
-                user=request.user,
-                equipment=equipment,
-                machine=machine,
-                user_description=custom_issue_description
-            )
-            issue.temporary_issue = temp_issue
 
         issue.status = MachineIssue.STATUS_PENDING
         issue.save()

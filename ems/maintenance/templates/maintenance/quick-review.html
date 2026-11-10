@@ -664,6 +664,25 @@
     .qr-multiselect-option input { width: 18px; height: 18px; accent-color: #dc2626; flex-shrink: 0; }
     .qr-multiselect-option small { display: block; color: #64748b; font-size: 0.75rem; font-weight: 400; }
     .qr-multiselect-empty { padding: 0.85rem; color: #64748b; font-size: 0.85rem; }
+    /* Fault identified (searchable via Choices.js, plain select as fallback) */
+    .qr-fault-group { margin-bottom: 1rem; }
+    .qr-fault-group > select {
+        width: 100%; min-height: 48px; padding: 0.7rem 0.85rem;
+        border: 2px solid #e5e7eb; border-radius: 12px; background: #f9fafb; color: #1e293b; font-size: 0.95rem;
+    }
+    .qr-fault-group .choices { margin-bottom: 0; }
+    .qr-fault-group .choices__inner {
+        min-height: 48px; padding: 0.55rem 0.85rem; border: 2px solid #e5e7eb; border-radius: 12px;
+        background: #f9fafb; font-size: 0.95rem;
+    }
+    .qr-fault-group .choices.is-focused .choices__inner,
+    .qr-fault-group .choices.is-open .choices__inner { border-color: #3b82f6; background: #fff; }
+    .qr-fault-group .choices__list--dropdown { border-radius: 12px; z-index: 5; }
+    .qr-fault-group .choices__list--dropdown .choices__item { font-size: 0.875rem; }
+    .qr-fault-hint { margin-top: 0.35rem; color: #64748b; font-size: 0.78rem; }
+    .qr-new-fault { margin-top: 0.75rem; }
+    .qr-modal-content .qr-new-fault textarea { min-height: 70px; }
+
     .qr-field-error { margin-top: 0.35rem; color: #dc2626; font-size: 0.8rem; font-weight: 500; }
     .qr-page-error {
         display: flex; gap: 0.6rem; align-items: flex-start; margin-bottom: 1rem; padding: 0.85rem 1rem;
@@ -1032,10 +1051,10 @@
         </div>
     </div>
 
-    {% if escalation_error %}
+    {% if page_error %}
     <div class="qr-page-error" role="alert">
         <i class="fas fa-exclamation-circle" style="margin-top: 0.15rem;"></i>
-        <span>{{ escalation_error }}</span>
+        <span>{{ page_error }}</span>
     </div>
     {% endif %}
 
@@ -1151,6 +1170,31 @@
                     <div class="qr-field-error" id="qrEscalateError" hidden>Select at least one person.</div>
                 </div>
 
+                <!-- Fault identified by the engineer (Fault Library entry or a new fault) -->
+                <div class="qr-fault-group">
+                    <label for="qrFault">
+                        <i class="fas fa-bolt"></i> Fault identified
+                        <span style="color:#94a3b8;font-weight:400;">(optional)</span>
+                    </label>
+                    <select name="fault" id="qrFault">
+                        <option value="">-- Select a fault --</option>
+                        {% for fault in faults %}
+                        <option value="{{ fault.pk }}" {% if fault.pk == issue.selected_issue_id %}selected{% endif %}>{{ fault.display_label }}</option>
+                        {% endfor %}
+                        <option value="other" {% if issue.temporary_issue_id and not issue.selected_issue_id %}selected{% endif %}>Other (new fault, not in the list)</option>
+                    </select>
+                    {% if not faults %}
+                    <div class="qr-fault-hint">No faults in the Fault Library for this machine yet. Choose "Other" to report one.</div>
+                    {% endif %}
+                    <div class="qr-new-fault" id="qrNewFaultGroup" hidden>
+                        <label for="qrNewFault">Describe the new fault <span class="qr-required">*</span></label>
+                        <textarea name="new-fault-description" id="qrNewFault" rows="2"
+                                  placeholder="e.g. Size Box 1 squeeze roll drive tripped on overload">{{ issue.temporary_issue.user_description|default:'' }}</textarea>
+                        <div class="qr-fault-hint">It will be reviewed and can be added to the Fault Library.</div>
+                        <div class="qr-field-error" id="qrNewFaultError" hidden>Describe the new fault, or pick one from the list.</div>
+                    </div>
+                </div>
+
                 <label for="qrComments">
                     <i class="fas fa-comment-alt"></i> <span id="qrCommentsLabel">Comments</span>
                     <span id="qrCommentsHint" style="color:#94a3b8;font-weight:400;">(optional)</span>
@@ -1189,6 +1233,7 @@
 <!-- Toast -->
 <div class="qr-toast" id="qrToast"></div>
 
+<script src="{% static 'vendor/choices/choices.min.js' %}"></script>
 <script>
 (function() {
     'use strict';
@@ -1414,8 +1459,41 @@
         if (this.value.trim()) $('qrCommentsError').hidden = true;
     });
 
+    // ===== Fault identified =====
+    QR.toggleNewFault = function() {
+        var other = $('qrFault').value === 'other';
+        $('qrNewFaultGroup').hidden = !other;
+        $('qrNewFault').disabled = !other;
+        if (!other) $('qrNewFaultError').hidden = true;
+    };
+
+    $('qrFault').addEventListener('change', QR.toggleNewFault);
+    $('qrNewFault').addEventListener('input', function() {
+        if (this.value.trim()) $('qrNewFaultError').hidden = true;
+    });
+    QR.toggleNewFault();
+
+    // Searchable list; without Choices.js the plain dropdown still works
+    if (typeof Choices !== 'undefined') {
+        QR.faultChoices = new Choices($('qrFault'), {
+            searchEnabled: true,
+            searchPlaceholderValue: 'Type to search faults...',
+            itemSelectText: '',
+            noResultsText: 'No matching fault',
+            shouldSort: false,
+            searchResultLimit: 50,
+            fuseOptions: { threshold: 0.3, distance: 100 }
+        });
+    }
+
     // Form submit
     $('qrReviewForm').addEventListener('submit', function(e) {
+        if ($('qrFault').value === 'other' && !$('qrNewFault').value.trim()) {
+            e.preventDefault();
+            $('qrNewFaultError').hidden = false;
+            $('qrNewFault').focus();
+            return;
+        }
         if ($('qrDecisionInput').value === 'ESCALATE') {
             var noRecipients = !$$('input[name="escalate-to"]:checked').length;
             var noReason = !$('qrComments').value.trim();

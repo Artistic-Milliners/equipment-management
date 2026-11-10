@@ -553,45 +553,6 @@
                                 </div>
                             </div>
 
-                           <!-- Issue Selection -->
-                            <div class="row mb-3">
-                                <div class="col-12">
-                                    <label for="issue-list" class="form-label">
-                                        <i class="fas fa-list-alt me-1"></i>
-                                        Select Issue Type
-                                        <span class="info-tooltip" data-bs-toggle="tooltip" title="Select from common issues or choose 'Other' to describe a new issue">
-                                            <i class="fas fa-info-circle"></i>
-                                        </span>
-                                    </label>
-                                    <select class="form-select" name="issue-list" id="issue-list" onchange="toggleCustomIssue(); clearValidation(this);">
-                                        <option value="">-- Select Equipment First --</option>
-                                    </select>
-                                    <input type="hidden" id="issue-type" name="issue-type" value="">
-                                    <input type="hidden" id="selected-issue-id" name="selected-issue-id" value="">
-                                </div>
-                            </div>
-
-                            <!-- Custom Issue Description (shown when "Other" is selected) -->
-                            <div class="row mb-3" id="custom-issue-container" style="display: none;">
-                                <div class="col-12">
-                                    <label for="custom-issue-description" class="form-label">
-                                        <i class="fas fa-edit me-1"></i>
-                                        Describe the New Issue <span class="text-danger">*</span>
-                                    </label>
-                                    <textarea
-                                        name="custom-issue-description"
-                                        id="custom-issue-description"
-                                        class="form-control"
-                                        rows="3"
-                                        oninput="clearValidation(this);"
-                                        placeholder="Please describe the issue that's not in the list above..."></textarea>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        This will be reviewed by an engineer and may be added to the standard issue list.
-                                    </div>
-                                </div>
-                            </div>
-                            
                             <div class="d-flex justify-content-end">
                                 <button type="button" class="btn-modern btn-primary-modern" onclick="goToStep(2)">
                                     Next: Issue Details
@@ -744,10 +705,6 @@
                                             <p id="review-hours" class="mb-0 text-muted">-</p>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <strong>Issue Type:</strong>
-                                            <p id="review-issue" class="mb-0 text-muted">-</p>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
                                             <strong>Machine Status:</strong>
                                             <p id="review-operational-status" class="mb-0 text-muted">-</p>
                                         </div>
@@ -874,8 +831,6 @@
         if (step === 1) {
             const equipment = document.getElementById('equipment');
             const code = document.getElementById('code');
-            const issueList = document.getElementById('issue-list');
-            const customIssue = document.getElementById('custom-issue-description');
 
             if (!equipment.value) {
                 equipment.classList.add('is-invalid');
@@ -891,18 +846,6 @@
             } else {
                 code.classList.remove('is-invalid');
                 code.classList.add('is-valid');
-            }
-
-            // Validate issue selection (optional but if "other" is selected, custom description is required)
-            if (issueList.value === 'other' && !customIssue.value.trim()) {
-                customIssue.classList.add('is-invalid');
-                alert('Please describe the new issue or select a different issue type.');
-                isValid = false;
-            } else {
-                customIssue.classList.remove('is-invalid');
-                if (customIssue.value.trim()) {
-                    customIssue.classList.add('is-valid');
-                }
             }
         } else if (step === 2) {
             const description = document.getElementById('description');
@@ -1002,8 +945,6 @@
         const code = document.getElementById('code');
         const section = document.getElementById('machine-section');
         const hours = document.getElementById('machine-hours');
-        const issueList = document.getElementById('issue-list');
-        const customIssue = document.getElementById('custom-issue-description');
         const operationalStatus = document.getElementById('operational-status');
         const department = document.getElementById('error-department');
         const description = document.getElementById('description');
@@ -1016,29 +957,6 @@
             section.value ? section.options[section.selectedIndex]?.text : 'Not specified';
         document.getElementById('review-hours').textContent =
             hours.value || 'Not specified';
-
-        // Display issue type
-        const issueElement = document.getElementById('review-issue');
-        if (issueList.value === 'other') {
-            issueElement.innerHTML = '<span style="color: #f59e0b; font-weight: 600;">New Issue:</span> ' +
-                (customIssue.value || 'Not specified');
-        } else if (issueList.value) {
-            const issueText = issueList.options[issueList.selectedIndex]?.text || '-';
-
-            // Show the "[Category]" prefix as a badge, the rest as plain text
-            const match = issueText.match(/^\[([^\]]+)\]\s*(.*)$/);
-            issueElement.textContent = '';
-            if (match) {
-                const badge = document.createElement('span');
-                badge.style.cssText = 'background: #dbeafe; color: #1e40af; padding: 0.125rem 0.5rem; border-radius: 4px; font-weight: 600; margin-right: 0.5rem;';
-                badge.textContent = match[1];
-                issueElement.append(badge, match[2]);
-            } else {
-                issueElement.textContent = issueText;
-            }
-        } else {
-            issueElement.textContent = 'Not specified';
-        }
 
         // Display operational status with color coding
         const statusText = operationalStatus.options[operationalStatus.selectedIndex]?.text || '-';
@@ -1073,20 +991,17 @@
         }, 500);
     });
     
-    // Fetch Machine Code and Issue List
+    // Fetch Machine Codes
     async function fetchMachineCode() {
         const equipment = document.querySelector('#equipment').value;
         const codeSelect = document.querySelector('#code');
-        const issueSelect = document.querySelector('#issue-list');
 
         if (!equipment) {
             codeSelect.innerHTML = '<option value="">-- Select Equipment First --</option>';
-            issueSelect.innerHTML = '<option value="">-- Select Equipment First --</option>';
             return;
         }
 
         codeSelect.innerHTML = '<option value="">Loading machines...</option>';
-        issueSelect.innerHTML = '<option value="">Loading issues...</option>';
 
         // Fetch machines
         const machineUrl = `/machine-code/${equipment}`;
@@ -1103,32 +1018,6 @@
             console.error("Error Fetching Machine data: ", error);
             codeSelect.innerHTML = '<option value="">Error loading machines</option>';
         }
-
-        // Fetch faults for this equipment (narrowed to the machine's manufacturer once a machine is picked)
-        await fetchIssueList(equipment);
-    }
-
-    // Fetch Fault Library entries for the equipment, optionally for a specific machine
-    async function fetchIssueList(equipment, machineId) {
-        const issueSelect = document.querySelector('#issue-list');
-        let issueUrl = `/api/issuelist/${equipment}/`;
-        if (machineId) {
-            issueUrl += `?machine=${machineId}`;
-        }
-        try {
-            const response = await fetch(issueUrl);
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error('Error fetching issue list');
-            }
-
-            populateIssueList(data.issues, issueSelect);
-            toggleCustomIssue();
-        } catch (error) {
-            console.error("Error fetching issue list:", error);
-            issueSelect.innerHTML = '<option value="">Error loading issues</option>';
-        }
     }
     
     // Fetch Machine Hours and Machine Sections
@@ -1142,9 +1031,6 @@
             sectionSelect.innerHTML = '<option value="">-- Select Machine First --</option>';
             return;
         }
-
-        // Show only faults that apply to this machine's manufacturer
-        fetchIssueList(document.querySelector('#equipment').value, machineId);
 
         // Fetch machine hours
         const hoursUrl = `/machine-hours/${machineId}`;
@@ -1215,36 +1101,6 @@
         });
     }
 
-    // Populate Issue List
-    function populateIssueList(issues, element) {
-        element.innerHTML = '';
-
-        // Add default option
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.text = '-- Select an Issue Type --';
-        element.append(defaultOption);
-
-        // Add issue options
-        issues.forEach(issue => {
-            const option = document.createElement('option');
-            option.value = issue.id;
-
-            // Display text: [Category] Section · Description
-            option.text = issue.label || issue.fault_description || 'Unknown Issue';
-
-            option.setAttribute('data-type', 'existing');
-            element.append(option);
-        });
-
-        // Add "Other" option
-        const otherOption = document.createElement('option');
-        otherOption.value = 'other';
-        otherOption.text = '🔧 Other (Describe new issue)';
-        otherOption.setAttribute('data-type', 'other');
-        element.append(otherOption);
-    }
-
     // Populate Machine Sections
     function populateMachineSections(sections, element) {
         element.innerHTML = '';
@@ -1271,86 +1127,6 @@
             element.append(option);
         });
     }
-
-    // Toggle Custom Issue Input
-    function toggleCustomIssue() {
-        const issueSelect = document.getElementById('issue-list');
-        const customContainer = document.getElementById('custom-issue-container');
-        const customTextarea = document.getElementById('custom-issue-description');
-        const issueTypeInput = document.getElementById('issue-type');
-        const selectedIssueIdInput = document.getElementById('selected-issue-id');
-
-        const selectedOption = issueSelect.options[issueSelect.selectedIndex];
-        const selectedValue = issueSelect.value;
-
-        if (selectedValue === 'other') {
-            // Show custom issue textarea
-            customContainer.style.display = 'block';
-            customTextarea.required = true;
-            issueTypeInput.value = 'other';
-            selectedIssueIdInput.value = '';
-        } else if (selectedValue) {
-            // Existing issue selected
-            customContainer.style.display = 'none';
-            customTextarea.required = false;
-            customTextarea.value = '';
-            issueTypeInput.value = 'existing';
-            selectedIssueIdInput.value = selectedValue;
-        } else {
-            // No selection
-            customContainer.style.display = 'none';
-            customTextarea.required = false;
-            customTextarea.value = '';
-            issueTypeInput.value = '';
-            selectedIssueIdInput.value = '';
-        }
-    }
-
-    // Initialize searchable dropdown for issue list
-    let issueChoices = null;
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // Note: We'll initialize Choices.js after the issue list is populated
-        // This is done in the populateIssueList function
-    });
-</script>
-
-<!-- Choices.js JavaScript for searchable dropdowns -->
-<script src="{% static 'vendor/choices/choices.min.js' %}"></script>
-
-<script>
-    // Update the populateIssueList function to initialize Choices.js
-    const originalPopulateIssueList = populateIssueList;
-
-    populateIssueList = function(issues, element) {
-        // Destroy existing Choices instance if it exists
-        if (issueChoices) {
-            issueChoices.destroy();
-        }
-
-        // Call original function to populate options
-        originalPopulateIssueList(issues, element);
-
-        // Without Choices.js the plain dropdown still lists every fault
-        if (typeof Choices === 'undefined') {
-            issueChoices = null;
-            return;
-        }
-
-        // Initialize Choices.js for searchable dropdown
-        issueChoices = new Choices(element, {
-            searchEnabled: true,
-            searchPlaceholderValue: 'Type to search issues...',
-            itemSelectText: 'Click to select',
-            noResultsText: 'No issues found',
-            shouldSort: false,  // Keep the order as provided (existing issues first, then "Other")
-            searchFields: ['label'],
-            fuseOptions: {
-                threshold: 0.3,  // Lower = stricter matching
-                distance: 100
-            }
-        });
-    };
 </script>
 
 {% endblock main-body %}
