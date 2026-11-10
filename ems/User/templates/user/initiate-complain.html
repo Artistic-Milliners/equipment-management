@@ -5,7 +5,7 @@
 
 {% block main-body %}
 <!-- Choices.js CSS for searchable dropdowns -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+<link rel="stylesheet" href="{% static 'vendor/choices/choices.min.css' %}" />
 
 <style>
     /* Progress Steps Styles */
@@ -1316,7 +1316,7 @@
 </script>
 
 <!-- Choices.js JavaScript for searchable dropdowns -->
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script src="{% static 'vendor/choices/choices.min.js' %}"></script>
 
 <script>
     // Update the populateIssueList function to initialize Choices.js
@@ -1330,6 +1330,12 @@
 
         // Call original function to populate options
         originalPopulateIssueList(issues, element);
+
+        // Without Choices.js the plain dropdown still lists every fault
+        if (typeof Choices === 'undefined') {
+            issueChoices = null;
+            return;
+        }
 
         // Initialize Choices.js for searchable dropdown
         issueChoices = new Choices(element, {

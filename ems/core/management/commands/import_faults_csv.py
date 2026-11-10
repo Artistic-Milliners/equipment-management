@@ -3,7 +3,7 @@ Management command to import faults into the Fault Library from a CSV file
 The CSV needs one column named "fault" or "faults". Each fault is added once for the equipment with no manufacturer,
 so it is offered on every machine of that equipment.
 
-Usage: python manage.py import_faults_csv path/to/file.csv --equipment Sizing --category MECHANICAL --dry-run
+Usage: python manage.py import_faults_csv path/to/file.csv --equipment "Sizing Machine" --category ELECTRICAL --dry-run
 """
 import csv
 import os
@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('csv_file', type=str, help='Path to CSV file')
-        parser.add_argument('--equipment', type=str, required=True, help='Equipment name, e.g. Sizing')
+        parser.add_argument('--equipment', type=str, required=True, help='Equipment name, e.g. "Sizing Machine"')
         parser.add_argument(
             '--category',
             type=str.upper,
