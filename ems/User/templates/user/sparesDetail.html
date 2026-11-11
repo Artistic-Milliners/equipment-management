@@ -169,10 +169,31 @@
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
-                                <input type="text" class="form-control" id="searchInput" placeholder="Search by name, code..." onkeyup="filterItems()">
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search by name, code, equipment..." onkeyup="filterItems()">
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1">Filter by Equipment</label>
+                            <select class="form-select" id="equipmentFilter" onchange="onEquipmentChange()">
+                                <option value="">All Equipment</option>
+                                {% for equipment in equipment_list %}
+                                <option value="{{ equipment.id }}">{{ equipment.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1">Filter by Machine</label>
+                            <select class="form-select" id="machineFilter" onchange="filterItems()">
+                                <option value="">All Spares</option>
+                                <option value="general" style="font-weight: bold;">📦 General Purpose Only</option>
+                                <optgroup label="Specific Machines">
+                                    {% for machine in machines %}
+                                    <option value="{{ machine.id }}" data-equipment="{{ machine.type_of_machine_id }}">{{ machine.name }} - {{ machine.type_of_machine.name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label small mb-1">Category</label>
                             <select class="form-select" id="categoryFilter" onchange="filterItems()">
                                 <option value="">All Categories</option>
@@ -188,18 +209,6 @@
                                 <option value="in-stock">🟢 In Stock</option>
                                 <option value="low-stock">🟡 Low Stock</option>
                                 <option value="out-of-stock">🔴 Out of Stock</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small mb-1">Filter by Machine</label>
-                            <select class="form-select" id="machineFilter" onchange="filterItems()">
-                                <option value="">All Spares</option>
-                                <option value="general" style="font-weight: bold;">📦 General Purpose Only</option>
-                                <optgroup label="Specific Machines">
-                                    {% for machine in machines %}
-                                    <option value="{{ machine.id }}">{{ machine.name }} - {{ machine.type_of_machine.name }}</option>
-                                    {% endfor %}
-                                </optgroup>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -235,6 +244,8 @@
              data-quantity="{{ spare.quantity }}"
              data-value="{{ spare.total_value|stringformat:'s' }}"
              data-machines="{% for machine in spare.machines.all %}{{ machine.id }},{% endfor %}"
+             data-equipment="{% for machine in spare.machines.all %}{{ machine.type_of_machine_id }},{% endfor %}"
+             data-equipment-names="{% for machine in spare.machines.all %}{{ machine.type_of_machine.name|lower }}|{% endfor %}"
              data-machine-count="{{ spare.machines.count }}">
             <div class="modern-card h-100">
                 <!-- Item Image -->
@@ -1273,6 +1284,7 @@ function filterItems() {
     const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
     const statusFilter = document.getElementById('statusFilter').value;
     const machineFilter = document.getElementById('machineFilter').value;
+    const equipmentFilter = document.getElementById('equipmentFilter').value;
     const items = document.querySelectorAll('.inventory-item');
     
     let visibleCount = 0;
@@ -1286,11 +1298,17 @@ function filterItems() {
         const quantity = parseInt(item.dataset.quantity);
         const machines = item.dataset.machines || ''; // "1,2,3,"
         const machineCount = parseInt(item.dataset.machineCount) || 0;
-        
+        const equipmentNames = item.dataset.equipmentNames || '';
+
         let showItem = true;
-        
-        // Search filter - search in both name and item code
-        if (searchTerm && !name.includes(searchTerm) && !code.includes(searchTerm)) {
+
+        // Search filter - search in name, item code and equipment
+        if (searchTerm && !name.includes(searchTerm) && !code.includes(searchTerm) && !equipmentNames.includes(searchTerm)) {
+            showItem = false;
+        }
+
+        // Equipment filter - spares linked to any machine of that equipment
+        if (equipmentFilter && !(item.dataset.equipment || '').split(',').includes(equipmentFilter)) {
             showItem = false;
         }
         
@@ -1329,10 +1347,23 @@ function filterItems() {
     });
     
     // Update filter summary
-    updateFilterSummary(visibleCount, searchTerm, categoryFilter, statusFilter, machineFilter, visibleValue);
+    updateFilterSummary(visibleCount, searchTerm, categoryFilter, statusFilter, machineFilter, visibleValue, equipmentFilter);
 }
 
-function updateFilterSummary(visibleCount, search, category, status, machine, visibleValue) {
+// Show only the chosen equipment's machines in the machine filter
+function onEquipmentChange() {
+    const equipment = document.getElementById('equipmentFilter').value;
+    const machineSelect = document.getElementById('machineFilter');
+    machineSelect.querySelectorAll('option[data-equipment]').forEach(option => {
+        const match = !equipment || option.dataset.equipment === equipment;
+        option.hidden = !match;
+        option.disabled = !match;
+        if (!match && option.selected) machineSelect.value = '';
+    });
+    filterItems();
+}
+
+function updateFilterSummary(visibleCount, search, category, status, machine, visibleValue, equipment) {
     const summary = document.getElementById('filter-summary');
     const summaryText = document.getElementById('filter-summary-text');
     const totalItems = document.querySelectorAll('.inventory-item').length;
@@ -1340,6 +1371,10 @@ function updateFilterSummary(visibleCount, search, category, status, machine, vi
     let messages = [];
     
     if (search) messages.push(`search: "${search}"`);
+    if (equipment) {
+        const equipmentName = document.querySelector(`#equipmentFilter option[value="${equipment}"]`)?.textContent || 'Unknown';
+        messages.push(`equipment: ${equipmentName}`);
+    }
     if (category) messages.push(`category: ${category}`);
     if (status) messages.push(`status: ${status}`);
     if (machine) {
@@ -1366,7 +1401,8 @@ function clearFilters() {
     document.getElementById('categoryFilter').value = '';
     document.getElementById('statusFilter').value = '';
     document.getElementById('machineFilter').value = '';
-    filterItems();
+    document.getElementById('equipmentFilter').value = '';
+    onEquipmentChange();
 }
 
 // Issue item functionality

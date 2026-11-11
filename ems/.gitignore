@@ -14,4 +14,4 @@ env/
 .env/
 .env
 .env.*
-.csv
+*.csv

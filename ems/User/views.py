@@ -1028,13 +1028,18 @@ def spare_view(request):
             spares = models.Spares.objects.all().order_by("-pk")
 
     # Value of the stock in hand, worked out for display only (not stored)
-    spares = spares.annotate(total_value=ExpressionWrapper(
+    spares = spares.prefetch_related('machines__type_of_machine').annotate(total_value=ExpressionWrapper(
         F('quantity') * F('unit_price'), output_field=DecimalField(max_digits=18, decimal_places=2)))
     stock_value = spares.aggregate(total=Sum('total_value'))['total'] or 0
 
     categories = models.Spares.objects.exclude(category='').values_list('category', flat=True).distinct().order_by('category')
+    # Only equipment and machines that have spare parts linked, for the filters
+    machines = (models.Machines.objects.filter(machine_spare__isnull=False).select_related('type_of_machine')
+                .distinct().order_by('type_of_machine__name', 'name'))
+    equipment_list = models.Equipment.objects.filter(typeOfMachine__machine_spare__isnull=False).distinct().order_by('name')
     return render(request, 'user/sparesDetail.html', {'spares':spares, 'categories': categories,
-                                                       'stock_value': stock_value})
+                                                       'stock_value': stock_value, 'machines': machines,
+                                                       'equipment_list': equipment_list})
 
 
 
