@@ -86,16 +86,8 @@ class Equipment(models.Model):
         return self.name
     
 class Spares(models.Model):
-    
-    CATEGORY_CHOICES = [
-        ('electrical', 'Electrical'),
-        ('mechanical', 'Mechanical'),
-        ('hydraulic', 'Hydraulic'),
-        ('pneumatic', 'Pneumatic'),
-        ('safety', 'Safety'),
-        ('general', 'General'),
-    ]
-    
+
+    # Item code prefixes for well-known categories; any other category gets GEN
     CATEGORY_PREFIX = {
         'electrical': 'ELE',
         'mechanical': 'MEC',
@@ -127,7 +119,8 @@ class Spares(models.Model):
                                            help_text="Maximum stock level for ordering")
     
     # Categorization
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='general')
+    category = models.CharField(max_length=100, default='General',
+                                help_text="Major category, e.g. Electrical, Mechanical (free text, as in the stock sheet)")
     
     # Additional metadata
     image = models.ImageField(upload_to='inventory/', blank=True, null=True)
@@ -152,7 +145,7 @@ class Spares(models.Model):
     def save(self, *args, **kwargs):
         # Auto-generate item code if not set
         if not self.item_code:
-            prefix = self.CATEGORY_PREFIX.get(self.category, 'GEN')
+            prefix = self.CATEGORY_PREFIX.get((self.category or '').strip().lower(), 'GEN')
             
             # Get the last item code for this category
             last_item = Spares.objects.filter(

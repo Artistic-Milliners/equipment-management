@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models.query import QuerySet
-from django.db.models import Q, Avg, Sum, Count
+from django.db.models import Q, Avg, Sum, Count, F, DecimalField, ExpressionWrapper
 from core.models import (Contractor, CustomUser, MachineIssueReview, Employee,
                          Unit, MachineIssue, Spares, Equipment,
                          Machines, ImageModel, Department,
@@ -1026,8 +1026,15 @@ def spare_view(request):
             spares = models.Spares.objects.filter(name__icontains=search_filter).order_by("-pk")
         else :
             spares = models.Spares.objects.all().order_by("-pk")
-    
-    return render(request, 'user/sparesDetail.html', {'spares':spares})
+
+    # Value of the stock in hand, worked out for display only (not stored)
+    spares = spares.annotate(total_value=ExpressionWrapper(
+        F('quantity') * F('unit_price'), output_field=DecimalField(max_digits=18, decimal_places=2)))
+    stock_value = spares.aggregate(total=Sum('total_value'))['total'] or 0
+
+    categories = models.Spares.objects.exclude(category='').values_list('category', flat=True).distinct().order_by('category')
+    return render(request, 'user/sparesDetail.html', {'spares':spares, 'categories': categories,
+                                                       'stock_value': stock_value})
 
 
 

@@ -133,6 +133,11 @@
                         </span>
                         {% endif %}
                     </p>
+                    <p class="mb-0 mt-1 small">
+                        <i class="fas fa-coins me-1 text-muted"></i>
+                        <span class="text-muted">Total stock value:</span>
+                        <strong>PKR {{ stock_value|floatformat:"2g" }}</strong>
+                    </p>
                 </div>
                 <div class="d-flex gap-2">
                     {% if perms.core.add_spares %}
@@ -171,12 +176,9 @@
                             <label class="form-label small mb-1">Category</label>
                             <select class="form-select" id="categoryFilter" onchange="filterItems()">
                                 <option value="">All Categories</option>
-                                <option value="electrical">⚡ Electrical</option>
-                                <option value="mechanical">⚙️ Mechanical</option>
-                                <option value="hydraulic">💧 Hydraulic</option>
-                                <option value="pneumatic">🌪️ Pneumatic</option>
-                                <option value="safety">🦺 Safety</option>
-                                <option value="general">📦 General</option>
+                                {% for category in categories %}
+                                <option value="{{ category|lower }}">{{ category }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -231,6 +233,7 @@
              data-code="{{ spare.item_code|lower }}"
              data-category="{{ spare.category|default:'general'|lower }}"
              data-quantity="{{ spare.quantity }}"
+             data-value="{{ spare.total_value|stringformat:'s' }}"
              data-machines="{% for machine in spare.machines.all %}{{ machine.id }},{% endfor %}"
              data-machine-count="{{ spare.machines.count }}">
             <div class="modern-card h-100">
@@ -299,6 +302,18 @@
                                 <i class="fas fa-cube me-1"></i>Quantity
                             </span>
                             <span class="fw-bold">{{ spare.quantity }} {{ spare.unit|default:"pcs" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <span class="small text-muted">
+                                <i class="fas fa-tag me-1"></i>Unit Price
+                            </span>
+                            <span class="small">PKR {{ spare.unit_price|floatformat:"2g" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <span class="small text-muted">
+                                <i class="fas fa-coins me-1"></i>Total Value
+                            </span>
+                            <span class="fw-bold">PKR {{ spare.total_value|floatformat:"2g" }}</span>
                         </div>
                     </div>
                     
@@ -1261,6 +1276,7 @@ function filterItems() {
     const items = document.querySelectorAll('.inventory-item');
     
     let visibleCount = 0;
+    let visibleValue = 0;
     let filterMessages = [];
     
     items.forEach(item => {
@@ -1306,16 +1322,17 @@ function filterItems() {
         if (showItem) {
             item.style.display = 'block';
             visibleCount++;
+            visibleValue += parseFloat(item.dataset.value) || 0;
         } else {
             item.style.display = 'none';
         }
     });
     
     // Update filter summary
-    updateFilterSummary(visibleCount, searchTerm, categoryFilter, statusFilter, machineFilter);
+    updateFilterSummary(visibleCount, searchTerm, categoryFilter, statusFilter, machineFilter, visibleValue);
 }
 
-function updateFilterSummary(visibleCount, search, category, status, machine) {
+function updateFilterSummary(visibleCount, search, category, status, machine, visibleValue) {
     const summary = document.getElementById('filter-summary');
     const summaryText = document.getElementById('filter-summary-text');
     const totalItems = document.querySelectorAll('.inventory-item').length;
@@ -1335,7 +1352,8 @@ function updateFilterSummary(visibleCount, search, category, status, machine) {
     }
     
     if (messages.length > 0) {
-        summaryText.innerHTML = `Showing <strong>${visibleCount}</strong> of <strong>${totalItems}</strong> items | Filters: ${messages.join(', ')}`;
+        const value = (visibleValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        summaryText.innerHTML = `Showing <strong>${visibleCount}</strong> of <strong>${totalItems}</strong> items | Value: <strong>PKR ${value}</strong> | Filters: ${messages.join(', ')}`;
         summary.classList.remove('d-none');
     } else {
         summaryText.textContent = '';
