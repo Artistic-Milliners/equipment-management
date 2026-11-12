@@ -9,7 +9,7 @@ from core.models import (Contractor, CustomUser, MachineIssueReview, Employee,
                          Unit, MachineIssue, Spares, Equipment,
                          Machines, ImageModel, Department,
                          MachineIssueReview, IssueClosing, MachineSpares,
-                         FaultLibrary, MachineSection, QuickReviewComments)
+                         FaultLibrary, MachineSection, QuickReviewComments, IssueEscalation)
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -189,12 +189,21 @@ class ComplainTrackingView(LoginRequiredMixin, View):
         if not can_view_issue(request.user, issue):
             return render(request, 'user/error/404.html', {'error': 'You do not have access to this complaint.'},
                           status=403)
+        escalations = (issue.escalations.select_related('escalated_by', 'reassigned_to', 'reassigned_by')
+                       .prefetch_related('escalated_to__employee'))
+        # A recipient of the open escalation can hand the ticket back to an engineer
+        open_escalation = escalations.filter(reassigned_at__isnull=True).first()
+        can_reassign = bool(issue.status == MachineIssue.STATUS_ESCALATED and open_escalation
+                            and open_escalation.escalated_to.filter(pk=request.user.pk).exists())
         context = {
             'issue': issue,
             'work_sessions': issue.work_sessions.select_related('engineer').order_by('started_at'),
             'quick_review_comments': issue.quick_review_comments.select_related('commenter__user').order_by('created_at'),
             'feedback_error': request.session.pop(f'feedback_error_{issue.pk}', None),
-            'escalations': issue.escalations.select_related('escalated_by').prefetch_related('escalated_to__employee'),
+            'escalation_error': request.session.pop(f'escalation_error_{issue.pk}', None),
+            'escalations': escalations,
+            'reassign_escalation_id': open_escalation.pk if can_reassign else None,
+            'assignable_engineers': IssueEscalation.assignable_engineers() if can_reassign else [],
             'can_confirm': issue.status == MachineIssue.STATUS_USER_FEEDBACK and can_confirm_issue(request.user, issue),
             'is_engineer_view': is_engineer_user(request.user),
         }

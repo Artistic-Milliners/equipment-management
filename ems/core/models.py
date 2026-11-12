@@ -618,17 +618,38 @@ class IssueEscalation(models.Model):
     reason = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Management's answer: hand the ticket back to an engineer with remarks
+    reassigned_to = models.ForeignKey(Employee, on_delete=models.PROTECT, null=True, blank=True,
+                                      related_name='escalations_assigned')
+    reassigned_by = models.ForeignKey(Employee, on_delete=models.PROTECT, null=True, blank=True,
+                                      related_name='escalations_reassigned')
+    reassign_remarks = models.TextField(blank=True)
+    reassigned_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.issue.ticket_num} escalated by {self.escalated_by.name}"
 
+    @property
+    def is_open(self):
+        return self.reassigned_at is None
+
     @classmethod
     def recipients(cls):
         """Users who can receive escalations"""
         return (CustomUser.objects.filter(groups__name=cls.ESCALATION_GROUP, is_active=True)
                 .select_related('employee').order_by('first_name', 'username').distinct())
+
+    @classmethod
+    def assignable_engineers(cls):
+        """Engineers management can hand an escalated ticket to (Engineers group or review permission)"""
+        perm = 'can_review_complaint'
+        return (Employee.objects.filter(user__is_active=True)
+                .filter(models.Q(user__groups__name='Engineers') | models.Q(user__groups__permissions__codename=perm)
+                        | models.Q(user__user_permissions__codename=perm))
+                .distinct().order_by('name'))
 
 
 class MachineIssueReview(models.Model):

@@ -179,6 +179,29 @@
         background: #fef2f2; border: 1px solid #fecaca; color: var(--ct-text-body); font-size: 0.875rem; line-height: 1.5;
     }
 
+    /* Management reassignment */
+    .ct-reassign-result {
+        margin-top: 0.85rem; padding: 0.85rem 1rem; border-radius: var(--ct-radius-sm);
+        background: var(--ct-blue-light); border: 1px solid #bfdbfe;
+    }
+    .ct-reassign-remarks { margin-top: 0.35rem; font-size: 0.875rem; color: var(--ct-text-body); line-height: 1.5; }
+    .ct-reassign-form { margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--ct-border); }
+    .ct-reassign-form label { display: block; margin: 0.75rem 0 0.35rem; font-size: 0.8rem; font-weight: 600; color: var(--ct-text-primary); }
+    .ct-reassign-form textarea {
+        width: 100%; padding: 0.75rem; border: 1.5px solid var(--ct-border); border-radius: var(--ct-radius-sm);
+        font-size: 16px; font-family: inherit; resize: vertical;
+    }
+    .ct-reassign-form textarea:focus { outline: none; border-color: var(--ct-blue); }
+    .ct-reassign-title { font-size: 0.75rem; font-weight: 600; color: var(--ct-text-primary); }
+    .ct-required { color: var(--ct-red); }
+    .ct-reassign-error {
+        margin-top: 0.6rem; padding: 0.6rem 0.8rem; border-radius: var(--ct-radius-sm);
+        background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-size: 0.85rem;
+    }
+    .ct-reassign-field-error { margin-top: 0.3rem; color: var(--ct-red); font-size: 0.8rem; }
+    .ct-reassign-note { margin-top: 0.75rem; font-size: 0.8rem; color: var(--ct-text-muted); }
+    .ct-reassign-btn { margin-top: 1rem; width: 100%; justify-content: center; }
+
     /* ===== CARDS ===== */
     .ct-card {
         background: var(--ct-card-bg);
@@ -1313,6 +1336,48 @@
                 <div class="ct-escalation-label">Reason</div>
                 {{ escalation.reason|linebreaksbr }}
             </div>
+
+            {% if not escalation.is_open %}
+            <div class="ct-reassign-result">
+                <div class="ct-escalation-label">
+                    <i class="fas fa-share"></i> Reassigned by {{ escalation.reassigned_by.name }}
+                    · {{ escalation.reassigned_at|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }}
+                </div>
+                <div class="ct-escalation-value">To {{ escalation.reassigned_to.name }}</div>
+                <div class="ct-reassign-remarks">{{ escalation.reassign_remarks|linebreaksbr }}</div>
+            </div>
+            {% elif escalation.pk == reassign_escalation_id %}
+            <form method="POST" action="{% url 'maintenance:reassign_escalation' pk=issue.pk %}" class="ct-reassign-form" id="ctReassignForm" novalidate>
+                {% csrf_token %}
+                <div class="ct-escalation-label ct-reassign-title">
+                    <i class="fas fa-user-cog"></i> Management action: reassign to an engineer
+                </div>
+                {% if escalation_error %}
+                <div class="ct-reassign-error" role="alert"><i class="fas fa-exclamation-circle"></i> {{ escalation_error }}</div>
+                {% endif %}
+                <label for="ctReassignTo">Engineer <span class="ct-required">*</span></label>
+                <select name="reassign-to" id="ctReassignTo" class="form-select" required>
+                    <option value="">-- Select engineer --</option>
+                    {% for engineer in assignable_engineers %}
+                    <option value="{{ engineer.pk }}">{{ engineer.name }}{% if engineer.designation %} ({{ engineer.designation }}){% endif %}</option>
+                    {% endfor %}
+                </select>
+                <div class="ct-reassign-field-error" id="ctReassignToError" hidden>Select an engineer.</div>
+                <label for="ctReassignRemarks">Remarks <span class="ct-required">*</span></label>
+                <textarea name="reassign-remarks" id="ctReassignRemarks" rows="3" required
+                          placeholder="Instructions for the engineer: what to check, approved spares, vendor contact..."></textarea>
+                <div class="ct-reassign-field-error" id="ctReassignRemarksError" hidden>Add remarks for the engineer.</div>
+                <div class="ct-reassign-note">
+                    <i class="fas fa-stopwatch"></i>
+                    The work timer resumes for the engineer from the time already spent on this ticket.
+                </div>
+                <button type="submit" class="ct-btn ct-btn--primary ct-reassign-btn" id="ctReassignBtn">
+                    <i class="fas fa-share"></i> Reassign
+                </button>
+            </form>
+            {% elif issue.status == 'ESCALATED' %}
+            <div class="ct-reassign-note"><i class="fas fa-hourglass-half"></i> Awaiting management action.</div>
+            {% endif %}
         </div>
     </div>
     {% endfor %}
@@ -2057,6 +2122,27 @@
             {% endif %}
         }
     });
+
+    // ===== Management reassignment (engineer and remarks are required) =====
+    var reassignForm = $('ctReassignForm');
+    if (reassignForm) {
+        reassignForm.addEventListener('submit', function(e) {
+            var noEngineer = !$('ctReassignTo').value;
+            var noRemarks = !$('ctReassignRemarks').value.trim();
+            $('ctReassignToError').hidden = !noEngineer;
+            $('ctReassignRemarksError').hidden = !noRemarks;
+            if (noEngineer || noRemarks) {
+                e.preventDefault();
+                (noEngineer ? $('ctReassignTo') : $('ctReassignRemarks')).focus();
+                return;
+            }
+            var btn = $('ctReassignBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Reassigning...';
+        });
+        $('ctReassignTo').addEventListener('change', function() { if (this.value) $('ctReassignToError').hidden = true; });
+        $('ctReassignRemarks').addEventListener('input', function() { if (this.value.trim()) $('ctReassignRemarksError').hidden = true; });
+    }
 
 })();
 </script>

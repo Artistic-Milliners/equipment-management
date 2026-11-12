@@ -7,7 +7,7 @@ from django.db import transaction
 from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Sum
 from django.contrib.auth.decorators import permission_required, login_required
 from django.core.files.storage import default_storage
 from User.views import home
@@ -112,12 +112,18 @@ def view_complains(request):
             user=emp
         ).select_related('user', 'equipment', 'machine_id', 'error_department', 'temporary_issue', 'selected_issue').order_by('-date_time')
 
-    # Tickets escalated to this user always appear in their list, whatever their role
+    # Tickets escalated to this user stay in their Active list, whatever their role, until the reporter
+    # confirms the work is completed; then they move to Closed (engineers keep them until fully CLOSED)
     escalated_to_me = MachineIssue.objects.filter(escalations__escalated_to=request.user)
+    escalation_closed = [MachineIssue.STATUS_CLOSED]
+    if not is_engineer:
+        escalation_closed.append(MachineIssue.STATUS_AWAITING_DOCUMENTATION)
     if escalated_to_me.exists():
         issue_list = (issue_list | escalated_to_me).distinct().order_by('-date_time')
+        closed_list = (closed_list | escalated_to_me.filter(status__in=escalation_closed)).distinct().order_by('-date_time')
 
-    active_list = issue_list.exclude(status__in=closed_statuses)
+    active_list = (issue_list.exclude(status__in=closed_statuses)
+                   .exclude(pk__in=escalated_to_me.filter(status__in=escalation_closed).values('pk')))
 
     # Get count of pending temporary issues for engineers/approvers
     pending_temp_issues_count = 0
@@ -313,12 +319,21 @@ def quick_review(request, pk):
 
         # Check for active work session
         active_session = issue.work_sessions.filter(outcome=WorkSession.OUTCOME_IN_PROGRESS).first()
+        # The timer carries on from the time already worked (e.g. before an escalation)
+        worked_hours = (issue.work_sessions.exclude(outcome=WorkSession.OUTCOME_IN_PROGRESS)
+                        .aggregate(total=Sum('duration_hours'))['total'] or 0)
+        latest_escalation = issue.escalations.select_related('reassigned_to', 'reassigned_by').first()
+        reassignment = latest_escalation if latest_escalation and not latest_escalation.is_open else None
 
         return render(request, "maintenance/quick-review.html", {
             'issue': issue,
             'elapsed_hours': elapsed_hours,
             'elapsed_minutes': elapsed_minutes,
             'active_session': active_session,
+            'worked_before_seconds': int(worked_hours * 3600),
+            # Counted on the server so a device clock that is off does not hold the timer at 00:00:00
+            'active_elapsed_seconds': int((timezone.now() - active_session.started_at).total_seconds()) if active_session else 0,
+            'reassignment': reassignment if issue.status == MachineIssue.STATUS_IN_PROGRESS else None,
             'escalation_recipients': IssueEscalation.recipients(),
             'faults': FaultLibrary.for_machine(issue.machine_id),
             'page_error': request.session.pop(f'quick_review_error_{issue.pk}', None),
@@ -430,39 +445,92 @@ def quick_review(request, pk):
 
 
 @login_required
-def start_working(request, pk):
-    """Engineer clicks Start Working - creates a WorkSession and updates issue status to IN_PROGRESS"""
-    if request.method == 'POST':
-        issue = get_object_or_404(MachineIssue, pk=pk)
-        engineer = Employee.objects.get(user=request.user)
+def reassign_escalation(request, pk):
+    """An Engineering Management recipient hands an escalated ticket to an engineer with remarks.
+    A new work session starts for that engineer; earlier work time keeps counting on the timer."""
+    track_url = redirect('User:complain_track', pk=pk)
+    if request.method != 'POST':
+        return track_url
 
-        # Check if there's already an active session on this issue
+    issue = get_object_or_404(MachineIssue, pk=pk)
+    escalation = issue.escalations.filter(reassigned_at__isnull=True).first()
+    manager = Employee.objects.filter(user=request.user).first()
+    engineer_id = request.POST.get('reassign-to', '')
+    engineer = (IssueEscalation.assignable_engineers().filter(pk=engineer_id).first()
+                if engineer_id.isdigit() else None)
+    remarks = request.POST.get('reassign-remarks', '').strip()
+
+    error = None
+    if issue.status != MachineIssue.STATUS_ESCALATED or escalation is None:
+        error = 'This ticket is not waiting for management action.'
+    elif not escalation.escalated_to.filter(pk=request.user.pk).exists():
+        error = 'Only the people this ticket was escalated to can reassign it.'
+    elif manager is None:
+        error = 'Your account is not linked to an employee record.'
+    elif engineer is None:
+        error = 'Select the engineer to reassign this ticket to.'
+    elif not remarks:
+        error = 'Add remarks for the engineer.'
+    if error:
+        request.session[f'escalation_error_{issue.pk}'] = error
+        return track_url
+
+    with transaction.atomic():
+        escalation.reassigned_to = engineer
+        escalation.reassigned_by = manager
+        escalation.reassign_remarks = remarks
+        escalation.reassigned_at = timezone.now()
+        escalation.save()
+        WorkSession.objects.create(issue=issue, engineer=engineer)
+        QuickReviewComments.objects.create(issue=issue, commenter=manager,
+                                           comment=f'Reassigned to {engineer.name}: {remarks}')
+        issue.status = MachineIssue.STATUS_IN_PROGRESS
+        issue.save()
+
+    logging.getLogger(__name__).info(f"Ticket {issue.ticket_num} reassigned by {request.user.username} to {engineer.name}")
+    return track_url
+
+
+@login_required
+def start_working(request, pk):
+    """Engineer clicks Start Working - creates a WorkSession and updates issue status to IN_PROGRESS.
+    The page starts its timer straight away; elapsed_seconds lets it count without relying on the device clock."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
+
+    engineer = Employee.objects.filter(user=request.user).first()
+    if engineer is None:
+        return JsonResponse({'status': 'error', 'message': 'Your account is not linked to an employee record.'}, status=400)
+
+    with transaction.atomic():
+        # Lock the ticket so two engineers tapping at once cannot both start a session
+        issue = get_object_or_404(MachineIssue.objects.select_for_update(), pk=pk)
+
         active_session = issue.work_sessions.filter(outcome=WorkSession.OUTCOME_IN_PROGRESS).first()
         if active_session:
             return JsonResponse({
                 'status': 'already_started',
                 'engineer': active_session.engineer.name,
                 'started_at': active_session.started_at.isoformat(),
+                'elapsed_seconds': int((timezone.now() - active_session.started_at).total_seconds()),
             })
 
-        # Create new work session
-        session = WorkSession.objects.create(
-            issue=issue,
-            engineer=engineer,
-        )
+        if issue.status not in (MachineIssue.STATUS_PENDING, MachineIssue.STATUS_IN_PROGRESS):
+            return JsonResponse({'status': 'error',
+                                 'message': f'This ticket is "{issue.get_status_display()}" and cannot be started.'},
+                                status=409)
 
-        # Update issue status to IN_PROGRESS
+        session = WorkSession.objects.create(issue=issue, engineer=engineer)
         issue.status = MachineIssue.STATUS_IN_PROGRESS
         issue.save()
 
-        return JsonResponse({
-            'status': 'started',
-            'session_id': session.pk,
-            'started_at': session.started_at.isoformat(),
-            'engineer': engineer.name,
-        })
-
-    return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
+    return JsonResponse({
+        'status': 'started',
+        'session_id': session.pk,
+        'started_at': session.started_at.isoformat(),
+        'elapsed_seconds': 0,
+        'engineer': engineer.name,
+    })
 
 
 

@@ -10,6 +10,7 @@ urlpatterns = [
     path('closed-archive/', views.closed_complaints_archive, name='closed_archive'),
     path('complain-view/quick-review/<int:pk>', views.quick_review, name='quick_review'),
     path('complain-view/start-working/<int:pk>', views.start_working, name='start_working'),
+    path('complain-view/reassign/<int:pk>', views.reassign_escalation, name='reassign_escalation'),
     path('complain-view/complain-detail/<int:pk>', views.complain_detail, name='complain_detail'),
     path('complain-view/complain-detail/complain-delete/<int:pk>', views.complain_delete, name='complain_delete'),
     # path('complain-view/complain-detail/complain-reject/<int:pk>', views.complain_reject, name='complain_reject'),

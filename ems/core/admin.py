@@ -446,9 +446,9 @@ class WorkSessionAdmin(admin.ModelAdmin):
 
 @admin.register(IssueEscalation)
 class IssueEscalationAdmin(admin.ModelAdmin):
-    list_display = ['issue', 'escalated_by', 'recipients', 'created_at']
-    list_filter = ['created_at']
-    search_fields = ['issue__ticket_num', 'escalated_by__name', 'reason']
+    list_display = ['issue', 'escalated_by', 'recipients', 'created_at', 'reassigned_to', 'reassigned_at']
+    list_filter = ['created_at', 'reassigned_at']
+    search_fields = ['issue__ticket_num', 'escalated_by__name', 'reason', 'reassign_remarks']
     filter_horizontal = ['escalated_to']
     readonly_fields = ['created_at']
 

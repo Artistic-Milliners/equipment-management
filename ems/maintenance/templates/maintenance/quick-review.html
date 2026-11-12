@@ -1,5 +1,5 @@
 {% extends "index.html" %}
-{% load static %}
+{% load static tz %}
 
 {% block page-title %}Quick Review - #{{ issue.ticket_num }}{% endblock page-title %}
 
@@ -378,6 +378,11 @@
         display: none;
     }
 
+    /* Timer, Start button and status badge are toggled with the hidden attribute */
+    .qr-page [hidden] {
+        display: none !important;
+    }
+
     @keyframes qrDecisionEntry {
         from {
             opacity: 0;
@@ -682,6 +687,15 @@
     .qr-fault-hint { margin-top: 0.35rem; color: #64748b; font-size: 0.78rem; }
     .qr-new-fault { margin-top: 0.75rem; }
     .qr-modal-content .qr-new-fault textarea { min-height: 70px; }
+
+    /* Management reassignment after an escalation */
+    .qr-reassign-banner {
+        display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1rem; padding: 0.9rem 1rem;
+        border-radius: 12px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; font-size: 0.875rem;
+    }
+    .qr-reassign-banner strong { display: block; margin-bottom: 0.2rem; }
+    .qr-reassign-remarks { margin-top: 0.35rem; color: #1e293b; white-space: pre-line; }
+    .qr-timer-carried { display: block; margin-top: 0.15rem; font-size: 0.72rem; color: #64748b; }
 
     .qr-field-error { margin-top: 0.35rem; color: #dc2626; font-size: 0.8rem; font-weight: 500; }
     .qr-page-error {
@@ -999,13 +1013,10 @@
     <!-- Ticket Header -->
     <div class="qr-header">
         <span class="qr-ticket-id">#{{ issue.ticket_num|default:"--" }}</span>
-        {% if active_session %}
-        <span class="qr-badge qr-badge--active">
+        <span class="qr-badge qr-badge--active" id="qrBadgeActive" {% if not active_session %}hidden{% endif %}>
             <span class="qr-badge-dot"></span> In Progress
         </span>
-        {% else %}
-        <span class="qr-badge qr-badge--pending">Pending Review</span>
-        {% endif %}
+        <span class="qr-badge qr-badge--pending" id="qrBadgePending" {% if active_session %}hidden{% endif %}>Pending Review</span>
     </div>
 
     <!-- Issue Details -->
@@ -1058,27 +1069,38 @@
     </div>
     {% endif %}
 
+    {% if reassignment %}
+    <div class="qr-reassign-banner" role="status">
+        <i class="fas fa-share" style="margin-top: 0.15rem;"></i>
+        <div>
+            <strong>Reassigned by {{ reassignment.reassigned_by.name }} to {{ reassignment.reassigned_to.name }}</strong>
+            <span>{{ reassignment.reassigned_at|timezone:"Asia/Karachi"|date:"M d, Y - h:i A" }} · after escalation by {{ reassignment.escalated_by.name }}</span>
+            <div class="qr-reassign-remarks">{{ reassignment.reassign_remarks }}</div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Action Area -->
     <div class="qr-action-area">
-        {% if active_session %}
-        <!-- Live Timer -->
-        <div class="qr-timer-card" id="qrTimerCard">
+        <!-- Live Timer (shown as soon as Start Working is tapped) -->
+        <div class="qr-timer-card" id="qrTimerCard" {% if not active_session %}hidden{% endif %}>
             <div class="qr-timer-indicator">
                 <div class="qr-timer-dot"></div>
             </div>
             <div class="qr-timer-details">
                 <div class="qr-timer-label">Working</div>
-                <div class="qr-timer-engineer">{{ active_session.engineer.name }}</div>
+                <div class="qr-timer-engineer" id="qrTimerEngineer">{% if active_session %}{{ active_session.engineer.name }}{% else %}{{ user.employee.name|default:user.username }}{% endif %}</div>
+                {% if worked_before_seconds %}
+                <span class="qr-timer-carried">Includes earlier work on this ticket</span>
+                {% endif %}
             </div>
             <div class="qr-timer-clock" id="qrTimerClock">00:00:00</div>
         </div>
-        {% else %}
         <!-- Start Working -->
-        <button class="qr-start-btn" id="qrStartBtn" type="button">
+        <button class="qr-start-btn" id="qrStartBtn" type="button" {% if active_session %}hidden{% endif %}>
             <i class="fas fa-play"></i>
             Start Working
         </button>
-        {% endif %}
     </div>
 
     <!-- Decision Cards -->
@@ -1259,34 +1281,65 @@
     };
 
     // ===== Live Timer =====
-    {% if active_session %}
-    (function() {
-        const startedAt = new Date("{{ active_session.started_at|date:'c' }}");
+    // Counts from seconds given by the server plus time since then on this device, so the device clock does not matter
+    const WORKED_BEFORE = {{ worked_before_seconds|default:0 }};  // carried over from earlier sessions
+    let timerInterval = null;
+
+    QR.startTimer = function(elapsedSeconds, engineerName) {
+        const base = WORKED_BEFORE + Math.max(0, elapsedSeconds || 0);
+        const t0 = performance.now();
         const clockEl = $('qrTimerClock');
 
         function tick() {
-            const diff = Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 1000));
+            const diff = base + Math.floor((performance.now() - t0) / 1000);
             const h = String(Math.floor(diff / 3600)).padStart(2, '0');
             const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
             const s = String(diff % 60).padStart(2, '0');
             clockEl.textContent = h + ':' + m + ':' + s;
         }
 
+        if (engineerName) $('qrTimerEngineer').textContent = engineerName;
+        $('qrTimerCard').hidden = false;
+        $('qrStartBtn').hidden = true;
+        $('qrBadgeActive').hidden = false;
+        $('qrBadgePending').hidden = true;
+        clearInterval(timerInterval);
         tick();
-        setInterval(tick, 1000);
-    })();
+        timerInterval = setInterval(tick, 1000);
+    };
+
+    QR.stopTimer = function() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        $('qrTimerCard').hidden = true;
+        $('qrStartBtn').hidden = false;
+        $('qrBadgeActive').hidden = true;
+        $('qrBadgePending').hidden = false;
+        $('qrDecisionsArea').classList.add('is-hidden');
+    };
+
+    {% if active_session %}
+    QR.startTimer({{ active_elapsed_seconds|default:0 }});
     {% endif %}
 
     // ===== Start Working =====
-    {% if not active_session %}
     (function() {
         const btn = $('qrStartBtn');
-        if (!btn) return;
+        const ownName = $('qrTimerEngineer').textContent;
+
+        function restoreButton(message) {
+            QR.stopTimer();
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play"></i> Start Working';
+            QR.toast(message, 4000);
+        }
 
         btn.addEventListener('click', function() {
             if (btn.disabled) return;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Starting...';
+
+            // Start the clock right away; the server confirms in the background
+            QR.startTimer(0, ownName);
 
             fetch("{% url 'maintenance:start_working' pk=issue.pk %}", {
                 method: 'POST',
@@ -1295,31 +1348,30 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                return res.json().catch(function() {
+                    throw new Error('Could not start: the server did not respond correctly. Refresh and try again.');
+                });
+            })
             .then(function(data) {
                 if (data.status === 'started') {
-                    window.location.reload();
+                    // Keep the clock that started on tap
+                    $('qrDecisionsArea').classList.remove('is-hidden');
                 } else if (data.status === 'already_started') {
-                    btn.innerHTML = '<i class="fas fa-info-circle"></i> ' + (data.engineer || 'Someone') + ' is working';
-                    btn.style.background = '#d97706';
-                    btn.style.boxShadow = '0 4px 14px rgba(217, 119, 6, 0.3)';
-                    setTimeout(function() { window.location.reload(); }, 1500);
+                    // Someone else is already working on it: follow their session's time
+                    QR.startTimer(data.elapsed_seconds, data.engineer);
+                    $('qrDecisionsArea').classList.remove('is-hidden');
+                    QR.toast((data.engineer || 'Someone') + ' is already working on this ticket', 3000);
+                } else {
+                    restoreButton(data.message || 'Could not start working on this ticket.');
                 }
             })
-            .catch(function() {
-                btn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error - tap to retry';
-                btn.style.background = '#dc2626';
-                btn.style.boxShadow = '0 4px 14px rgba(220, 38, 38, 0.3)';
-                btn.disabled = false;
-                setTimeout(function() {
-                    btn.innerHTML = '<i class="fas fa-play"></i> Start Working';
-                    btn.style.background = '';
-                    btn.style.boxShadow = '';
-                }, 2500);
+            .catch(function(err) {
+                restoreButton(err && err.message && err.message.indexOf('Could not start') === 0
+                    ? err.message : 'Could not start: check your connection and try again.');
             });
         });
     })();
-    {% endif %}
 
     // ===== Decision Cards =====
     const MODAL_CONFIG = {
